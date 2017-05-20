@@ -1911,4 +1911,4 @@ for (var y = 0; y < generatedMap.length; y++) {
     result += "\n";
 }
 console.log(result);
-//# sourceMappingURL=proctology.js.map
+//# sourceMappingURL=Marahel.js.map

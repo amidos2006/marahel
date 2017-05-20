@@ -11,7 +11,7 @@
             "program": "${workspaceRoot}/src/Main.ts",
             "cwd": "${workspaceRoot}",
             "outFiles": [
-                "${workspaceRoot}/bin/proctology.js"
+                "${workspaceRoot}/bin/Marahel.js"
             ]
         }
     ]
