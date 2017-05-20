@@ -1,4 +1,5 @@
 /// <reference path="EstimatorInterface.ts"/>
+/// <reference path="../utils/Tools.ts"/>
 
 class NeighborhoodEstimator implements EstimatorInterface{
     private neighbor:Neighborhood;

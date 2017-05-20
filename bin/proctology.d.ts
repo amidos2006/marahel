@@ -5,10 +5,15 @@ declare class Map {
     height: number;
     private mapValues;
     private backValues;
+    private numEntities;
     constructor(width: number, height: number);
     setValue(x: number, y: number, value: number): void;
     switchBuffers(): void;
     getValue(x: number, y: number): number;
+    checkConstraints(): boolean;
+    getStringMap(): string[][];
+    getIndexMap(): number[][];
+    getColorMap(): number[][];
     toString(): string;
 }
 declare class Point {
@@ -59,7 +64,67 @@ declare class Neighborhood {
     getTotal(value: number, center: Point, region: Region): number;
     setTotal(value: number, center: Point, region: Region): void;
     getPath(start: Point, end: Point, region: Region, checkSolid: Function): Point[];
+    getNeighbors(x: number, y: number, region: Region): Point[];
     toString(): string;
+}
+interface DividerInterface {
+    getRegions(map: Region): Region[];
+}
+declare class AdjustmentDivider implements DividerInterface {
+    static ADJUSTMENT_TRAILS: number;
+    static RETRY_TRAILS: number;
+    private numberOfRegions;
+    private minWidth;
+    private minHeight;
+    private maxWidth;
+    private maxHeight;
+    private allowIntersect;
+    constructor(numberOfRegions: number, parameters: any);
+    private checkIntersection(r, regions);
+    private changeRegion(map, r);
+    private getFitRegion(map, regions);
+    private calculateIntersection(regions);
+    private adjustRegions(map, regions);
+    getRegions(map: Region): Region[];
+}
+declare class BinaryDivider implements DividerInterface {
+    private numberOfRegions;
+    private minWidth;
+    private minHeight;
+    private maxWidth;
+    private maxHeight;
+    constructor(numberOfRegions: number, parameters: any);
+    private divideWidth(region, allowedWidth);
+    private divideHeight(region, allowedHeight);
+    private testDivide(region);
+    private divide(region);
+    private checkMaxSize(regions);
+    private divideMaxSize(region);
+    getRegions(map: Region): Region[];
+}
+declare class DiggerDivider implements DividerInterface {
+    static ACCEPTANCE_TRIALS: number;
+    private numberOfRegions;
+    private minWidth;
+    private minHeight;
+    private maxWidth;
+    private maxHeight;
+    private probDir;
+    private probSpawn;
+    private allowIntersect;
+    constructor(numberOfRegions: number, parameters: any);
+    private checkIntersection(r, regions);
+    private getRegion(map);
+    getRegions(map: Region): Region[];
+}
+declare class EqualDivider implements DividerInterface {
+    private numberOfRegions;
+    private minWidth;
+    private minHeight;
+    private maxWidth;
+    private maxHeight;
+    constructor(numberOfRegions: number, parameters: any);
+    getRegions(map: Region): Region[];
 }
 interface OperatorInterface {
     check(leftValue: number, rightValue: number): boolean;
@@ -85,6 +150,23 @@ declare class NotEqualOperator implements OperatorInterface {
 interface EstimatorInterface {
     calculate(iteration: number, position: Point, region: Region): number;
 }
+declare class LocationNode {
+    x: number;
+    y: number;
+    parent: LocationNode;
+    constructor(parent?: LocationNode, x?: number, y?: number);
+    checkEnd(x: number, y: number): boolean;
+    estimate(x: number, y: number): number;
+    toString(): string;
+}
+declare class AStar {
+    static MAX_ITERATIONS: number;
+    private static convertNodeToPath(node);
+    static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
+}
+declare class EntityListParser {
+    static parseList(line: string): Entity[];
+}
 declare class NeighborhoodEstimator implements EstimatorInterface {
     private neighbor;
     private entities;
@@ -100,10 +182,67 @@ declare class DistanceEstimator implements EstimatorInterface {
     private type;
     private neighbor;
     private entities;
+    private avoids;
     constructor(line: string);
     private getMax(position, region, entityIndex);
     private getMin(position, region, entityIndex);
     calculate(iteration: number, position: Point, region: Region): number;
+}
+declare class Condition {
+    private leftSide;
+    private operator;
+    private rightSide;
+    private nextCondition;
+    constructor(line: string);
+    check(iteration: number, position: Point, region: Region): boolean;
+}
+declare class Executer {
+    private neightbor;
+    private entities;
+    private nextExecuter;
+    constructor(line: string);
+    apply(position: Point, region: Region): void;
+}
+declare class Rule {
+    private condition;
+    private executer;
+    private nextRule;
+    constructor(lines: string[]);
+    checkRule(iteration: number, position: Point, region: Region): boolean;
+    execute(iteration: number, position: Point, region: Region): boolean;
+}
+declare abstract class Generator {
+    protected regionsName: string;
+    protected regions: Region[];
+    protected rules: Rule[];
+    protected minBorder: number;
+    protected maxBorder: number;
+    protected replacingType: number;
+    protected borderType: number;
+    constructor(currentRegion: any, rules: string[]);
+    selectRegions(map: Region, regions: Region[]): void;
+    applyGeneration(): void;
+}
+declare class AutomataGenerator extends Generator {
+    private numIterations;
+    private start;
+    private explore;
+    constructor(currentRegion: any, rules: string[], parameters: any);
+    applyGeneration(): void;
+}
+declare class AgentGenerator extends Generator {
+    private startEntities;
+    private avoidEntities;
+    private numAgents;
+    private speed;
+    private changeTime;
+    private lifespan;
+    private directions;
+    constructor(currentRegion: any, rules: string[], parameters: any);
+    applyGeneration(): void;
+}
+declare class ConnectorGenerator extends Generator {
+    applyGeneration(): void;
 }
 declare class Prando {
     private static MIN;
@@ -197,72 +336,6 @@ declare class Prando {
     private map(val, minFrom, maxFrom, minTo, maxTo);
     private hashCode(str);
 }
-declare class Marahel {
-    static replacingType: number;
-    static borderType: number;
-    static currentMap: Map;
-    private static rnd;
-    private static noise;
-    private static minDim;
-    private static maxDim;
-    private static entities;
-    private static entityIndex;
-    private static neighbors;
-    private static regionDivider;
-    private static generators;
-    static getRandom(): number;
-    static getIntRandom(min: number, max: number): number;
-    static getNoise(x: number, y: number): number;
-    static shuffleArray(array: any[]): void;
-    static initialize(data: any): void;
-    static generate(seed?: number): void;
-    static getEntity(value: number | string): Entity;
-    static getEntityIndex(name: string): number;
-    static getNeighborhood(name: string): Neighborhood;
-    static getEstimator(line: string): EstimatorInterface;
-    static getOperator(line: string): OperatorInterface;
-}
-interface DividerInterface {
-    getRegions(map: Region): Region[];
-}
-declare class DiggerDivider implements DividerInterface {
-    static ACCEPTANCE_TRIALS: number;
-    private numberOfRegions;
-    private minWidth;
-    private minHeight;
-    private maxWidth;
-    private maxHeight;
-    private probDir;
-    private probSpawn;
-    private allowIntersect;
-    constructor(numberOfRegions: number, parameters: any);
-    private checkIntersection(r, regions);
-    private getRegion(map);
-    getRegions(map: Region): Region[];
-}
-declare class Condition {
-    private leftSide;
-    private operator;
-    private rightSide;
-    private nextCondition;
-    constructor(line: string);
-    check(iteration: number, position: Point, region: Region): boolean;
-}
-declare class Executer {
-    private neightbor;
-    private entities;
-    private nextExecuter;
-    constructor(line: string);
-    apply(position: Point, region: Region): void;
-}
-declare class Rule {
-    private condition;
-    private executer;
-    private nextRule;
-    constructor(lines: string[]);
-    checkRule(iteration: number, position: Point, region: Region): boolean;
-    execute(iteration: number, position: Point, region: Region): boolean;
-}
 declare class Grad {
     private x;
     private y;
@@ -289,82 +362,39 @@ declare class Noise {
     perlin2(x: number, y: number): number;
     perlin3(x: number, y: number, z: number): number;
 }
-declare abstract class Generator {
-    protected regions: Region[];
-    protected rules: Rule[];
-    protected minBorder: number;
-    protected maxBorder: number;
-    constructor(currentRegion: any, map: Region, regions: Region[], rules: string[]);
-    applyGeneration(): void;
+declare class Marahel {
+    static STRING_OUTPUT: number;
+    static COLOR_OUTPUT: number;
+    static INDEX_OUTPUT: number;
+    static MAX_TRIALS: number;
+    static replacingType: number;
+    static borderType: number;
+    static currentMap: Map;
+    private static rnd;
+    private static noise;
+    private static minDim;
+    private static maxDim;
+    private static entities;
+    private static entityIndex;
+    private static neighbors;
+    private static regionDivider;
+    private static generators;
+    static getRandom(): number;
+    static getIntRandom(min: number, max: number): number;
+    static getNoise(x: number, y: number): number;
+    static shuffleArray(array: any[]): void;
+    static initialize(data: any): void;
+    private static generateOneTime();
+    static generate(outputType?: number, seed?: number): any[][];
+    static getEntity(value: number | string): Entity;
+    static getAllEntities(): Entity[];
+    static getEntityIndex(name: string): number;
+    static getNeighborhood(name: string): Neighborhood;
+    static getEstimator(line: string): EstimatorInterface;
+    static getOperator(line: string): OperatorInterface;
+    private static getDivider(type, numRegions, parameters);
+    private static getGenerator(type, currentRegion, parameters, rules);
 }
-declare class AgentGenerator extends Generator {
-    applyGeneration(): void;
-}
-declare class AutomataGenerator extends Generator {
-    private numIterations;
-    private start;
-    private explore;
-    constructor(currentRegion: any, map: Region, regions: Region[], rules: string[], parameters: any);
-    applyGeneration(): void;
-}
-declare class ConnectorGenerator extends Generator {
-    applyGeneration(): void;
-}
-declare class AdjustmentDivider implements DividerInterface {
-    static ADJUSTMENT_TRAILS: number;
-    static RETRY_TRAILS: number;
-    private numberOfRegions;
-    private minWidth;
-    private minHeight;
-    private maxWidth;
-    private maxHeight;
-    private allowIntersect;
-    constructor(numberOfRegions: number, parameters: any);
-    private checkIntersection(r, regions);
-    private changeRegion(map, r);
-    private getFitRegion(map, regions);
-    private calculateIntersection(regions);
-    private adjustRegions(map, regions);
-    getRegions(map: Region): Region[];
-}
-declare class BinaryDivider implements DividerInterface {
-    private numberOfRegions;
-    private minWidth;
-    private minHeight;
-    private maxWidth;
-    private maxHeight;
-    constructor(numberOfRegions: number, parameters: any);
-    private divideWidth(region, allowedWidth);
-    private divideHeight(region, allowedHeight);
-    private testDivide(region);
-    private divide(region);
-    private checkMaxSize(regions);
-    private divideMaxSize(region);
-    getRegions(map: Region): Region[];
-}
-declare class EqualDivider implements DividerInterface {
-    private numberOfRegions;
-    private minWidth;
-    private minHeight;
-    private maxWidth;
-    private maxHeight;
-    constructor(numberOfRegions: number, parameters: any);
-    getRegions(map: Region): Region[];
-}
-declare class LocationNode {
-    x: number;
-    y: number;
-    parent: LocationNode;
-    constructor(parent?: LocationNode, x?: number, y?: number);
-    checkEnd(x: number, y: number): boolean;
-    estimate(x: number, y: number): number;
-    toString(): string;
-}
-declare class AStar {
-    static MAX_ITERATIONS: number;
-    private static convertNodeToPath(node);
-    static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
-}
-declare class EntityListParser {
-    static parseList(line: string): Entity[];
-}
+declare let data: any;
+declare let generatedMap: number[][];
+declare let result: string;

@@ -4,7 +4,7 @@ class NumberEstimator implements EstimatorInterface{
     private name:string;
 
     constructor(line:string){
-
+        this.name = line;
     }
 
     calculate(iteration:number, position:Point, region:Region):number{
@@ -17,6 +17,9 @@ class NumberEstimator implements EstimatorInterface{
         if(this.name == "noise"){
             return Marahel.getNoise(position.x/region.getWidth(), position.y/region.getHeight());
         }
-        return region.getEntityNumber(Marahel.getEntityIndex(this.name));
+        if(isNaN(parseFloat(this.name))){
+            return region.getEntityNumber(Marahel.getEntityIndex(this.name));
+        }
+        return parseFloat(this.name);
     }
 }

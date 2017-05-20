@@ -70,6 +70,9 @@ class AStar{
 
 class EntityListParser{
     static parseList(line:string):Entity[]{
+        if(line.trim() == "any"){
+            return Marahel.getAllEntities().concat([Marahel.getEntity(-1)]);
+        }
         let result:Entity[] = [];
         let eeParts:string[] = line.split("|");
         for(let e of eeParts){

@@ -10,6 +10,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var Map = (function () {
     function Map(width, height) {
+        this.numEntities = {};
         this.width = width;
         this.height = height;
         this.mapValues = [];
@@ -22,9 +23,19 @@ var Map = (function () {
                 this.backValues[y].push(-1);
             }
         }
+        this.numEntities["undefined"] = this.width * this.height;
         Marahel.replacingType = Map.REPLACE_BACK;
     }
     Map.prototype.setValue = function (x, y, value) {
+        var e = Marahel.getEntity(value);
+        if (e.name in this.numEntities && e.maxValue > 0 && this.numEntities[e.name] >= e.maxValue) {
+            return;
+        }
+        this.numEntities[Marahel.getEntity(this.mapValues[y][x]).name] -= 1;
+        if (!(e.name in this.numEntities)) {
+            this.numEntities[e.name] = 0;
+        }
+        this.numEntities[e.name] += 1;
         if (Marahel.replacingType == Map.REPLACE_SAME) {
             this.mapValues[y][x] = value;
         }
@@ -33,12 +44,64 @@ var Map = (function () {
         }
     };
     Map.prototype.switchBuffers = function () {
-        var temp = this.mapValues;
-        this.mapValues = this.backValues;
-        this.backValues = temp;
+        if (Marahel.replacingType == Map.REPLACE_BACK) {
+            var temp = this.mapValues;
+            this.mapValues = this.backValues;
+            this.backValues = temp;
+            for (var y = 0; y < this.backValues.length; y++) {
+                for (var x = 0; x < this.backValues[y].length; x++) {
+                    this.backValues[y][x] = this.mapValues[y][x];
+                }
+            }
+        }
     };
     Map.prototype.getValue = function (x, y) {
         return this.mapValues[y][x];
+    };
+    Map.prototype.checkConstraints = function () {
+        var entities = Marahel.getAllEntities();
+        for (var _i = 0, entities_1 = entities; _i < entities_1.length; _i++) {
+            var e = entities_1[_i];
+            if (e.minValue > 0) {
+                if (!(e.name in this.numEntities)) {
+                    return false;
+                }
+                if (e.name in this.numEntities && this.numEntities[e.name] < e.minValue) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    Map.prototype.getStringMap = function () {
+        var result = [];
+        for (var y = 0; y < this.mapValues.length; y++) {
+            result.push([]);
+            for (var x = 0; x < this.mapValues[y].length; x++) {
+                result[y].push(Marahel.getEntity(this.mapValues[y][x]).name);
+            }
+        }
+        return result;
+    };
+    Map.prototype.getIndexMap = function () {
+        var result = [];
+        for (var y = 0; y < this.mapValues.length; y++) {
+            result.push([]);
+            for (var x = 0; x < this.mapValues[y].length; x++) {
+                result[y].push(this.mapValues[y][x]);
+            }
+        }
+        return result;
+    };
+    Map.prototype.getColorMap = function () {
+        var result = [];
+        for (var y = 0; y < this.mapValues.length; y++) {
+            result.push([]);
+            for (var x = 0; x < this.mapValues[y].length; x++) {
+                result[y].push(Marahel.getEntity(this.mapValues[y][x]).color);
+            }
+        }
+        return result;
     };
     Map.prototype.toString = function () {
         return this.mapValues.toString();
@@ -62,9 +125,18 @@ var Point = (function () {
 var Entity = (function () {
     function Entity(name, parameters) {
         this.name = name;
-        this.color = parameters["color"];
-        this.minValue = parameters["min"];
-        this.maxValue = parameters["max"];
+        this.color = -1;
+        if ("color" in parameters) {
+            this.color = parameters["color"];
+        }
+        this.minValue = -1;
+        if ("min" in parameters) {
+            this.minValue = parameters["min"];
+        }
+        this.maxValue = -1;
+        if ("max" in parameters) {
+            this.maxValue = parameters["max"];
+        }
     }
     return Entity;
 }());
@@ -240,10 +312,336 @@ var Neighborhood = (function () {
     Neighborhood.prototype.getPath = function (start, end, region, checkSolid) {
         return AStar.getPath(start, end, this.locations, region, checkSolid);
     };
+    Neighborhood.prototype.getNeighbors = function (x, y, region) {
+        var result = [];
+        for (var _i = 0, _a = this.locations; _i < _a.length; _i++) {
+            var l = _a[_i];
+            result.push(region.getRegionPosition(x + l.x, y + l.y));
+        }
+        return result;
+    };
     Neighborhood.prototype.toString = function () {
         return this.name + "\n" + this.printing + "\nRelative locations\n" + this.locations;
     };
     return Neighborhood;
+}());
+/// <reference path="../Marahel.ts"/>
+/// <reference path="../Data/Region.ts"/>
+/// <reference path="DividerInterface.ts"/>
+var AdjustmentDivider = (function () {
+    function AdjustmentDivider(numberOfRegions, parameters) {
+        this.numberOfRegions = numberOfRegions;
+        var parts = parameters["min"].split("x");
+        this.minWidth = parseInt(parts[0]);
+        this.minHeight = parseInt(parts[1]);
+        parts = parameters["max"].split("x");
+        this.maxWidth = parseInt(parts[0]);
+        this.maxHeight = parseInt(parts[1]);
+        this.allowIntersect = parameters["allowIntersection"] == "true";
+    }
+    AdjustmentDivider.prototype.checkIntersection = function (r, regions) {
+        for (var _i = 0, regions_1 = regions; _i < regions_1.length; _i++) {
+            var cr = regions_1[_i];
+            if (cr.intersect(r)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    AdjustmentDivider.prototype.changeRegion = function (map, r) {
+        r.setX(Marahel.getIntRandom(0, map.getWidth() - this.maxWidth));
+        r.setY(Marahel.getIntRandom(0, map.getHeight() - this.maxHeight));
+        r.setWidth(Marahel.getIntRandom(this.minWidth, this.maxWidth));
+        r.setHeight(Marahel.getIntRandom(this.minHeight, this.maxHeight));
+    };
+    AdjustmentDivider.prototype.getFitRegion = function (map, regions) {
+        var r = new Region(0, 0, 0, 0);
+        for (var i = 0; i < AdjustmentDivider.RETRY_TRAILS; i++) {
+            this.changeRegion(map, r);
+            if (!this.checkIntersection(r, regions)) {
+                break;
+            }
+        }
+        return r;
+    };
+    AdjustmentDivider.prototype.calculateIntersection = function (regions) {
+        var results = 0;
+        for (var _i = 0, regions_2 = regions; _i < regions_2.length; _i++) {
+            var r = regions_2[_i];
+            if (this.checkIntersection(r, regions)) {
+                results += 1;
+            }
+        }
+        return results - regions.length;
+    };
+    AdjustmentDivider.prototype.adjustRegions = function (map, regions) {
+        var minIntersect = this.calculateIntersection(regions);
+        for (var i = 0; i < AdjustmentDivider.ADJUSTMENT_TRAILS; i++) {
+            var r = regions[Marahel.getIntRandom(0, regions.length)];
+            var temp = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
+            this.changeRegion(map, r);
+            var value = this.calculateIntersection(regions);
+            if (value >= minIntersect) {
+                r.setX(temp.getX());
+                r.setY(temp.getY());
+                r.setWidth(temp.getWidth());
+                r.setHeight(temp.getHeight());
+            }
+            else {
+                minIntersect = value;
+                if (minIntersect <= 0) {
+                    return;
+                }
+            }
+        }
+    };
+    AdjustmentDivider.prototype.getRegions = function (map) {
+        var results = [];
+        while (results.length < this.numberOfRegions) {
+            results.push(this.getFitRegion(map, results));
+        }
+        if (!this.allowIntersect && this.calculateIntersection(results) > 0) {
+            this.adjustRegions(map, results);
+        }
+        return results;
+    };
+    return AdjustmentDivider;
+}());
+AdjustmentDivider.ADJUSTMENT_TRAILS = 1000;
+AdjustmentDivider.RETRY_TRAILS = 100;
+/// <reference path="DividerInterface.ts"/>
+var BinaryDivider = (function () {
+    function BinaryDivider(numberOfRegions, parameters) {
+        this.numberOfRegions = numberOfRegions;
+        var parts = parameters["min"].split("x");
+        this.minWidth = parseInt(parts[0]);
+        this.minHeight = parseInt(parts[1]);
+        parts = parameters["max"].split("x");
+        this.maxWidth = parseInt(parts[0]);
+        this.maxHeight = parseInt(parts[1]);
+    }
+    BinaryDivider.prototype.divideWidth = function (region, allowedWidth) {
+        var rWidth = this.minWidth + Marahel.getIntRandom(0, allowedWidth);
+        return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()),
+            new Region(region.getX() + rWidth, region.getY(), region.getWidth() - rWidth, region.getHeight())];
+    };
+    BinaryDivider.prototype.divideHeight = function (region, allowedHeight) {
+        var rHeight = this.minHeight + Marahel.getIntRandom(0, allowedHeight);
+        return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight),
+            new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
+    };
+    BinaryDivider.prototype.testDivide = function (region) {
+        return (region.getWidth() >= 2 * this.minWidth || region.getHeight() >= 2 * this.minHeight);
+    };
+    BinaryDivider.prototype.divide = function (region) {
+        var allowedWidth = region.getWidth() - 2 * this.minWidth;
+        var allowedHeight = region.getHeight() - 2 * this.minHeight;
+        if (Marahel.getRandom() < 0.5) {
+            if (allowedWidth > 0) {
+                return this.divideWidth(region, allowedWidth);
+            }
+            if (allowedHeight > 0) {
+                return this.divideHeight(region, allowedHeight);
+            }
+        }
+        else {
+            if (allowedHeight > 0) {
+                return this.divideHeight(region, allowedHeight);
+            }
+            if (allowedWidth > 0) {
+                return this.divideWidth(region, allowedWidth);
+            }
+        }
+        if (region.getWidth() > region.getHeight()) {
+            return this.divideWidth(region, 0);
+        }
+        else {
+            return this.divideHeight(region, 0);
+        }
+    };
+    BinaryDivider.prototype.checkMaxSize = function (regions) {
+        for (var _i = 0, regions_3 = regions; _i < regions_3.length; _i++) {
+            var r = regions_3[_i];
+            if (r.getWidth() > this.maxWidth || r.getHeight() > this.maxHeight) {
+                return true;
+            }
+        }
+        return false;
+    };
+    BinaryDivider.prototype.divideMaxSize = function (region) {
+        if (Marahel.getRandom() < 0.5) {
+            if (region.getWidth() >= this.maxWidth) {
+                return this.divideWidth(region, 0);
+            }
+            if (region.getHeight() >= this.maxHeight) {
+                return this.divideHeight(region, 0);
+            }
+        }
+        else {
+            if (region.getHeight() >= this.maxHeight) {
+                return this.divideHeight(region, 0);
+            }
+            if (region.getWidth() >= this.maxWidth) {
+                return this.divideWidth(region, 0);
+            }
+        }
+        if (region.getWidth() > region.getHeight()) {
+            return this.divideWidth(region, 0);
+        }
+        else {
+            return this.divideHeight(region, 0);
+        }
+    };
+    BinaryDivider.prototype.getRegions = function (map) {
+        var results = [new Region(0, 0, map.getWidth(), map.getHeight())];
+        while (results.length < this.numberOfRegions || this.checkMaxSize(results)) {
+            Marahel.shuffleArray(results);
+            var prevLength = results.length;
+            for (var i = 0; i < results.length; i++) {
+                if (this.testDivide(results[i])) {
+                    results = results.concat(this.divide(results.splice(i, 1)[0]));
+                    break;
+                }
+            }
+            if (prevLength == results.length) {
+                for (var i = 0; i < results.length; i++) {
+                    if (this.checkMaxSize([results[i]])) {
+                        results = results.concat(this.divideMaxSize(results.splice(i, 1)[0]));
+                        break;
+                    }
+                }
+            }
+        }
+        Marahel.shuffleArray(results);
+        results = results.slice(0, this.numberOfRegions);
+        return results;
+    };
+    return BinaryDivider;
+}());
+/// <reference path="DividerInterface.ts"/>
+var DiggerDivider = (function () {
+    function DiggerDivider(numberOfRegions, parameters) {
+        this.numberOfRegions = numberOfRegions;
+        var parts = parameters["min"].split("x");
+        this.minWidth = parseInt(parts[0]);
+        this.minHeight = parseInt(parts[1]);
+        parts = parameters["max"].split("x");
+        this.maxWidth = parseInt(parts[0]);
+        this.maxHeight = parseInt(parts[1]);
+        this.probDir = parseFloat(parameters["probDir"]);
+        this.probSpawn = parseFloat(parameters["probSpawn"]);
+        this.allowIntersect = parameters["allowIntersection"] == "true";
+    }
+    DiggerDivider.prototype.checkIntersection = function (r, regions) {
+        for (var _i = 0, regions_4 = regions; _i < regions_4.length; _i++) {
+            var cr = regions_4[_i];
+            if (cr.intersect(r)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    DiggerDivider.prototype.getRegion = function (map) {
+        var width = Marahel.getIntRandom(this.minWidth, this.maxWidth);
+        var height = Marahel.getIntRandom(this.minHeight, this.maxHeight);
+        var x = Marahel.getIntRandom(0, map.getWidth() - this.maxWidth) - Math.floor(width / 2);
+        if (x < 0) {
+            x = 0;
+        }
+        if (x + Math.ceil(width / 2) >= map.getWidth()) {
+            x = map.getWidth() - Math.ceil(width / 2);
+        }
+        var y = Marahel.getIntRandom(0, map.getHeight() - this.maxHeight) - Math.floor(height / 2);
+        if (y < 0) {
+            y = 0;
+        }
+        if (y + Math.ceil(height / 2) >= map.getHeight()) {
+            x = map.getHeight() - Math.ceil(height / 2);
+        }
+        return new Region(x, y, width, height);
+    };
+    DiggerDivider.prototype.getRegions = function (map) {
+        var results = [];
+        var digger = new Point(Marahel.getIntRandom(0, map.getWidth()), Marahel.getIntRandom(0, map.getHeight()));
+        var directions = [new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0)];
+        var currentDir = Marahel.getIntRandom(0, directions.length);
+        var directionProb = 0;
+        var spawnProb = 0;
+        var acceptCounter = 0;
+        while (results.length < this.numberOfRegions) {
+            if (Marahel.getRandom() < directionProb || !map.intersect(new Point(digger.x + directions[currentDir].x, digger.y + directions[currentDir].y))) {
+                currentDir = Marahel.getIntRandom(0, directions.length);
+                directionProb = 0;
+            }
+            else {
+                directionProb += this.probDir;
+            }
+            if (Marahel.getRandom() < spawnProb) {
+                var r = this.getRegion(map);
+                if (this.allowIntersect) {
+                    results.push(r);
+                }
+                else if (!this.checkIntersection(r, results)) {
+                    results.push(r);
+                }
+                else if (acceptCounter >= DiggerDivider.ACCEPTANCE_TRIALS) {
+                    results.push(r);
+                }
+                else {
+                    acceptCounter += 1;
+                }
+                spawnProb = 0;
+            }
+            else {
+                spawnProb += this.probSpawn;
+            }
+            if (map.intersect(new Point(digger.x + directions[currentDir].x, digger.y + directions[currentDir].y))) {
+                digger.x += directions[currentDir].x;
+                digger.y += directions[currentDir].x;
+            }
+        }
+        return results;
+    };
+    return DiggerDivider;
+}());
+DiggerDivider.ACCEPTANCE_TRIALS = 100;
+/// <reference path="DividerInterface.ts"/>
+var EqualDivider = (function () {
+    function EqualDivider(numberOfRegions, parameters) {
+        this.numberOfRegions = numberOfRegions;
+        var parts = parameters["min"].split("x");
+        this.minWidth = parseInt(parts[0]);
+        this.minHeight = parseInt(parts[1]);
+        parts = parameters["max"].split("x");
+        this.maxWidth = parseInt(parts[0]);
+        this.maxHeight = parseInt(parts[1]);
+    }
+    EqualDivider.prototype.getRegions = function (map) {
+        var result = [];
+        var currentWidth = Marahel.getIntRandom(this.minWidth, this.maxWidth);
+        var currentHeight = Marahel.getIntRandom(this.minHeight, this.maxHeight);
+        var roomWidth = Math.floor(map.getWidth() / currentWidth);
+        var roomHeight = Math.floor(map.getHeight() / currentHeight);
+        for (var x = 0; x < this.minWidth; x++) {
+            for (var y = 0; y < this.minHeight; y++) {
+                var rX = x * roomWidth;
+                var rY = y * roomHeight;
+                var rW = roomWidth;
+                var rH = roomHeight;
+                if (x == currentWidth - 1) {
+                    rW = map.getWidth() - rX;
+                }
+                if (y == currentHeight - 1) {
+                    rH = map.getHeight() - rY;
+                }
+                result.push(new Region(rX, rY, rW, rH));
+            }
+        }
+        Marahel.shuffleArray(result);
+        result = result.slice(0, this.numberOfRegions);
+        return result;
+    };
+    return EqualDivider;
 }());
 /// <reference path="../Marahel.ts"/>
 /// <reference path="OperatorInterface.ts"/>
@@ -303,7 +701,98 @@ var NotEqualOperator = (function () {
 /// <reference path="../Marahel.ts"/>
 /// <reference path="../Data/Point.ts"/>
 /// <reference path="../Data/Region.ts"/>
+/// <reference path="../data/Point.ts"/>
+var LocationNode = (function () {
+    function LocationNode(parent, x, y) {
+        if (parent === void 0) { parent = null; }
+        if (x === void 0) { x = 0; }
+        if (y === void 0) { y = 0; }
+        this.x = x;
+        this.y = y;
+        this.parent = parent;
+    }
+    LocationNode.prototype.checkEnd = function (x, y) {
+        return this.x == x && this.y == y;
+    };
+    LocationNode.prototype.estimate = function (x, y) {
+        return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2);
+    };
+    LocationNode.prototype.toString = function () {
+        return this.x + "," + this.y;
+    };
+    return LocationNode;
+}());
+var AStar = (function () {
+    function AStar() {
+    }
+    AStar.convertNodeToPath = function (node) {
+        var points = [];
+        while (node != null) {
+            points.push(new Point(node.x, node.y));
+            node = node.parent;
+        }
+        return points.reverse();
+    };
+    AStar.getPath = function (start, end, directions, region, checkSolid) {
+        var iterations = 0;
+        var openNodes = [new LocationNode(null, start.x, start.y)];
+        var visited = {};
+        var currentNode = openNodes[0];
+        while (openNodes.length > 0 && !currentNode.checkEnd(end.x, end.y)) {
+            currentNode = openNodes.splice(0, 1)[0];
+            if (!visited[currentNode.toString()]) {
+                visited[currentNode.toString()] = true;
+                for (var _i = 0, directions_1 = directions; _i < directions_1.length; _i++) {
+                    var d = directions_1[_i];
+                    var p = region.getRegionPosition(currentNode.x + d.x, currentNode.y + d.y);
+                    var newLocation = new LocationNode(currentNode, p.x, p.y);
+                    if (!checkSolid(newLocation.x, newLocation.y) && !region.outRegion(p.x, p.y)) {
+                        openNodes.push(newLocation);
+                    }
+                }
+                openNodes.sort(function (a, b) {
+                    return a.estimate(end.x, end.y) - b.estimate(end.x, end.y);
+                });
+            }
+            iterations += 1;
+            if (iterations >= AStar.MAX_ITERATIONS) {
+                break;
+            }
+        }
+        if (currentNode.checkEnd(end.x, end.y)) {
+            return AStar.convertNodeToPath(currentNode);
+        }
+        return [];
+    };
+    return AStar;
+}());
+AStar.MAX_ITERATIONS = 1000;
+var EntityListParser = (function () {
+    function EntityListParser() {
+    }
+    EntityListParser.parseList = function (line) {
+        if (line.trim() == "any") {
+            return Marahel.getAllEntities().concat([Marahel.getEntity(-1)]);
+        }
+        var result = [];
+        var eeParts = line.split("|");
+        for (var _i = 0, eeParts_1 = eeParts; _i < eeParts_1.length; _i++) {
+            var e = eeParts_1[_i];
+            var nums = e.split(":");
+            var times = 1;
+            if (nums.length > 1) {
+                times = parseInt(nums[1]);
+            }
+            for (var i = 0; i < times; i++) {
+                result.push(Marahel.getEntity(nums[0].trim()));
+            }
+        }
+        return result;
+    };
+    return EntityListParser;
+}());
 /// <reference path="EstimatorInterface.ts"/>
+/// <reference path="../utils/Tools.ts"/>
 var NeighborhoodEstimator = (function () {
     function NeighborhoodEstimator(line) {
         var parts = line.split(/\((.+)\)/);
@@ -323,6 +812,7 @@ var NeighborhoodEstimator = (function () {
 /// <reference path="EstimatorInterface.ts"/>
 var NumberEstimator = (function () {
     function NumberEstimator(line) {
+        this.name = line;
     }
     NumberEstimator.prototype.calculate = function (iteration, position, region) {
         if (this.name == "complete") {
@@ -334,7 +824,10 @@ var NumberEstimator = (function () {
         if (this.name == "noise") {
             return Marahel.getNoise(position.x / region.getWidth(), position.y / region.getHeight());
         }
-        return region.getEntityNumber(Marahel.getEntityIndex(this.name));
+        if (isNaN(parseFloat(this.name))) {
+            return region.getEntityNumber(Marahel.getEntityIndex(this.name));
+        }
+        return parseFloat(this.name);
     };
     return NumberEstimator;
 }());
@@ -350,9 +843,19 @@ var DistanceEstimator = (function () {
         var parts = line.split(/\((.+)\)/)[1].split(",");
         this.neighbor = Marahel.getNeighborhood(parts[0].trim());
         this.entities = EntityListParser.parseList(parts[1]);
+        this.avoids = EntityListParser.parseList(parts[2]);
     }
     DistanceEstimator.prototype.getMax = function (position, region, entityIndex) {
-        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) { return false; });
+        var _this = this;
+        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
+            for (var _i = 0, _a = _this.avoids; _i < _a.length; _i++) {
+                var a = _a[_i];
+                if (region.getValue(x, y) == Marahel.getEntityIndex(a.name)) {
+                    return true;
+                }
+            }
+            return false;
+        });
         if (values.length > 0) {
             return -1;
         }
@@ -365,7 +868,16 @@ var DistanceEstimator = (function () {
         return max;
     };
     DistanceEstimator.prototype.getMin = function (position, region, entityIndex) {
-        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) { return false; });
+        var _this = this;
+        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
+            for (var _i = 0, _a = _this.avoids; _i < _a.length; _i++) {
+                var a = _a[_i];
+                if (region.getValue(x, y) == Marahel.getEntityIndex(a.name)) {
+                    return true;
+                }
+            }
+            return false;
+        });
         if (values.length > 0) {
             return -1;
         }
@@ -400,6 +912,270 @@ var DistanceEstimator = (function () {
     };
     return DistanceEstimator;
 }());
+/// <reference path="../Marahel.ts"/>
+/// <reference path="../estimator/EstimatorInterface.ts"/>
+/// <reference path="../operator/OperatorInterface.ts"/>
+var Condition = (function () {
+    function Condition(line) {
+        var parts = line.split(",");
+        var cParts = parts[0].split(/>=|<=|==|!=|>|</);
+        this.leftSide = Marahel.getEstimator(cParts[0].trim());
+        this.operator = Marahel.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
+        this.rightSide = Marahel.getEstimator(cParts[1].trim());
+        if (parts.length > 1) {
+            parts.splice(0, 1);
+            this.nextCondition = new Condition(parts.join(","));
+        }
+    }
+    Condition.prototype.check = function (iteration, position, region) {
+        var result = this.operator.check(this.leftSide.calculate(iteration, position, region), this.rightSide.calculate(iteration, position, region));
+        if (result && this.nextCondition != null) {
+            result = result && this.nextCondition.check(iteration, position, region);
+        }
+        return result;
+    };
+    return Condition;
+}());
+/// <reference path="../Marahel.ts"/>
+/// <reference path="Neighborhood.ts"/>
+/// <reference path="Entity.ts"/>
+/// <reference path="Region.ts"/>
+/// <reference path="Point.ts"/>
+var Executer = (function () {
+    function Executer(line) {
+        var parts = line.split(",");
+        var eParts = parts[0].split(/\((.+)\)/);
+        this.neightbor = Marahel.getNeighborhood(eParts[0].trim());
+        this.entities = EntityListParser.parseList(eParts[1].trim());
+        if (parts.length > 1) {
+            parts.splice(0, 1);
+            this.nextExecuter = new Executer(parts.join(","));
+        }
+    }
+    Executer.prototype.apply = function (position, region) {
+        var entity = this.entities[Marahel.getIntRandom(0, this.entities.length)];
+        this.neightbor.setTotal(Marahel.getEntityIndex(entity.name), position, region);
+        if (this.nextExecuter != null) {
+            this.nextExecuter.apply(position, region);
+        }
+    };
+    return Executer;
+}());
+/// <reference path="../Marahel.ts"/>
+/// <reference path="Condition.ts"/>
+/// <reference path="Executer.ts"/>
+/// <reference path="Point.ts"/>
+/// <reference path="Region.ts"/>
+var Rule = (function () {
+    function Rule(lines) {
+        this.condition = new Condition(lines[0].split("->")[0]);
+        this.executer = new Executer(lines[0].split("->")[1]);
+        this.nextRule = null;
+        if (lines.length > 1) {
+            lines.splice(0, 1);
+            this.nextRule = new Rule(lines);
+        }
+    }
+    Rule.prototype.checkRule = function (iteration, position, region) {
+        if (this.condition.check(iteration, position, region)) {
+            return true;
+        }
+        else if (this.nextRule != null) {
+            return this.nextRule.checkRule(iteration, position, region);
+        }
+        return false;
+    };
+    Rule.prototype.execute = function (iteration, position, region) {
+        if (this.condition.check(iteration, position, region)) {
+            this.executer.apply(position, region);
+            return true;
+        }
+        else if (this.nextRule != null) {
+            return this.nextRule.execute(iteration, position, region);
+        }
+        return false;
+    };
+    return Rule;
+}());
+/// <reference path="../data/Region.ts"/>
+/// <reference path="../data/Rule.ts"/>
+var Generator = (function () {
+    function Generator(currentRegion, rules) {
+        this.minBorder = 0;
+        this.maxBorder = 0;
+        if (currentRegion["border"]) {
+            this.minBorder = parseInt(currentRegion["border"].split(",")[0]);
+            this.maxBorder = parseInt(currentRegion["border"].split(",")[1]);
+        }
+        this.regionsName = currentRegion["name"].trim();
+        this.replacingType = Map.REPLACE_BACK;
+        if (currentRegion["replacingType"]) {
+            if (currentRegion["replacingType"].trim() == "same") {
+                this.replacingType = Map.REPLACE_SAME;
+            }
+            else if (currentRegion["replacingType"].trim() == "buffer") {
+                this.replacingType = Map.REPLACE_BACK;
+            }
+        }
+        this.borderType = Region.BORDER_NONE;
+        if (currentRegion["borderType"]) {
+            if (currentRegion["borderType"].trim() == "wrap") {
+                this.borderType = Region.BORDER_WRAP;
+            }
+            else if (currentRegion["borderType"].trim() == "none") {
+                this.borderType = Region.BORDER_NONE;
+            }
+            else {
+                this.borderType = Marahel.getEntityIndex(currentRegion["borderType"].trim());
+            }
+        }
+        this.rules = [];
+        for (var _i = 0, rules_1 = rules; _i < rules_1.length; _i++) {
+            var r = rules_1[_i];
+            this.rules.push(new Rule(rules));
+        }
+    }
+    Generator.prototype.selectRegions = function (map, regions) {
+        if (this.regionsName == "map") {
+            this.regions = [map];
+        }
+        else if (this.regionsName.trim() == "all") {
+            this.regions = regions;
+        }
+        else {
+            this.regions = [];
+            var parts = this.regionsName.split(",");
+            for (var _i = 0, parts_1 = parts; _i < parts_1.length; _i++) {
+                var p = parts_1[_i];
+                p = p.trim();
+                if (p.match("-")) {
+                    var indeces = p.split("-");
+                    for (var i = parseInt(indeces[0]); i < parseInt(indeces[1]); i++) {
+                        this.regions.push(regions[i]);
+                    }
+                }
+                else {
+                    this.regions.push(regions[parseInt(p)]);
+                }
+            }
+        }
+    };
+    Generator.prototype.applyGeneration = function () {
+        Marahel.replacingType = this.replacingType;
+        Marahel.borderType = this.borderType;
+        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
+            var r = _a[_i];
+            r.border = Marahel.getIntRandom(this.minBorder, this.maxBorder);
+        }
+    };
+    return Generator;
+}());
+/// <reference path="Generator.ts"/>
+var AutomataGenerator = (function (_super) {
+    __extends(AutomataGenerator, _super);
+    function AutomataGenerator(currentRegion, rules, parameters) {
+        var _this = _super.call(this, currentRegion, rules) || this;
+        _this.numIterations = 0;
+        if (parameters["iterations"]) {
+            _this.numIterations = parseInt(parameters["iterations"]);
+        }
+        _this.start = new Point();
+        if (parameters["start"]) {
+            _this.start = new Point(parseInt(parameters["start"].split(",")[0]), parseInt(parameters["start"].split(",")[1]));
+        }
+        _this.explore = Marahel.getNeighborhood("sequential");
+        if (parameters["exploration"]) {
+            _this.explore = Marahel.getNeighborhood(parameters["exploration"]);
+        }
+        return _this;
+    }
+    AutomataGenerator.prototype.applyGeneration = function () {
+        _super.prototype.applyGeneration.call(this);
+        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
+            var r = _a[_i];
+            for (var i = 0; i < this.numIterations; i++) {
+                var visited = {};
+                var exploreList = [new Point(this.start.x * r.getWidth(), this.start.y * r.getHeight())];
+                while (exploreList.length > 0) {
+                    var currentPoint = exploreList.splice(0, 1)[0];
+                    currentPoint = r.getRegionPosition(currentPoint.x, currentPoint.y);
+                    if (!visited[currentPoint.toString()] && !r.outRegion(currentPoint.x, currentPoint.y)) {
+                        visited[currentPoint.toString()] = true;
+                        for (var _b = 0, _c = this.rules; _b < _c.length; _b++) {
+                            var rule = _c[_b];
+                            var applied = rule.execute(i / this.numIterations, currentPoint, r);
+                            if (applied) {
+                                break;
+                            }
+                        }
+                        var neighbors = this.explore.getNeighbors(currentPoint.x, currentPoint.y, r);
+                        for (var _d = 0, neighbors_1 = neighbors; _d < neighbors_1.length; _d++) {
+                            var n = neighbors_1[_d];
+                            exploreList.push(n);
+                        }
+                    }
+                }
+                Marahel.currentMap.switchBuffers();
+            }
+        }
+    };
+    return AutomataGenerator;
+}(Generator));
+/// <reference path="Generator.ts"/>
+var AgentGenerator = (function (_super) {
+    __extends(AgentGenerator, _super);
+    function AgentGenerator(currentRegion, rules, parameters) {
+        var _this = _super.call(this, currentRegion, rules) || this;
+        _this.startEntities = EntityListParser.parseList("any");
+        if (parameters["start"]) {
+            _this.startEntities = EntityListParser.parseList(parameters["start"]);
+        }
+        _this.avoidEntities = [];
+        if (parameters["avoid"]) {
+            _this.avoidEntities = EntityListParser.parseList(parameters["avoid"]);
+        }
+        _this.numAgents = new Point(1, 1);
+        if (parameters["number"]) {
+            _this.numAgents.x = parseInt(parameters["number"].split(",")[0]);
+            _this.numAgents.y = parseInt(parameters["number"].split(",")[1]);
+        }
+        _this.speed = new Point(1, 1);
+        if (parameters["speed"]) {
+            _this.speed.x = parseInt(parameters["speed"].split(",")[0]);
+            _this.speed.y = parseInt(parameters["speed"].split(",")[1]);
+        }
+        _this.changeTime = new Point(1, 1);
+        if (parameters["change"]) {
+            _this.changeTime.x = parseInt(parameters["change"].split(",")[0]);
+            _this.changeTime.y = parseInt(parameters["change"].split(",")[1]);
+        }
+        _this.lifespan = new Point(50, 50);
+        if (parameters["lifespan"]) {
+            _this.lifespan.x = parseInt(parameters["lifespan"].split(",")[0]);
+            _this.lifespan.y = parseInt(parameters["lifespan"].split(",")[1]);
+        }
+        _this.directions = Marahel.getNeighborhood("plus");
+        if (parameters["directions"]) {
+            _this.directions = Marahel.getNeighborhood(parameters["directions"]);
+        }
+        return _this;
+    }
+    AgentGenerator.prototype.applyGeneration = function () {
+        throw new Error("Method not implemented.");
+    };
+    return AgentGenerator;
+}(Generator));
+/// <reference path="Generator.ts"/>
+var ConnectorGenerator = (function (_super) {
+    __extends(ConnectorGenerator, _super);
+    function ConnectorGenerator() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    ConnectorGenerator.prototype.applyGeneration = function () {
+        throw new Error("Method not implemented.");
+    };
+    return ConnectorGenerator;
+}(Generator));
 // https://github.com/zeh/prando
 var Prando = (function () {
     function Prando(seed) {
@@ -557,282 +1333,6 @@ var Prando = (function () {
 }());
 Prando.MIN = -2147483648; // Int32 min
 Prando.MAX = 2147483647; // Int32 max
-/// <reference path="data/Map.ts"/>
-/// <reference path="data/Point.ts"/>
-/// <reference path="data/Entity.ts"/>
-/// <reference path="data/Neighborhood.ts"/>
-/// <reference path="operator/OperatorInterface.ts"/>
-/// <reference path="operator/LargerEqualOperator.ts"/>
-/// <reference path="operator/LessEqualOperator.ts"/>
-/// <reference path="operator/LargerOperator.ts"/>
-/// <reference path="operator/LessOperator.ts"/>
-/// <reference path="operator/EqualOperator.ts"/>
-/// <reference path="operator/NotEqualOperator.ts"/>
-/// <reference path="estimator/NeighborhoodEstimator.ts"/>
-/// <reference path="estimator/NumberEstimator.ts"/>
-/// <reference path="estimator/DistanceEstimator.ts"/>
-/// <reference path="estimator/EstimatorInterface.ts"/>
-/// <reference path="utils/Prando.ts"/>
-var Marahel = (function () {
-    function Marahel() {
-    }
-    Marahel.getRandom = function () {
-        return Marahel.rnd.next();
-    };
-    Marahel.getIntRandom = function (min, max) {
-        return Marahel.rnd.nextInt(min, max - 1);
-    };
-    Marahel.getNoise = function (x, y) {
-        return Marahel.noise.perlin2(x, y);
-    };
-    Marahel.shuffleArray = function (array) {
-        for (var i = 0; i < array.length; i++) {
-            var i1 = Marahel.getIntRandom(0, array.length);
-            var i2 = Marahel.getIntRandom(0, array.length);
-            var temp = array[i1];
-            array[i1] = array[i2];
-            array[i2] = temp;
-        }
-    };
-    Marahel.initialize = function (data) {
-        Marahel.rnd = new Prando();
-        Marahel.noise = new Noise();
-        //TODO:
-    };
-    Marahel.generate = function (seed) {
-        if (!Marahel.rnd) {
-            console.log("Call initialize first.");
-            return;
-        }
-        if (seed) {
-            Marahel.rnd = new Prando(seed);
-        }
-        Marahel.currentMap = new Map(Marahel.getIntRandom(Marahel.minDim.x, Marahel.maxDim.x), Marahel.getIntRandom(Marahel.minDim.y, Marahel.maxDim.y));
-        var mapRegion = new Region(0, 0, Marahel.currentMap.width, Marahel.currentMap.height);
-        var regions = Marahel.regionDivider.getRegions(mapRegion);
-        for (var _i = 0, _a = Marahel.generators; _i < _a.length; _i++) {
-            var g = _a[_i];
-            g.applyGeneration();
-        }
-    };
-    Marahel.getEntity = function (value) {
-        if (typeof value == "string") {
-            return Marahel.entities[Marahel.getEntityIndex(value)];
-        }
-        return Marahel.entities[value];
-    };
-    Marahel.getEntityIndex = function (name) {
-        return Marahel.entityIndex[name];
-    };
-    Marahel.getNeighborhood = function (name) {
-        return Marahel.neighbors[name];
-    };
-    Marahel.getEstimator = function (line) {
-        var parts = line.split(/\((.+)\)/);
-        if (line.match(/\((.+)\)/) == null) {
-            return new NumberEstimator(line);
-        }
-        else if (line.match("Dist")) {
-            return new DistanceEstimator(line);
-        }
-        return new NeighborhoodEstimator(line);
-    };
-    Marahel.getOperator = function (line) {
-        line = line.trim();
-        switch (line) {
-            case ">=":
-                return new LargerEqualOperator();
-            case "<=":
-                return new LessEqualOperator();
-            case "=":
-            case "==":
-                return new EqualOperator();
-            case "<>":
-            case "!=":
-                return new NotEqualOperator();
-            case ">":
-                return new LargerOperator();
-            case "<":
-                return new LessOperator();
-        }
-        return null;
-    };
-    return Marahel;
-}());
-/// <reference path="../Marahel.ts"/>
-/// <reference path="../Data/Region.ts"/>
-/// <reference path="DividerInterface.ts"/>
-var DiggerDivider = (function () {
-    function DiggerDivider(numberOfRegions, parameters) {
-        this.numberOfRegions = numberOfRegions;
-        var parts = parameters["min"].split("x");
-        this.minWidth = parseInt(parts[0]);
-        this.minHeight = parseInt(parts[1]);
-        parts = parameters["max"].split("x");
-        this.maxWidth = parseInt(parts[0]);
-        this.maxHeight = parseInt(parts[1]);
-        this.probDir = parseFloat(parameters["probDir"]);
-        this.probSpawn = parseFloat(parameters["probSpawn"]);
-        this.allowIntersect = parameters["allowIntersection"] == "true";
-    }
-    DiggerDivider.prototype.checkIntersection = function (r, regions) {
-        for (var _i = 0, regions_1 = regions; _i < regions_1.length; _i++) {
-            var cr = regions_1[_i];
-            if (cr.intersect(r)) {
-                return true;
-            }
-        }
-        return false;
-    };
-    DiggerDivider.prototype.getRegion = function (map) {
-        var width = Marahel.getIntRandom(this.minWidth, this.maxWidth);
-        var height = Marahel.getIntRandom(this.minHeight, this.maxHeight);
-        var x = Marahel.getIntRandom(0, map.getWidth() - this.maxWidth) - Math.floor(width / 2);
-        if (x < 0) {
-            x = 0;
-        }
-        if (x + Math.ceil(width / 2) >= map.getWidth()) {
-            x = map.getWidth() - Math.ceil(width / 2);
-        }
-        var y = Marahel.getIntRandom(0, map.getHeight() - this.maxHeight) - Math.floor(height / 2);
-        if (y < 0) {
-            y = 0;
-        }
-        if (y + Math.ceil(height / 2) >= map.getHeight()) {
-            x = map.getHeight() - Math.ceil(height / 2);
-        }
-        return new Region(x, y, width, height);
-    };
-    DiggerDivider.prototype.getRegions = function (map) {
-        var results = [];
-        var digger = new Point(Marahel.getIntRandom(0, map.getWidth()), Marahel.getIntRandom(0, map.getHeight()));
-        var directions = [new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0)];
-        var currentDir = Marahel.getIntRandom(0, directions.length);
-        var directionProb = 0;
-        var spawnProb = 0;
-        var acceptCounter = 0;
-        while (results.length < this.numberOfRegions) {
-            if (Marahel.getRandom() < directionProb || !map.intersect(new Point(digger.x + directions[currentDir].x, digger.y + directions[currentDir].y))) {
-                currentDir = Marahel.getIntRandom(0, directions.length);
-                directionProb = 0;
-            }
-            else {
-                directionProb += this.probDir;
-            }
-            if (Marahel.getRandom() < spawnProb) {
-                var r = this.getRegion(map);
-                if (this.allowIntersect) {
-                    results.push(r);
-                }
-                else if (!this.checkIntersection(r, results)) {
-                    results.push(r);
-                }
-                else if (acceptCounter >= DiggerDivider.ACCEPTANCE_TRIALS) {
-                    results.push(r);
-                }
-                else {
-                    acceptCounter += 1;
-                }
-                spawnProb = 0;
-            }
-            else {
-                spawnProb += this.probSpawn;
-            }
-            if (map.intersect(new Point(digger.x + directions[currentDir].x, digger.y + directions[currentDir].y))) {
-                digger.x += directions[currentDir].x;
-                digger.y += directions[currentDir].x;
-            }
-        }
-        return results;
-    };
-    return DiggerDivider;
-}());
-DiggerDivider.ACCEPTANCE_TRIALS = 100;
-/// <reference path="../Marahel.ts"/>
-/// <reference path="../estimator/EstimatorInterface.ts"/>
-/// <reference path="../operator/OperatorInterface.ts"/>
-var Condition = (function () {
-    function Condition(line) {
-        var parts = line.split(",");
-        var cParts = parts[0].split(/>=|<=|==|!=|>|</);
-        this.leftSide = Marahel.getEstimator(cParts[0]);
-        this.operator = Marahel.getOperator(cParts[1]);
-        this.rightSide = Marahel.getEstimator(cParts[2]);
-        if (parts.length > 1) {
-            parts.splice(0, 1);
-            this.nextCondition = new Condition(parts.join(","));
-        }
-    }
-    Condition.prototype.check = function (iteration, position, region) {
-        var result = this.operator.check(this.leftSide.calculate(iteration, position, region), this.rightSide.calculate(iteration, position, region));
-        if (result && this.nextCondition != null) {
-            result = result && this.nextCondition.check(iteration, position, region);
-        }
-        return result;
-    };
-    return Condition;
-}());
-/// <reference path="../Marahel.ts"/>
-/// <reference path="Neighborhood.ts"/>
-/// <reference path="Entity.ts"/>
-/// <reference path="Region.ts"/>
-/// <reference path="Point.ts"/>
-var Executer = (function () {
-    function Executer(line) {
-        var parts = line.split(",");
-        var eParts = parts[0].split(/\((.+)\)/);
-        this.neightbor = Marahel.getNeighborhood(eParts[0]);
-        this.entities = EntityListParser.parseList(eParts[1]);
-        if (parts.length > 1) {
-            parts.splice(0, 1);
-            this.nextExecuter = new Executer(parts.join(","));
-        }
-    }
-    Executer.prototype.apply = function (position, region) {
-        var entity = this.entities[Marahel.getIntRandom(0, this.entities.length)];
-        this.neightbor.setTotal(Marahel.getEntityIndex(entity.name), position, region);
-        if (this.nextExecuter != null) {
-            this.nextExecuter.apply(position, region);
-        }
-    };
-    return Executer;
-}());
-/// <reference path="../Marahel.ts"/>
-/// <reference path="Condition.ts"/>
-/// <reference path="Executer.ts"/>
-/// <reference path="Point.ts"/>
-/// <reference path="Region.ts"/>
-var Rule = (function () {
-    function Rule(lines) {
-        this.condition = new Condition(lines[0].split("->")[0]);
-        this.executer = new Executer(lines[0].split("->")[1]);
-        this.nextRule = null;
-        if (lines.length > 1) {
-            lines.splice(0, 1);
-            this.nextRule = new Rule(lines);
-        }
-    }
-    Rule.prototype.checkRule = function (iteration, position, region) {
-        if (this.condition.check(iteration, position, region)) {
-            return true;
-        }
-        else if (this.nextRule != null) {
-            return this.nextRule.checkRule(iteration, position, region);
-        }
-        return false;
-    };
-    Rule.prototype.execute = function (iteration, position, region) {
-        if (this.condition.check(iteration, position, region)) {
-            this.executer.apply(position, region);
-            return true;
-        }
-        else if (this.nextRule != null) {
-            return this.nextRule.execute(iteration, position, region);
-        }
-        return false;
-    };
-    return Rule;
-}());
 /*
  * A speed-improved perlin and simplex noise algorithms for 2D.
  *
@@ -1155,430 +1655,260 @@ var Noise = (function () {
     };
     return Noise;
 }());
-/// <reference path="core/regionDivider/DiggerDivider.ts"/>
-/// <reference path="core/data/Rule.ts"/>
-/// <reference path="core/data/Point.ts"/>
-/// <reference path="core/utils/Perlin.ts"/>
-// let parameters = {"max":"30x30", "min":"15x15", "probDir":"0.02", "probSpawn":"0.05", "allowIntersection":"false"};
-// let r = new Rule(["all(solid) > 5 -> self(empty)"]);
-// console.log(r);
-// console.log(new DiggerDivider(20, parameters).getRegions(new Region(0, 0, 103, 103)));
-// console.log(AStar.getPath(new Point(0, 0), new Point(5, 5), [new Point(0, 1), new Point(1, 0)], (x:number, y:number):boolean=>{return false;}));
-console.log(new Noise().perlin2(0.1, 0));
-/// <reference path="../data/Region.ts"/>
-var Generator = (function () {
-    function Generator(currentRegion, map, regions, rules) {
-        this.minBorder = parseInt(currentRegion["border"].split(",")[0]);
-        this.maxBorder = parseInt(currentRegion["border"].split(",")[1]);
-        if (currentRegion["name"].trim() == "map") {
-            this.regions = [map];
-        }
-        else if (currentRegion["name"].trim() == "all") {
-            this.regions = regions;
-        }
-        else {
-            this.regions = [];
-            var parts = currentRegion.split(",");
-            for (var _i = 0, parts_1 = parts; _i < parts_1.length; _i++) {
-                var p = parts_1[_i];
-                p = p.trim();
-                if (p.match("-")) {
-                    var indeces = p.split("-");
-                    for (var i = parseInt(indeces[0]); i < parseInt(indeces[1]); i++) {
-                        this.regions.push(regions[i]);
-                    }
-                }
-                else {
-                    this.regions.push(regions[parseInt(p)]);
-                }
-            }
-        }
-        if (currentRegion["replacingType"].trim() == "same") {
-            Marahel.replacingType = Map.REPLACE_SAME;
-        }
-        else if (currentRegion["replacingType"].trim() == "buffer") {
-            Marahel.replacingType = Map.REPLACE_SAME;
-        }
-        if (currentRegion["borderType"].trim() == "wrap") {
-            Marahel.borderType = Region.BORDER_WRAP;
-        }
-        else if (currentRegion["borderType"].trim() == "none") {
-            Marahel.borderType = Region.BORDER_NONE;
-        }
-        else {
-            Marahel.borderType = Marahel.getEntityIndex(currentRegion["borderType"].trim());
-        }
-        this.rules = [];
-        for (var _a = 0, rules_1 = rules; _a < rules_1.length; _a++) {
-            var r = rules_1[_a];
-            this.rules.push(new Rule(rules));
-        }
+/// <reference path="data/Map.ts"/>
+/// <reference path="data/Point.ts"/>
+/// <reference path="data/Entity.ts"/>
+/// <reference path="data/Neighborhood.ts"/>
+/// <reference path="regionDivider/AdjustmentDivider.ts"/>
+/// <reference path="regionDivider/BinaryDivider.ts"/>
+/// <reference path="regionDivider/DiggerDivider.ts"/>
+/// <reference path="regionDivider/EqualDivider.ts"/>
+/// <reference path="operator/OperatorInterface.ts"/>
+/// <reference path="operator/LargerEqualOperator.ts"/>
+/// <reference path="operator/LessEqualOperator.ts"/>
+/// <reference path="operator/LargerOperator.ts"/>
+/// <reference path="operator/LessOperator.ts"/>
+/// <reference path="operator/EqualOperator.ts"/>
+/// <reference path="operator/NotEqualOperator.ts"/>
+/// <reference path="estimator/NeighborhoodEstimator.ts"/>
+/// <reference path="estimator/NumberEstimator.ts"/>
+/// <reference path="estimator/DistanceEstimator.ts"/>
+/// <reference path="estimator/EstimatorInterface.ts"/>
+/// <reference path="generator/AutomataGenerator.ts"/>
+/// <reference path="generator/AgentGenerator.ts"/>
+/// <reference path="generator/ConnectorGenerator.ts"/>
+/// <reference path="utils/Prando.ts"/>
+/// <reference path="utils/Noise.ts"/>
+var Marahel = (function () {
+    function Marahel() {
     }
-    Generator.prototype.applyGeneration = function () {
-        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
-            var r = _a[_i];
-            r.border = Marahel.getIntRandom(this.minBorder, this.maxBorder);
+    Marahel.getRandom = function () {
+        return Marahel.rnd.next();
+    };
+    Marahel.getIntRandom = function (min, max) {
+        return Marahel.rnd.nextInt(min, max - 1);
+    };
+    Marahel.getNoise = function (x, y) {
+        return Marahel.noise.perlin2(x, y);
+    };
+    Marahel.shuffleArray = function (array) {
+        for (var i = 0; i < array.length; i++) {
+            var i1 = Marahel.getIntRandom(0, array.length);
+            var i2 = Marahel.getIntRandom(0, array.length);
+            var temp = array[i1];
+            array[i1] = array[i2];
+            array[i2] = temp;
         }
     };
-    return Generator;
-}());
-/// <reference path="Generator.ts"/>
-var AgentGenerator = (function (_super) {
-    __extends(AgentGenerator, _super);
-    function AgentGenerator() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    AgentGenerator.prototype.applyGeneration = function () {
-        throw new Error("Method not implemented.");
-    };
-    return AgentGenerator;
-}(Generator));
-/// <reference path="Generator.ts"/>
-var AutomataGenerator = (function (_super) {
-    __extends(AutomataGenerator, _super);
-    function AutomataGenerator(currentRegion, map, regions, rules, parameters) {
-        var _this = _super.call(this, currentRegion, map, regions, rules) || this;
-        _this.numIterations = parseInt(parameters["iterations"]);
-        _this.start = new Point(parseInt(parameters["start"].split(",")[0]), parseInt(parameters["start"].split(",")[1]));
-        _this.explore = Marahel.getNeighborhood(parameters["exploration"]);
-        return _this;
-    }
-    AutomataGenerator.prototype.applyGeneration = function () {
-        _super.prototype.applyGeneration.call(this);
-        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
-            var r = _a[_i];
-            for (var i = 0; i < this.numIterations; i++) {
-                var n = void 0;
-            }
+    Marahel.initialize = function (data) {
+        Marahel.rnd = new Prando();
+        Marahel.noise = new Noise();
+        Marahel.replacingType = Map.REPLACE_BACK;
+        Marahel.borderType = Region.BORDER_NONE;
+        Marahel.minDim = new Point(parseInt(data["metadata"]["min"].split("x")[0]), parseInt(data["metadata"]["min"].split("x")[1]));
+        Marahel.maxDim = new Point(parseInt(data["metadata"]["max"].split("x")[0]), parseInt(data["metadata"]["max"].split("x")[1]));
+        Marahel.entities = [];
+        Marahel.entityIndex = {};
+        for (var e in data["entity"]) {
+            Marahel.entities.push(new Entity(e, data["entity"][e]));
+            Marahel.entityIndex[e] = Marahel.entities.length - 1;
+        }
+        Marahel.neighbors = {};
+        for (var n in data["neighborhood"]) {
+            Marahel.neighbors[n] = new Neighborhood(n, data["neighborhood"][n]);
+        }
+        if (!("plus" in Marahel.neighbors)) {
+            Marahel.neighbors["plus"] = new Neighborhood("plus", "010,121,010");
+        }
+        if (!("all" in Marahel.neighbors)) {
+            Marahel.neighbors["all"] = new Neighborhood("all", "111,121,111");
+        }
+        if (!("sequential" in Marahel.neighbors)) {
+            Marahel.neighbors["sequential"] = new Neighborhood("sequential", "31,10");
+        }
+        if (!("self" in Marahel.neighbors)) {
+            Marahel.neighbors["self"] = new Neighborhood("self", "3");
+        }
+        Marahel.regionDivider = Marahel.getDivider(data["region"]["type"], parseInt(data["region"]["number"]), data["region"]["parameters"]);
+        Marahel.generators = [];
+        for (var _i = 0, _a = data["rule"]; _i < _a.length; _i++) {
+            var g = _a[_i];
+            Marahel.generators.push(Marahel.getGenerator(g["type"], g["region"], g["parameters"], g["rules"]));
         }
     };
-    return AutomataGenerator;
-}(Generator));
-/// <reference path="Generator.ts"/>
-var ConnectorGenerator = (function (_super) {
-    __extends(ConnectorGenerator, _super);
-    function ConnectorGenerator() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    ConnectorGenerator.prototype.applyGeneration = function () {
-        throw new Error("Method not implemented.");
-    };
-    return ConnectorGenerator;
-}(Generator));
-/// <reference path="DividerInterface.ts"/>
-var AdjustmentDivider = (function () {
-    function AdjustmentDivider(numberOfRegions, parameters) {
-        this.numberOfRegions = numberOfRegions;
-        var parts = parameters["min"].split("x");
-        this.minWidth = parseInt(parts[0]);
-        this.minHeight = parseInt(parts[1]);
-        parts = parameters["max"].split("x");
-        this.maxWidth = parseInt(parts[0]);
-        this.maxHeight = parseInt(parts[1]);
-        this.allowIntersect = parameters["allowIntersection"] == "true";
-    }
-    AdjustmentDivider.prototype.checkIntersection = function (r, regions) {
-        for (var _i = 0, regions_2 = regions; _i < regions_2.length; _i++) {
-            var cr = regions_2[_i];
-            if (cr.intersect(r)) {
-                return true;
-            }
+    Marahel.generateOneTime = function () {
+        Marahel.currentMap = new Map(Marahel.getIntRandom(Marahel.minDim.x, Marahel.maxDim.x), Marahel.getIntRandom(Marahel.minDim.y, Marahel.maxDim.y));
+        var mapRegion = new Region(0, 0, Marahel.currentMap.width, Marahel.currentMap.height);
+        var regions = Marahel.regionDivider.getRegions(mapRegion);
+        for (var _i = 0, _a = Marahel.generators; _i < _a.length; _i++) {
+            var g = _a[_i];
+            g.selectRegions(mapRegion, regions);
+            g.applyGeneration();
         }
-        return false;
     };
-    AdjustmentDivider.prototype.changeRegion = function (map, r) {
-        r.setX(Marahel.getIntRandom(0, map.getWidth() - this.maxWidth));
-        r.setY(Marahel.getIntRandom(0, map.getHeight() - this.maxHeight));
-        r.setWidth(Marahel.getIntRandom(this.minWidth, this.maxWidth));
-        r.setHeight(Marahel.getIntRandom(this.minHeight, this.maxHeight));
-    };
-    AdjustmentDivider.prototype.getFitRegion = function (map, regions) {
-        var r = new Region(0, 0, 0, 0);
-        for (var i = 0; i < AdjustmentDivider.RETRY_TRAILS; i++) {
-            this.changeRegion(map, r);
-            if (!this.checkIntersection(r, regions)) {
+    Marahel.generate = function (outputType, seed) {
+        if (outputType === void 0) { outputType = 0; }
+        if (!Marahel.rnd) {
+            throw new Error("Call initialize first.");
+        }
+        if (seed) {
+            Marahel.rnd = new Prando(seed);
+            Marahel.noise.seed(seed);
+        }
+        for (var i = 0; i < Marahel.MAX_TRIALS; i++) {
+            Marahel.generateOneTime();
+            if (Marahel.currentMap.checkConstraints()) {
                 break;
             }
         }
-        return r;
-    };
-    AdjustmentDivider.prototype.calculateIntersection = function (regions) {
-        var results = 0;
-        for (var _i = 0, regions_3 = regions; _i < regions_3.length; _i++) {
-            var r = regions_3[_i];
-            if (this.checkIntersection(r, regions)) {
-                results += 1;
-            }
+        if (outputType == Marahel.COLOR_OUTPUT) {
+            return Marahel.currentMap.getColorMap();
         }
-        return results - regions.length;
-    };
-    AdjustmentDivider.prototype.adjustRegions = function (map, regions) {
-        var minIntersect = this.calculateIntersection(regions);
-        for (var i = 0; i < AdjustmentDivider.ADJUSTMENT_TRAILS; i++) {
-            var r = regions[Marahel.getIntRandom(0, regions.length)];
-            var temp = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-            this.changeRegion(map, r);
-            var value = this.calculateIntersection(regions);
-            if (value >= minIntersect) {
-                r.setX(temp.getX());
-                r.setY(temp.getY());
-                r.setWidth(temp.getWidth());
-                r.setHeight(temp.getHeight());
-            }
-            else {
-                minIntersect = value;
-                if (minIntersect <= 0) {
-                    return;
-                }
-            }
+        if (outputType == Marahel.INDEX_OUTPUT) {
+            return Marahel.currentMap.getIndexMap();
         }
+        return Marahel.currentMap.getStringMap();
     };
-    AdjustmentDivider.prototype.getRegions = function (map) {
-        var results = [];
-        while (results.length < this.numberOfRegions) {
-            results.push(this.getFitRegion(map, results));
+    Marahel.getEntity = function (value) {
+        if (typeof value == "string") {
+            value = Marahel.getEntityIndex(value);
         }
-        if (!this.allowIntersect && this.calculateIntersection(results) > 0) {
-            this.adjustRegions(map, results);
+        if (value < 0 || value >= Marahel.entities.length) {
+            return new Entity("undefined", { "color": "0x000000" });
         }
-        return results;
+        return Marahel.entities[value];
     };
-    return AdjustmentDivider;
+    Marahel.getAllEntities = function () {
+        return this.entities;
+    };
+    Marahel.getEntityIndex = function (name) {
+        if (name in Marahel.entityIndex) {
+            return Marahel.entityIndex[name];
+        }
+        return -1;
+    };
+    Marahel.getNeighborhood = function (name) {
+        if (name in Marahel.neighbors) {
+            return Marahel.neighbors[name];
+        }
+        return Marahel.neighbors["self"];
+    };
+    Marahel.getEstimator = function (line) {
+        var parts = line.split(/\((.+)\)/);
+        if (line.match(/\((.+)\)/) == null) {
+            return new NumberEstimator(line);
+        }
+        else if (line.match("Dist")) {
+            return new DistanceEstimator(line);
+        }
+        return new NeighborhoodEstimator(line);
+    };
+    Marahel.getOperator = function (line) {
+        line = line.trim();
+        switch (line) {
+            case ">=":
+                return new LargerEqualOperator();
+            case "<=":
+                return new LessEqualOperator();
+            case "=":
+            case "==":
+                return new EqualOperator();
+            case "<>":
+            case "!=":
+                return new NotEqualOperator();
+            case ">":
+                return new LargerOperator();
+            case "<":
+                return new LessOperator();
+        }
+        return null;
+    };
+    Marahel.getDivider = function (type, numRegions, parameters) {
+        switch (type.trim()) {
+            case "equal":
+                return new EqualDivider(numRegions, parameters);
+            case "bsp":
+                return new BinaryDivider(numRegions, parameters);
+            case "digger":
+                return new DiggerDivider(numRegions, parameters);
+            case "sampling":
+                return new AdjustmentDivider(numRegions, parameters);
+        }
+        return null;
+    };
+    Marahel.getGenerator = function (type, currentRegion, parameters, rules) {
+        switch (type.trim()) {
+            case "automata":
+                return new AutomataGenerator(currentRegion, rules, parameters);
+            case "agent":
+            case "connector":
+        }
+        return null;
+    };
+    return Marahel;
 }());
-AdjustmentDivider.ADJUSTMENT_TRAILS = 1000;
-AdjustmentDivider.RETRY_TRAILS = 100;
-/// <reference path="DividerInterface.ts"/>
-var BinaryDivider = (function () {
-    function BinaryDivider(numberOfRegions, parameters) {
-        this.numberOfRegions = numberOfRegions;
-        var parts = parameters["min"].split("x");
-        this.minWidth = parseInt(parts[0]);
-        this.minHeight = parseInt(parts[1]);
-        parts = parameters["max"].split("x");
-        this.maxWidth = parseInt(parts[0]);
-        this.maxHeight = parseInt(parts[1]);
+Marahel.STRING_OUTPUT = 0;
+Marahel.COLOR_OUTPUT = 1;
+Marahel.INDEX_OUTPUT = 2;
+Marahel.MAX_TRIALS = 10;
+/// <reference path="core/Marahel.ts"/>
+var data = {
+    "metadata": {
+        "min": "30x30",
+        "max": "40x40"
+    },
+    "region": {
+        "type": "bsp",
+        "number": "7",
+        "parameters": {
+            "min": "8x8",
+            "max": "15x15"
+        }
+    },
+    "entity": {
+        "empty": { "color": "0xffffff" },
+        "solid": { "color": "0x000000" },
+        "player": { "color": "0xff0000", "min": "1", "max": "1" }
+    },
+    "neighborhood": {
+        "all": "111,121,111",
+        "plus": "010,121,010"
+    },
+    "rule": [
+        {
+            "type": "automata",
+            "region": { "name": "map" },
+            "parameters": { "iterations": 1 },
+            "rules": ["self(any)==1 -> self(solid)"]
+        },
+        {
+            "type": "automata",
+            "region": { "name": "all", "border": "1,2" },
+            "parameters": { "iterations": 1 },
+            "rules": ["self(any)==1 -> self(empty:2|solid)"]
+        },
+        {
+            "type": "automata",
+            "region": { "name": "all" },
+            "parameters": { "iterations": 2 },
+            "rules": ["self(solid)==1, all(empty)>5 -> self(empty)", "self(empty)==1, all(solid)>5 -> self(solid)"]
+        },
+        {
+            "type": "automata",
+            "region": { "name": "0" },
+            "parameters": { "iterations": 1 },
+            "rules": ["all(empty)>=6, random < 0.05 -> self(player)"]
+        }
+    ]
+};
+Marahel.initialize(data);
+var generatedMap = Marahel.generate(Marahel.INDEX_OUTPUT);
+var result = "";
+for (var y = 0; y < generatedMap.length; y++) {
+    for (var x = 0; x < generatedMap[y].length; x++) {
+        result += generatedMap[y][x];
     }
-    BinaryDivider.prototype.divideWidth = function (region, allowedWidth) {
-        var rWidth = this.minWidth + Marahel.getIntRandom(0, allowedWidth);
-        return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()),
-            new Region(region.getX() + rWidth, region.getY(), region.getWidth() - rWidth, region.getHeight())];
-    };
-    BinaryDivider.prototype.divideHeight = function (region, allowedHeight) {
-        var rHeight = this.minHeight + Marahel.getIntRandom(0, allowedHeight);
-        return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight),
-            new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
-    };
-    BinaryDivider.prototype.testDivide = function (region) {
-        return (region.getWidth() >= 2 * this.minWidth || region.getHeight() >= 2 * this.minHeight);
-    };
-    BinaryDivider.prototype.divide = function (region) {
-        var allowedWidth = region.getWidth() - 2 * this.minWidth;
-        var allowedHeight = region.getHeight() - 2 * this.minHeight;
-        if (Marahel.getRandom() < 0.5) {
-            if (allowedWidth > 0) {
-                return this.divideWidth(region, allowedWidth);
-            }
-            if (allowedHeight > 0) {
-                return this.divideHeight(region, allowedHeight);
-            }
-        }
-        else {
-            if (allowedHeight > 0) {
-                return this.divideHeight(region, allowedHeight);
-            }
-            if (allowedWidth > 0) {
-                return this.divideWidth(region, allowedWidth);
-            }
-        }
-        if (region.getWidth() > region.getHeight()) {
-            return this.divideWidth(region, 0);
-        }
-        else {
-            return this.divideHeight(region, 0);
-        }
-    };
-    BinaryDivider.prototype.checkMaxSize = function (regions) {
-        for (var _i = 0, regions_4 = regions; _i < regions_4.length; _i++) {
-            var r = regions_4[_i];
-            if (r.getWidth() > this.maxWidth || r.getHeight() > this.maxHeight) {
-                return true;
-            }
-        }
-        return false;
-    };
-    BinaryDivider.prototype.divideMaxSize = function (region) {
-        if (Marahel.getRandom() < 0.5) {
-            if (region.getWidth() >= this.maxWidth) {
-                return this.divideWidth(region, 0);
-            }
-            if (region.getHeight() >= this.maxHeight) {
-                return this.divideHeight(region, 0);
-            }
-        }
-        else {
-            if (region.getHeight() >= this.maxHeight) {
-                return this.divideHeight(region, 0);
-            }
-            if (region.getWidth() >= this.maxWidth) {
-                return this.divideWidth(region, 0);
-            }
-        }
-        if (region.getWidth() > region.getHeight()) {
-            return this.divideWidth(region, 0);
-        }
-        else {
-            return this.divideHeight(region, 0);
-        }
-    };
-    BinaryDivider.prototype.getRegions = function (map) {
-        var results = [new Region(0, 0, map.getWidth(), map.getHeight())];
-        while (results.length < this.numberOfRegions || this.checkMaxSize(results)) {
-            Marahel.shuffleArray(results);
-            var prevLength = results.length;
-            for (var i = 0; i < results.length; i++) {
-                if (this.testDivide(results[i])) {
-                    results = results.concat(this.divide(results.splice(i, 1)[0]));
-                    break;
-                }
-            }
-            if (prevLength == results.length) {
-                for (var i = 0; i < results.length; i++) {
-                    if (this.checkMaxSize([results[i]])) {
-                        results = results.concat(this.divideMaxSize(results.splice(i, 1)[0]));
-                        break;
-                    }
-                }
-            }
-        }
-        Marahel.shuffleArray(results);
-        results = results.slice(0, this.numberOfRegions);
-        return results;
-    };
-    return BinaryDivider;
-}());
-/// <reference path="DividerInterface.ts"/>
-var EqualDivider = (function () {
-    function EqualDivider(numberOfRegions, parameters) {
-        this.numberOfRegions = numberOfRegions;
-        var parts = parameters["min"].split("x");
-        this.minWidth = parseInt(parts[0]);
-        this.minHeight = parseInt(parts[1]);
-        parts = parameters["max"].split("x");
-        this.maxWidth = parseInt(parts[0]);
-        this.maxHeight = parseInt(parts[1]);
-    }
-    EqualDivider.prototype.getRegions = function (map) {
-        var result = [];
-        var currentWidth = Marahel.getIntRandom(this.minWidth, this.maxWidth);
-        var currentHeight = Marahel.getIntRandom(this.minHeight, this.maxHeight);
-        var roomWidth = Math.floor(map.getWidth() / currentWidth);
-        var roomHeight = Math.floor(map.getHeight() / currentHeight);
-        for (var x = 0; x < this.minWidth; x++) {
-            for (var y = 0; y < this.minHeight; y++) {
-                var rX = x * roomWidth;
-                var rY = y * roomHeight;
-                var rW = roomWidth;
-                var rH = roomHeight;
-                if (x == currentWidth - 1) {
-                    rW = map.getWidth() - rX;
-                }
-                if (y == currentHeight - 1) {
-                    rH = map.getHeight() - rY;
-                }
-                result.push(new Region(rX, rY, rW, rH));
-            }
-        }
-        Marahel.shuffleArray(result);
-        result = result.slice(0, this.numberOfRegions);
-        return result;
-    };
-    return EqualDivider;
-}());
-/// <reference path="../data/Point.ts"/>
-var LocationNode = (function () {
-    function LocationNode(parent, x, y) {
-        if (parent === void 0) { parent = null; }
-        if (x === void 0) { x = 0; }
-        if (y === void 0) { y = 0; }
-        this.x = x;
-        this.y = y;
-        this.parent = parent;
-    }
-    LocationNode.prototype.checkEnd = function (x, y) {
-        return this.x == x && this.y == y;
-    };
-    LocationNode.prototype.estimate = function (x, y) {
-        return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2);
-    };
-    LocationNode.prototype.toString = function () {
-        return this.x + "," + this.y;
-    };
-    return LocationNode;
-}());
-var AStar = (function () {
-    function AStar() {
-    }
-    AStar.convertNodeToPath = function (node) {
-        var points = [];
-        while (node != null) {
-            points.push(new Point(node.x, node.y));
-            node = node.parent;
-        }
-        return points.reverse();
-    };
-    AStar.getPath = function (start, end, directions, region, checkSolid) {
-        var iterations = 0;
-        var openNodes = [new LocationNode(null, start.x, start.y)];
-        var visited = {};
-        var currentNode = openNodes[0];
-        while (openNodes.length > 0 && !currentNode.checkEnd(end.x, end.y)) {
-            currentNode = openNodes.splice(0, 1)[0];
-            if (!visited[currentNode.toString()]) {
-                visited[currentNode.toString()] = true;
-                for (var _i = 0, directions_1 = directions; _i < directions_1.length; _i++) {
-                    var d = directions_1[_i];
-                    var p = region.getRegionPosition(currentNode.x + d.x, currentNode.y + d.y);
-                    var newLocation = new LocationNode(currentNode, p.x, p.y);
-                    if (!checkSolid(newLocation.x, newLocation.y) && !region.outRegion(p.x, p.y)) {
-                        openNodes.push(newLocation);
-                    }
-                }
-                openNodes.sort(function (a, b) {
-                    return a.estimate(end.x, end.y) - b.estimate(end.x, end.y);
-                });
-            }
-            iterations += 1;
-            if (iterations >= AStar.MAX_ITERATIONS) {
-                break;
-            }
-        }
-        if (currentNode.checkEnd(end.x, end.y)) {
-            return AStar.convertNodeToPath(currentNode);
-        }
-        return [];
-    };
-    return AStar;
-}());
-AStar.MAX_ITERATIONS = 1000;
-var EntityListParser = (function () {
-    function EntityListParser() {
-    }
-    EntityListParser.parseList = function (line) {
-        var result = [];
-        var eeParts = line.split("|");
-        for (var _i = 0, eeParts_1 = eeParts; _i < eeParts_1.length; _i++) {
-            var e = eeParts_1[_i];
-            var nums = e.split(":");
-            var times = 1;
-            if (nums.length > 1) {
-                times = parseInt(nums[1]);
-            }
-            for (var i = 0; i < times; i++) {
-                result.push(Marahel.getEntity(nums[0].trim()));
-            }
-        }
-        return result;
-    };
-    return EntityListParser;
-}());
+    result += "\n";
+}
+console.log(result);
 //# sourceMappingURL=proctology.js.map

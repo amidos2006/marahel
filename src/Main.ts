@@ -1,12 +1,61 @@
-/// <reference path="core/regionDivider/DiggerDivider.ts"/>
-/// <reference path="core/data/Rule.ts"/>
-/// <reference path="core/data/Point.ts"/>
-/// <reference path="core/utils/Perlin.ts"/>
+/// <reference path="core/Marahel.ts"/>
 
-// let parameters = {"max":"30x30", "min":"15x15", "probDir":"0.02", "probSpawn":"0.05", "allowIntersection":"false"};
-// let r = new Rule(["all(solid) > 5 -> self(empty)"]);
-// console.log(r);
-// console.log(new DiggerDivider(20, parameters).getRegions(new Region(0, 0, 103, 103)));
-// console.log(AStar.getPath(new Point(0, 0), new Point(5, 5), [new Point(0, 1), new Point(1, 0)], (x:number, y:number):boolean=>{return false;}));
-
-console.log(new Noise().perlin2(0.1, 0));
+let data:any = {
+    "metadata": {
+        "min":"30x30",
+        "max":"40x40"
+    },
+    "region": {
+        "type":"bsp",
+        "number":"7",
+        "parameters":{
+            "min":"8x8",
+            "max":"15x15"
+        }
+    },
+    "entity": {
+        "empty":{"color": "0xffffff"}, 
+        "solid":{"color": "0x000000"},
+        "player":{"color": "0xff0000", "min":"1", "max":"1"}
+    },
+    "neighborhood": {
+  	    "all":"111,121,111",
+        "plus":"010,121,010"
+    },
+    "rule": [
+  	    {
+            "type":"automata",
+            "region":{"name":"map"},
+            "parameters": {"iterations":1},
+            "rules":["self(any)==1 -> self(solid)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"all", "border":"1,2"},
+            "parameters": {"iterations":1},
+            "rules":["self(any)==1 -> self(empty:2|solid)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"all"},
+            "parameters": {"iterations":2},
+            "rules":["self(solid)==1, all(empty)>5 -> self(empty)", "self(empty)==1, all(solid)>5 -> self(solid)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"0"},
+            "parameters": {"iterations":1},
+            "rules":["all(empty)>=6, random < 0.05 -> self(player)"]
+        }
+    ]
+};
+Marahel.initialize(data);
+let generatedMap:number[][] = Marahel.generate(Marahel.INDEX_OUTPUT);
+let result = "";
+for(let y:number=0; y<generatedMap.length; y++){
+    for(let x:number=0; x<generatedMap[y].length; x++){
+        result += generatedMap[y][x];
+    }
+    result += "\n";
+}
+console.log(result);

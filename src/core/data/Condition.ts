@@ -11,9 +11,9 @@ class Condition{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let cParts:string[] = parts[0].split(/>=|<=|==|!=|>|</);
-        this.leftSide = Marahel.getEstimator(cParts[0]);
-        this.operator = Marahel.getOperator(cParts[1]);
-        this.rightSide = Marahel.getEstimator(cParts[2]);
+        this.leftSide = Marahel.getEstimator(cParts[0].trim());
+        this.operator = Marahel.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
+        this.rightSide = Marahel.getEstimator(cParts[1].trim());
 
         if(parts.length > 1){
             parts.splice(0, 1);

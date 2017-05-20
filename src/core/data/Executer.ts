@@ -12,8 +12,8 @@ class Executer{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let eParts:string[] = parts[0].split(/\((.+)\)/);
-        this.neightbor = Marahel.getNeighborhood(eParts[0]);
-        this.entities = EntityListParser.parseList(eParts[1]);
+        this.neightbor = Marahel.getNeighborhood(eParts[0].trim());
+        this.entities = EntityListParser.parseList(eParts[1].trim());
 
         if(parts.length > 1){
             parts.splice(0, 1);
