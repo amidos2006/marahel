@@ -4,7 +4,7 @@ abstract class Generator{
     private regions:Region[];
     private rules:Rule[];
     
-    constructor(currentRegion:string, map:Region, regions:Region[], rules:string[]){
+    constructor(currentRegion:string, replacingType:string, borderType:string, map:Region, regions:Region[], rules:string[]){
         currentRegion = currentRegion.trim();
         if(currentRegion == "map"){
             this.regions = [map];
@@ -33,6 +33,26 @@ abstract class Generator{
         for(let r of rules){
             this.rules.push(new Rule(rules));
         }
+
+        replacingType = replacingType.trim();
+        if(replacingType == "same"){
+            Marahel.replacingType = Map.REPLACE_SAME;
+        }
+        if(replacingType == "buffer"){
+            Marahel.replacingType = Map.REPLACE_SAME
+        }
+
+        borderType = borderType.trim();
+        if(borderType == "wrap"){
+            Marahel.borderType = Region.BORDER_WRAP;
+        }
+        else if(borderType == "none"){
+            Marahel.borderType = Region.BORDER_NONE;
+        }
+        else{
+            Marahel.borderType = Marahel.getEntityIndex(borderType);
+        }
+
     }
 
     applyGeneration():void{

@@ -1,7 +1,6 @@
 declare class Map {
     static REPLACE_SAME: number;
     static REPLACE_BACK: number;
-    currentReplacing: number;
     width: number;
     height: number;
     private mapValues;
@@ -25,6 +24,8 @@ declare class Entity {
     constructor(name: string, parameters: any);
 }
 declare class Region {
+    static BORDER_WRAP: number;
+    static BORDER_NONE: number;
     x: number;
     y: number;
     width: number;
@@ -146,6 +147,9 @@ declare class Prando {
     private hashCode(str);
 }
 declare class Marahel {
+    static replacingType: number;
+    static borderType: number;
+    static currentMap: Map;
     private static rnd;
     private static minDim;
     private static maxDim;
@@ -154,13 +158,11 @@ declare class Marahel {
     private static neighbors;
     private static regionDivider;
     private static generators;
-    private static currentMap;
     static getRandom(): number;
     static getIntRandom(min: number, max: number): number;
     static shuffleArray(array: any[]): void;
     static initialize(data: any): void;
     static generate(seed?: number): void;
-    static getMap(): Map;
     static getEntity(value: number | string): Entity;
     static getEntityIndex(name: string): number;
     static getNeighborhood(name: string): Neighborhood;
@@ -195,7 +197,7 @@ declare class Condition {
 }
 declare class Executer {
     private neightbor;
-    private entity;
+    private entities;
     private nextExecuter;
     constructor(line: string);
     apply(position: Point, region: Region): void;
@@ -218,13 +220,15 @@ declare let r: Rule;
 declare class DistanceEstimator implements EstimatorInterface {
     private type;
     private neighbor;
-    private entity;
+    private entities;
     constructor(line: string);
+    private getMax(region, entityIndex);
+    private getMin(region, entityIndex);
     calculate(iteration: number, position: Point, region: Region): number;
 }
 declare class NeighborhoodEstimator implements EstimatorInterface {
     private neighbor;
-    private entity;
+    private entities;
     constructor(line: string);
     calculate(iteration: number, position: Point, region: Region): number;
 }
@@ -236,13 +240,15 @@ declare class NumberEstimator implements EstimatorInterface {
 declare abstract class Generator {
     private regions;
     private rules;
-    constructor(currentRegion: string, map: Region, regions: Region[], rules: string[]);
+    constructor(currentRegion: string, replacingType: string, borderType: string, map: Region, regions: Region[], rules: string[]);
     applyGeneration(): void;
 }
 declare class AgentGenerator extends Generator {
     applyGeneration(): void;
 }
 declare class AutomataGenerator extends Generator {
+    private numIterations;
+    constructor(currentRegion: string, replacingType: string, borderType: string, map: Region, regions: Region[], rules: string[], parameters: any);
     applyGeneration(): void;
 }
 declare class ConnectorGenerator extends Generator {

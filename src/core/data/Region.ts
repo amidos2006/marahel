@@ -3,6 +3,9 @@
 /// <reference path="Point.ts"/>
 
 class Region{
+    static BORDER_WRAP:number = -10;
+    static BORDER_NONE:number = -20;
+
     x:number;
     y:number;
     width:number;
