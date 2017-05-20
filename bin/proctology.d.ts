@@ -26,11 +26,20 @@ declare class Entity {
 declare class Region {
     static BORDER_WRAP: number;
     static BORDER_NONE: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    border: number;
+    private x;
+    private y;
+    private width;
+    private height;
     constructor(x: number, y: number, width: number, height: number);
+    setX(value: number): void;
+    setY(value: number): void;
+    setWidth(value: number): void;
+    setHeight(value: number): void;
+    getX(): number;
+    getY(): number;
+    getWidth(): number;
+    getHeight(): number;
     setValue(x: number, y: number, value: number): void;
     getValue(x: number, y: number): number;
     getEntityNumber(value: number): number;
@@ -46,12 +55,51 @@ declare class Neighborhood {
     constructor(name: string, line: string);
     getTotal(value: number, center: Point, region: Region): number;
     setTotal(value: number, center: Point, region: Region): void;
+    getPath(start: Point, end: Point, region: Region): Point[];
     toString(): string;
 }
 interface OperatorInterface {
     check(leftValue: number, rightValue: number): boolean;
 }
+declare class LargerEqualOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
+declare class LessEqualOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
+declare class LargerOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
+declare class LessOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
+declare class EqualOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
+declare class NotEqualOperator implements OperatorInterface {
+    check(leftValue: number, rightValue: number): boolean;
+}
 interface EstimatorInterface {
+    calculate(iteration: number, position: Point, region: Region): number;
+}
+declare class NeighborhoodEstimator implements EstimatorInterface {
+    private neighbor;
+    private entities;
+    constructor(line: string);
+    calculate(iteration: number, position: Point, region: Region): number;
+}
+declare class NumberEstimator implements EstimatorInterface {
+    private name;
+    constructor(line: string);
+    calculate(iteration: number, position: Point, region: Region): number;
+}
+declare class DistanceEstimator implements EstimatorInterface {
+    private type;
+    private neighbor;
+    private entities;
+    constructor(line: string);
+    private getMax(region, entityIndex);
+    private getMin(region, entityIndex);
     calculate(iteration: number, position: Point, region: Region): number;
 }
 declare class Prando {
@@ -207,40 +255,28 @@ declare class Rule {
     private executer;
     private nextRule;
     constructor(lines: string[]);
+    checkRule(iteration: number, position: Point, region: Region): boolean;
     execute(iteration: number, position: Point, region: Region): boolean;
 }
-declare let parameters: {
-    "max": string;
-    "min": string;
-    "probDir": string;
-    "probSpawn": string;
-    "allowIntersection": string;
-};
-declare let r: Rule;
-declare class DistanceEstimator implements EstimatorInterface {
-    private type;
-    private neighbor;
-    private entities;
-    constructor(line: string);
-    private getMax(region, entityIndex);
-    private getMin(region, entityIndex);
-    calculate(iteration: number, position: Point, region: Region): number;
+declare class LocationNode {
+    x: number;
+    y: number;
+    parent: LocationNode;
+    constructor(parent?: LocationNode, x?: number, y?: number);
+    checkEnd(x: number, y: number): boolean;
+    estimate(x: number, y: number): number;
+    toString(): string;
 }
-declare class NeighborhoodEstimator implements EstimatorInterface {
-    private neighbor;
-    private entities;
-    constructor(line: string);
-    calculate(iteration: number, position: Point, region: Region): number;
-}
-declare class NumberEstimator implements EstimatorInterface {
-    private name;
-    constructor(line: string);
-    calculate(iteration: number, position: Point, region: Region): number;
+declare class AStar {
+    private static convertNodeToPath(node);
+    static getPath(start: Point, end: Point, directions: Point[], checkSolid: Function): Point[];
 }
 declare abstract class Generator {
     private regions;
     private rules;
-    constructor(currentRegion: string, replacingType: string, borderType: string, map: Region, regions: Region[], rules: string[]);
+    private minBorder;
+    private maxBorder;
+    constructor(currentRegion: any, map: Region, regions: Region[], rules: string[]);
     applyGeneration(): void;
 }
 declare class AgentGenerator extends Generator {
@@ -248,29 +284,11 @@ declare class AgentGenerator extends Generator {
 }
 declare class AutomataGenerator extends Generator {
     private numIterations;
-    constructor(currentRegion: string, replacingType: string, borderType: string, map: Region, regions: Region[], rules: string[], parameters: any);
+    constructor(currentRegion: any, map: Region, regions: Region[], rules: string[], parameters: any);
     applyGeneration(): void;
 }
 declare class ConnectorGenerator extends Generator {
     applyGeneration(): void;
-}
-declare class EqualOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
-}
-declare class LargerEqualOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
-}
-declare class LargerOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
-}
-declare class LessEqualOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
-}
-declare class LessOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
-}
-declare class NotEqualOperator implements OperatorInterface {
-    check(leftValue: number, rightValue: number): boolean;
 }
 declare class AdjustmentDivider implements DividerInterface {
     static ADJUSTMENT_TRAILS: number;

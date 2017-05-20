@@ -33,10 +33,10 @@ class AdjustmentDivider implements DividerInterface{
     }
 
     private changeRegion(map:Region, r:Region):void{
-        r.x = Marahel.getIntRandom(0, map.width - this.maxWidth);
-        r.y = Marahel.getIntRandom(0, map.height - this.maxHeight);
-        r.width = Marahel.getIntRandom(this.minWidth, this.maxWidth);
-        r.height = Marahel.getIntRandom(this.minHeight, this.maxHeight);
+        r.setX(Marahel.getIntRandom(0, map.getWidth() - this.maxWidth));
+        r.setY(Marahel.getIntRandom(0, map.getHeight() - this.maxHeight));
+        r.setWidth(Marahel.getIntRandom(this.minWidth, this.maxWidth));
+        r.setHeight(Marahel.getIntRandom(this.minHeight, this.maxHeight));
     }
 
     private getFitRegion(map:Region, regions:Region[]):Region{
@@ -65,14 +65,14 @@ class AdjustmentDivider implements DividerInterface{
         let minIntersect:number = this.calculateIntersection(regions);
         for(let i:number=0; i<AdjustmentDivider.ADJUSTMENT_TRAILS; i++){
             let r:Region = regions[Marahel.getIntRandom(0, regions.length)];
-            let temp:Region = new Region(r.x, r.y, r.width, r.height);
+            let temp:Region = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
             this.changeRegion(map, r);
             let value:number = this.calculateIntersection(regions);
             if(value >= minIntersect){
-                r.x = temp.x;
-                r.y = temp.y;
-                r.width = temp.width;
-                r.height = temp.height;
+                r.setX(temp.getX());
+                r.setY(temp.getY());
+                r.setWidth(temp.getWidth());
+                r.setHeight(temp.getHeight());
             }
             else{
                 minIntersect = value;

@@ -3,13 +3,18 @@
 abstract class Generator{
     private regions:Region[];
     private rules:Rule[];
+    private minBorder:number;
+    private maxBorder:number;
     
-    constructor(currentRegion:string, replacingType:string, borderType:string, map:Region, regions:Region[], rules:string[]){
-        currentRegion = currentRegion.trim();
-        if(currentRegion == "map"){
+    constructor(currentRegion:any, map:Region, regions:Region[], rules:string[]){
+        this.minBorder = parseInt(currentRegion["minBorder"]);
+        this.maxBorder = parseInt(currentRegion["maxBorder"]);
+
+        if(currentRegion["name"].trim() == "map"){
             this.regions = [map];
+
         }
-        else if(currentRegion == "all"){
+        else if(currentRegion["name"].trim() == "all"){
             this.regions = regions;
         }
         else{
@@ -34,27 +39,28 @@ abstract class Generator{
             this.rules.push(new Rule(rules));
         }
 
-        replacingType = replacingType.trim();
-        if(replacingType == "same"){
+        if(currentRegion["replacingType"].trim() == "same"){
             Marahel.replacingType = Map.REPLACE_SAME;
         }
-        if(replacingType == "buffer"){
+        else if(currentRegion["replacingType"].trim() == "buffer"){
             Marahel.replacingType = Map.REPLACE_SAME
         }
 
-        borderType = borderType.trim();
-        if(borderType == "wrap"){
+        if(currentRegion["borderType"].trim() == "wrap"){
             Marahel.borderType = Region.BORDER_WRAP;
         }
-        else if(borderType == "none"){
+        else if(currentRegion["borderType"].trim() == "none"){
             Marahel.borderType = Region.BORDER_NONE;
         }
         else{
-            Marahel.borderType = Marahel.getEntityIndex(borderType);
+            Marahel.borderType = Marahel.getEntityIndex(currentRegion["borderType"].trim());
         }
 
     }
 
     applyGeneration():void{
+        for(let r of this.regions){
+            r.border = Marahel.getIntRandom(this.minBorder, this.maxBorder);
+        }
     }
 }

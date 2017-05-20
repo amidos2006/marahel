@@ -6,37 +6,114 @@ class Region{
     static BORDER_WRAP:number = -10;
     static BORDER_NONE:number = -20;
 
-    x:number;
-    y:number;
-    width:number;
-    height:number;
+    public border:number;
+
+    private x:number;
+    private y:number;
+    private width:number;
+    private height:number;
 
     constructor(x:number, y:number, width:number, height:number){
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.border = 0;
+    }
+
+    setX(value:number):void{
+        this.x = value;
+    }
+
+    setY(value:number):void{
+        this.y = value;
+    }
+
+    setWidth(value:number):void{
+        this.width = value;
+    }
+    
+    setHeight(value:number):void{
+        this.height = value;
+    }
+
+    getX():number{
+        return this.x + this.border;
+    }
+
+    getY():number{
+        return this.y + this.border;
+    }
+
+    getWidth():number{
+        return this.width - 2*this.border;
+    }
+
+    getHeight():number{
+        return this.height - 2*this.border;
     }
 
     setValue(x:number, y:number, value:number){
-
+        let p:Point = new Point(x, y);
+        if(Marahel.borderType == Region.BORDER_WRAP){
+            if(p.x >= this.getWidth()){
+                p.x -= this.getWidth();
+            }
+            if(p.y >= this.getHeight()){
+                p.y -= this.getHeight();
+            }
+            if(p.x < 0){
+                p.x += this.getWidth();
+            }
+            if(p.y < 0){
+                p.y += this.getHeight();
+            }
+        }
+        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
+            return;
+        }
+        Marahel.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
     }
 
     getValue(x:number, y:number):number{
-        return -1;
+        let p:Point = new Point(x, y);
+        if(Marahel.borderType == Region.BORDER_WRAP){
+            if(p.x >= this.getWidth()){
+                p.x -= this.getWidth();
+            }
+            if(p.y >= this.getHeight()){
+                p.y -= this.getHeight();
+            }
+            if(p.x < 0){
+                p.x += this.getWidth();
+            }
+            if(p.y < 0){
+                p.y += this.getHeight();
+            }
+        }
+        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
+            if(Marahel.borderType == Region.BORDER_NONE){
+                return -1;
+            }
+            return Marahel.borderType;
+        }
+        return Marahel.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
     }
 
     getEntityNumber(value:number):number{
         let result:number = 0;
-        for(let x:number=0; x<this.width; x++){
-            for(let y:number=0; y<this.height; y++){
-                //TODO
+        for(let x:number=0; x<this.getWidth(); x++){
+            for(let y:number=0; y<this.getHeight(); y++){
+                if(Marahel.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                    result += 1;
+                }
             }
         }
         return result;
     }
 
     getDistances(neighbor:Neighborhood, value:number):number[]{
+        //TODO
         return [];
     }
 

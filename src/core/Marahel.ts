@@ -3,6 +3,15 @@
 /// <reference path="data/Entity.ts"/>
 /// <reference path="data/Neighborhood.ts"/>
 /// <reference path="operator/OperatorInterface.ts"/>
+/// <reference path="operator/LargerEqualOperator.ts"/>
+/// <reference path="operator/LessEqualOperator.ts"/>
+/// <reference path="operator/LargerOperator.ts"/>
+/// <reference path="operator/LessOperator.ts"/>
+/// <reference path="operator/EqualOperator.ts"/>
+/// <reference path="operator/NotEqualOperator.ts"/>
+/// <reference path="estimator/NeighborhoodEstimator.ts"/>
+/// <reference path="estimator/NumberEstimator.ts"/>
+/// <reference path="estimator/DistanceEstimator.ts"/>
 /// <reference path="estimator/EstimatorInterface.ts"/>
 /// <reference path="utils/Prando.ts"/>
 

@@ -60,6 +60,11 @@ class Neighborhood {
             region.setValue(center.x + this.locations[i].x, center.y + this.locations[i].y, value);
         }
     }
+    
+    getPath(start:Point, end:Point, region:Region):Point[]{
+        //TODO
+        return [];
+    }
 
     toString():string{
         return this.name + "\n" + this.printing + "\nRelative locations\n" + this.locations;

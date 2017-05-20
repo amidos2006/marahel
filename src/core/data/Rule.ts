@@ -19,6 +19,16 @@ class Rule{
         }
     }
 
+    checkRule(iteration:number, position:Point, region:Region):boolean{
+        if(this.condition.check(iteration, position, region)){
+            return true;
+        }
+        else if(this.nextRule != null){
+            return this.nextRule.checkRule(iteration, position, region);
+        }
+        return false;
+    }
+
     execute(iteration:number, position:Point, region:Region):boolean{
         if(this.condition.check(iteration, position, region)){
             this.executer.apply(position, region);

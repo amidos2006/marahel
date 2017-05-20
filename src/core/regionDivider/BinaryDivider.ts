@@ -20,23 +20,23 @@ class BinaryDivider implements DividerInterface{
 
     private divideWidth(region:Region, allowedWidth:number):Region[]{
         let rWidth:number = this.minWidth + Marahel.getIntRandom(0, allowedWidth);
-        return [new Region(region.x, region.y, rWidth, region.height), 
-                new Region(region.x + rWidth, region.y, region.width - rWidth, region.height)];
+        return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()), 
+                new Region(region.getX() + rWidth, region.getY(), region.getWidth() - rWidth, region.getHeight())];
     }
 
     private divideHeight(region:Region, allowedHeight:number):Region[]{
         let rHeight:number = this.minHeight + Marahel.getIntRandom(0, allowedHeight);
-        return [new Region(region.x, region.y, region.width, rHeight), 
-                new Region(region.x, region.y + rHeight, region.width, region.height - rHeight)];
+        return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight), 
+                new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
     }
 
     private testDivide(region:Region):boolean{
-        return (region.width >= 2 * this.minWidth || region.height >= 2 * this.minHeight);
+        return (region.getWidth() >= 2 * this.minWidth || region.getHeight() >= 2 * this.minHeight);
     }
 
     private divide(region:Region):Region[]{
-        let allowedWidth:number = region.width - 2 * this.minWidth;
-        let allowedHeight:number = region.height - 2 * this.minHeight;
+        let allowedWidth:number = region.getWidth() - 2 * this.minWidth;
+        let allowedHeight:number = region.getHeight() - 2 * this.minHeight;
 
         if(Marahel.getRandom() < 0.5){
             if(allowedWidth > 0){
@@ -55,7 +55,7 @@ class BinaryDivider implements DividerInterface{
             }
         }
 
-        if(region.width > region.height){
+        if(region.getWidth() > region.getHeight()){
             return this.divideWidth(region, 0);
         }
         else{
@@ -65,7 +65,7 @@ class BinaryDivider implements DividerInterface{
 
     private checkMaxSize(regions:Region[]):boolean{
         for(let r of regions){
-            if(r.width > this.maxWidth || r.height > this.maxHeight){
+            if(r.getWidth() > this.maxWidth || r.getHeight() > this.maxHeight){
                 return true;
             }
         }
@@ -74,23 +74,23 @@ class BinaryDivider implements DividerInterface{
 
     private divideMaxSize(region:Region):Region[]{
         if(Marahel.getRandom() < 0.5){
-            if(region.width >= this.maxWidth){
+            if(region.getWidth() >= this.maxWidth){
                 return this.divideWidth(region, 0);
             }
-            if(region.height >= this.maxHeight){
+            if(region.getHeight() >= this.maxHeight){
                 return this.divideHeight(region, 0);
             }
         }
         else{
-            if(region.height >= this.maxHeight){
+            if(region.getHeight() >= this.maxHeight){
                 return this.divideHeight(region, 0);
             }
-            if(region.width >= this.maxWidth){
+            if(region.getWidth() >= this.maxWidth){
                 return this.divideWidth(region, 0);
             }
         }
 
-        if(region.width > region.height){
+        if(region.getWidth() > region.getHeight()){
             return this.divideWidth(region, 0);
         }
         else{
@@ -99,7 +99,7 @@ class BinaryDivider implements DividerInterface{
     }
 
     getRegions(map: Region): Region[] {
-        let results:Region[] = [new Region(0, 0, map.width, map.height)];
+        let results:Region[] = [new Region(0, 0, map.getWidth(), map.getHeight())];
         
         while(results.length<this.numberOfRegions || this.checkMaxSize(results)){
             Marahel.shuffleArray(results);

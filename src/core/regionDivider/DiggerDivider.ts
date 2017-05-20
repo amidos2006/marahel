@@ -38,26 +38,26 @@ class DiggerDivider implements DividerInterface{
     private getRegion(map:Region):Region{
         let width:number = Marahel.getIntRandom(this.minWidth, this.maxWidth);
         let height:number = Marahel.getIntRandom(this.minHeight, this.maxHeight);
-        let x:number = Marahel.getIntRandom(0, map.width - this.maxWidth) - Math.floor(width / 2);
+        let x:number = Marahel.getIntRandom(0, map.getWidth() - this.maxWidth) - Math.floor(width / 2);
         if(x < 0){
             x = 0;
         }
-        if(x + Math.ceil(width/2) >= map.width){
-            x = map.width - Math.ceil(width/2);
+        if(x + Math.ceil(width/2) >= map.getWidth()){
+            x = map.getWidth() - Math.ceil(width/2);
         }
-        let y:number = Marahel.getIntRandom(0, map.height - this.maxHeight) - Math.floor(height / 2);
+        let y:number = Marahel.getIntRandom(0, map.getHeight() - this.maxHeight) - Math.floor(height / 2);
         if(y < 0){
             y = 0;
         }
-        if(y + Math.ceil(height/2) >= map.height){
-            x = map.height - Math.ceil(height/2);
+        if(y + Math.ceil(height/2) >= map.getHeight()){
+            x = map.getHeight() - Math.ceil(height/2);
         }
         return new Region(x, y, width, height);
     }
 
     getRegions(map: Region): Region[] {
         let results:Region[] = [];
-        let digger:Point = new Point(Marahel.getIntRandom(0, map.width), Marahel.getIntRandom(0, map.height));
+        let digger:Point = new Point(Marahel.getIntRandom(0, map.getWidth()), Marahel.getIntRandom(0, map.getHeight()));
         let directions:Point[] = [new Point(0, 1), new Point(0, -1), new Point(1, 0), new Point(-1, 0)];
         let currentDir:number = Marahel.getIntRandom(0, directions.length);
         let directionProb:number = 0;

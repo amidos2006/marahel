@@ -24,8 +24,8 @@ class EqualDivider implements DividerInterface{
         let currentWidth:number = Marahel.getIntRandom(this.minWidth, this.maxWidth);
         let currentHeight:number = Marahel.getIntRandom(this.minHeight, this.maxHeight);
 
-        let roomWidth:number = Math.floor(map.width / currentWidth);
-        let roomHeight:number = Math.floor(map.height / currentHeight);
+        let roomWidth:number = Math.floor(map.getWidth() / currentWidth);
+        let roomHeight:number = Math.floor(map.getHeight() / currentHeight);
         for(let x:number=0; x<this.minWidth; x++){
             for(let y:number=0; y<this.minHeight; y++){
                 let rX:number = x*roomWidth;
@@ -33,10 +33,10 @@ class EqualDivider implements DividerInterface{
                 let rW:number = roomWidth;
                 let rH:number = roomHeight;
                 if(x==currentWidth - 1){
-                    rW = map.width - rX;
+                    rW = map.getWidth() - rX;
                 }
                 if(y==currentHeight - 1){
-                    rH = map.height - rY;
+                    rH = map.getHeight() - rY;
                 }
                 result.push(new Region(rX, rY, rW, rH));
             }
