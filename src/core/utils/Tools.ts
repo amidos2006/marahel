@@ -25,6 +25,8 @@ class LocationNode{
 }
 
 class AStar{
+    static MAX_ITERATIONS:number = 1000;
+
     private static convertNodeToPath(node:LocationNode):Point[]{
         let points:Point[] = [];
         while(node != null){
@@ -34,7 +36,8 @@ class AStar{
         return points.reverse();
     }
 
-    static getPath(start:Point, end:Point, directions:Point[], checkSolid:Function):Point[]{
+    static getPath(start:Point, end:Point, directions:Point[], region:Region, checkSolid:Function):Point[]{
+        let iterations:number = 0;
         let openNodes:LocationNode[] = [new LocationNode(null, start.x, start.y)];
         let visited:any = {};
         let currentNode:LocationNode = openNodes[0];
@@ -43,9 +46,9 @@ class AStar{
             if(!visited[currentNode.toString()]){
                 visited[currentNode.toString()] = true;
                 for(let d of directions){
-                    let newLocation:LocationNode = new LocationNode(currentNode, currentNode.x + d.x, 
-                        currentNode.y + d.y);
-                    if(!checkSolid(newLocation.x, newLocation.y)){
+                    let p:Point = region.getRegionPosition(currentNode.x + d.x, currentNode.y + d.y);
+                    let newLocation:LocationNode = new LocationNode(currentNode, p.x, p.y);
+                    if(!checkSolid(newLocation.x, newLocation.y) && !region.outRegion(p.x, p.y)){
                         openNodes.push(newLocation);
                     }
                 }
@@ -53,10 +56,32 @@ class AStar{
                     return a.estimate(end.x, end.y) - b.estimate(end.x, end.y);
                 });
             }
+            iterations += 1;
+            if(iterations >= AStar.MAX_ITERATIONS){
+                break;
+            }
         }
         if(currentNode.checkEnd(end.x, end.y)){
             return AStar.convertNodeToPath(currentNode);
         }
         return [];
+    }
+}
+
+class EntityListParser{
+    static parseList(line:string):Entity[]{
+        let result:Entity[] = [];
+        let eeParts:string[] = line.split("|");
+        for(let e of eeParts){
+            let nums:string[] = e.split(":");
+            let times:number = 1;
+            if(nums.length > 1){
+                times = parseInt(nums[1]);
+            }
+            for(let i:number=0; i<times; i++){
+                result.push(Marahel.getEntity(nums[0].trim()));
+            }
+        }
+        return result;
     }
 }

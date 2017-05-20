@@ -4,6 +4,7 @@ class DistanceEstimator implements EstimatorInterface{
     private type:string;
     private neighbor:Neighborhood;
     private entities:Entity[];
+    private avoids:Entity[];
 
     constructor(line:string){
         if(line.match("max")){
@@ -15,15 +16,20 @@ class DistanceEstimator implements EstimatorInterface{
 
         let parts:string[] = line.split(/\((.+)\)/)[1].split(",");
         this.neighbor = Marahel.getNeighborhood(parts[0].trim());
-        let eParts:string[] = parts[1].split("|");
-        this.entities = [];
-        for(let e of eParts){
-            this.entities.push(Marahel.getEntity(e));
-        }
+        this.entities = EntityListParser.parseList(parts[1]);
+        this.avoids = EntityListParser.parseList(parts[2]);
     }
 
-    private getMax(region:Region, entityIndex:number):number{
-        let values:number[] = region.getDistances(this.neighbor, entityIndex);
+    private getMax(position:Point, region:Region, entityIndex:number):number{
+        let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
+            (x:number, y:number)=>{
+                for(let a of this.avoids){
+                    if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
+                        return true;
+                    }
+                }
+                return false;
+            });
         if(values.length > 0){
             return -1;
         }
@@ -36,8 +42,16 @@ class DistanceEstimator implements EstimatorInterface{
         return max;
     }
 
-    private getMin(region:Region, entityIndex:number):number{
-        let values:number[] = region.getDistances(this.neighbor, entityIndex);
+    private getMin(position:Point, region:Region, entityIndex:number):number{
+        let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
+            (x:number, y:number)=>{
+                for(let a of this.avoids){
+                    if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
+                        return true;
+                    }
+                }
+                return false;
+            });
         if(values.length > 0){
             return -1;
         }
@@ -55,11 +69,11 @@ class DistanceEstimator implements EstimatorInterface{
         let max:number = 0;
         let min:number = Number.MAX_VALUE;
         for(let e of this.entities){
-            let maxValue:number = this.getMax(region, Marahel.getEntityIndex(e.name));
+            let maxValue:number = this.getMax(position, region, Marahel.getEntityIndex(e.name));
             if(maxValue != -1 && maxValue > max){
                 max = max;
             }
-            let minValue:number = this.getMin(region, Marahel.getEntityIndex(e.name));
+            let minValue:number = this.getMin(position, region, Marahel.getEntityIndex(e.name));
             if(minValue != -1 && minValue < min){
                 min = minValue;
             }

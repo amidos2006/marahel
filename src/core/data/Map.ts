@@ -43,4 +43,8 @@ class Map{
     getValue(x:number, y:number):number{
         return this.mapValues[y][x];
     }
+
+    toString():string{
+        return this.mapValues.toString();
+    }
 }

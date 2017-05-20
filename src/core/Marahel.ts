@@ -21,6 +21,7 @@ class Marahel{
     public static currentMap:Map;
 
     private static rnd:Prando;
+    private static noise:Noise;
     private static minDim:Point;
     private static maxDim:Point;
     private static entities:Entity[];
@@ -37,6 +38,10 @@ class Marahel{
         return Marahel.rnd.nextInt(min, max - 1);
     }
 
+    static getNoise(x:number, y:number):number{
+        return Marahel.noise.perlin2(x, y);
+    }
+
     static shuffleArray(array:any[]):void{
         for(let i:number=0; i<array.length; i++){
             let i1:number = Marahel.getIntRandom(0, array.length);
@@ -49,6 +54,7 @@ class Marahel{
 
     static initialize(data:any):void{
         Marahel.rnd = new Prando();
+        Marahel.noise = new Noise();
         //TODO:
     }
 

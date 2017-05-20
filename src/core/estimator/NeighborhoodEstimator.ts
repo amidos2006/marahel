@@ -8,11 +8,7 @@ class NeighborhoodEstimator implements EstimatorInterface{
         let parts:string[] = line.split(/\((.+)\)/);
         this.neighbor = Marahel.getNeighborhood(parts[0].trim());
         
-        let eParts:string[] = parts[1].split("|");
-        this.entities = [];
-        for(let e of eParts){
-            this.entities.push(Marahel.getEntity(e.trim()));
-        }
+        this.entities = EntityListParser.parseList(parts[1]);
     }
     
     calculate(iteration:number, position:Point, region:Region):number{

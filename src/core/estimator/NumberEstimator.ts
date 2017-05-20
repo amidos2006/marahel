@@ -14,6 +14,9 @@ class NumberEstimator implements EstimatorInterface{
         if(this.name == "random"){
             return Marahel.getRandom();
         }
+        if(this.name == "noise"){
+            return Marahel.getNoise(position.x/region.getWidth(), position.y/region.getHeight());
+        }
         return region.getEntityNumber(Marahel.getEntityIndex(this.name));
     }
 }

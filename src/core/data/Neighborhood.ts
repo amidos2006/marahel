@@ -61,9 +61,16 @@ class Neighborhood {
         }
     }
     
-    getPath(start:Point, end:Point, region:Region):Point[]{
-        //TODO
-        return [];
+    getPath(start:Point, end:Point, region:Region, checkSolid:Function):Point[]{
+        return AStar.getPath(start, end, this.locations, region, checkSolid);
+    }
+
+    getNeighbors(x:number, y:number, region:Region):Point[]{
+        let result:Point[] = [];
+        for(let l of this.locations){
+            result.push(region.getRegionPosition(x + l.x, y + l.y));
+        }
+        return result;
     }
 
     toString():string{

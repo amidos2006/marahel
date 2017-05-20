@@ -1,14 +1,14 @@
 /// <reference path="../data/Region.ts"/>
 
 abstract class Generator{
-    private regions:Region[];
-    private rules:Rule[];
-    private minBorder:number;
-    private maxBorder:number;
+    protected regions:Region[];
+    protected rules:Rule[];
+    protected minBorder:number;
+    protected maxBorder:number;
     
     constructor(currentRegion:any, map:Region, regions:Region[], rules:string[]){
-        this.minBorder = parseInt(currentRegion["minBorder"]);
-        this.maxBorder = parseInt(currentRegion["maxBorder"]);
+        this.minBorder = parseInt(currentRegion["border"].split(",")[0]);
+        this.maxBorder = parseInt(currentRegion["border"].split(",")[1]);
 
         if(currentRegion["name"].trim() == "map"){
             this.regions = [map];
@@ -33,12 +33,7 @@ abstract class Generator{
                 }
             }
         }
-
-        this.rules = [];
-        for(let r of rules){
-            this.rules.push(new Rule(rules));
-        }
-
+        
         if(currentRegion["replacingType"].trim() == "same"){
             Marahel.replacingType = Map.REPLACE_SAME;
         }
@@ -56,6 +51,10 @@ abstract class Generator{
             Marahel.borderType = Marahel.getEntityIndex(currentRegion["borderType"].trim());
         }
 
+        this.rules = [];
+        for(let r of rules){
+            this.rules.push(new Rule(rules));
+        }
     }
 
     applyGeneration():void{

@@ -54,21 +54,7 @@ class Region{
     }
 
     setValue(x:number, y:number, value:number){
-        let p:Point = new Point(x, y);
-        if(Marahel.borderType == Region.BORDER_WRAP){
-            if(p.x >= this.getWidth()){
-                p.x -= this.getWidth();
-            }
-            if(p.y >= this.getHeight()){
-                p.y -= this.getHeight();
-            }
-            if(p.x < 0){
-                p.x += this.getWidth();
-            }
-            if(p.y < 0){
-                p.y += this.getHeight();
-            }
-        }
+        let p:Point = this.getRegionPosition(x, y);
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
             return;
         }
@@ -76,21 +62,7 @@ class Region{
     }
 
     getValue(x:number, y:number):number{
-        let p:Point = new Point(x, y);
-        if(Marahel.borderType == Region.BORDER_WRAP){
-            if(p.x >= this.getWidth()){
-                p.x -= this.getWidth();
-            }
-            if(p.y >= this.getHeight()){
-                p.y -= this.getHeight();
-            }
-            if(p.x < 0){
-                p.x += this.getWidth();
-            }
-            if(p.y < 0){
-                p.y += this.getHeight();
-            }
-        }
+        let p:Point = this.getRegionPosition(x, y);
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
             if(Marahel.borderType == Region.BORDER_NONE){
                 return -1;
@@ -112,9 +84,46 @@ class Region{
         return result;
     }
 
-    getDistances(neighbor:Neighborhood, value:number):number[]{
-        //TODO
-        return [];
+    getRegionPosition(x:number, y:number):Point{
+        let p:Point = new Point(x, y);
+        if(Marahel.borderType == Region.BORDER_WRAP){
+            if(p.x >= this.getWidth()){
+                p.x -= this.getWidth();
+            }
+            if(p.y >= this.getHeight()){
+                p.y -= this.getHeight();
+            }
+            if(p.x < 0){
+                p.x += this.getWidth();
+            }
+            if(p.y < 0){
+                p.y += this.getHeight();
+            }
+        }
+        return p;
+    }
+
+    outRegion(x:number, y:number):boolean{
+        let p:Point = this.getRegionPosition(x, y);
+        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
+            return true;
+        }
+        return false;
+    }
+
+    getDistances(start:Point, neighbor:Neighborhood, value:number, checkSolid:Function):number[]{
+        let results:number[]=[];
+        for(let x:number=0; x<this.getWidth(); x++){
+            for(let y:number=0; y<this.getHeight(); y++){
+                if(Marahel.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                    let path:Point[] = neighbor.getPath(start, new Point(x, y), this, checkSolid);
+                    if(path.length > 0){
+                        results.push(path.length);
+                    }
+                }
+            }
+        }
+        return results;
     }
 
     intersect(pr:Region|Point):boolean{
