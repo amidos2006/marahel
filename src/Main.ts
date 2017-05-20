@@ -16,36 +16,24 @@ let data:any = {
     "entity": {
         "empty":{"color": "0xffffff"}, 
         "solid":{"color": "0x000000"},
-        "player":{"color": "0xff0000", "min":"1", "max":"1"}
+        "player":{"color": "0xff0000", "min":"0", "max":"1"}
     },
     "neighborhood": {
-  	    "all":"111,121,111",
+  	    "all":"111,131,111",
         "plus":"010,121,010"
     },
     "rule": [
   	    {
             "type":"automata",
             "region":{"name":"map"},
-            "parameters": {"iterations":1},
-            "rules":["self(any)==1 -> self(solid)"]
+            "parameters": {"iterations":"1"},
+            "rules":["self(any) -> self(solid)"]
         },
         {
-            "type":"automata",
-            "region":{"name":"all", "border":"1,2"},
-            "parameters": {"iterations":1},
-            "rules":["self(any)==1 -> self(empty:2|solid)"]
-        },
-        {
-            "type":"automata",
-            "region":{"name":"all"},
-            "parameters": {"iterations":2},
-            "rules":["self(solid)==1, all(empty)>5 -> self(empty)", "self(empty)==1, all(solid)>5 -> self(solid)"]
-        },
-        {
-            "type":"automata",
-            "region":{"name":"0"},
-            "parameters": {"iterations":1},
-            "rules":["all(empty)>=6, random < 0.05 -> self(player)"]
+            "type":"agent",
+            "region":{"name":"map", "border":"1,2"},
+            "parameters": {"number":"1,5", "change":"10,15", "lifespan":"100,200", "directions":"plus"},
+            "rules":["self(any), random<0.9 -> self(empty)", "self(any) -> all(empty)"]
         }
     ]
 };

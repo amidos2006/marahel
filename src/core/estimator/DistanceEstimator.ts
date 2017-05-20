@@ -68,21 +68,31 @@ class DistanceEstimator implements EstimatorInterface{
     calculate(iteration:number, position:Point, region:Region):number{
         let max:number = 0;
         let min:number = Number.MAX_VALUE;
+        let maxChange:boolean = false;
+        let minChange:boolean = false;
         for(let e of this.entities){
             let maxValue:number = this.getMax(position, region, Marahel.getEntityIndex(e.name));
             if(maxValue != -1 && maxValue > max){
                 max = max;
+                maxChange = true;
             }
             let minValue:number = this.getMin(position, region, Marahel.getEntityIndex(e.name));
             if(minValue != -1 && minValue < min){
                 min = minValue;
+                minChange = false;
             }
         }
 
         switch(this.type){
             case "max":
+                if(!maxChange){
+                    return -1;
+                }
                 return max;
             case "min":
+                if(!minChange){
+                    return -1;
+                }
                 return min;
         }
     }

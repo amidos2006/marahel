@@ -8,7 +8,7 @@ class Neighborhood {
 
     public name:string;
     
-    private locations:Point[];
+    public locations:Point[];
     private printing:string;
 
     constructor(name:string, line:string) {

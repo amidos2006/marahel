@@ -58,7 +58,7 @@ declare class Neighborhood {
     width: number;
     height: number;
     name: string;
-    private locations;
+    locations: Point[];
     private printing;
     constructor(name: string, line: string);
     getTotal(value: number, center: Point, region: Region): number;
@@ -229,6 +229,23 @@ declare class AutomataGenerator extends Generator {
     private explore;
     constructor(currentRegion: any, rules: string[], parameters: any);
     applyGeneration(): void;
+}
+declare class Agent {
+    private position;
+    private currentLifespan;
+    private lifespan;
+    private currentSpeed;
+    private speed;
+    private currentChange;
+    private change;
+    private currentDirection;
+    private directions;
+    private entities;
+    constructor(lifespan: number, speed: number, change: Point, entities: Entity[], directions: Neighborhood);
+    moveToLocation(region: Region): void;
+    private checkAllowed(x, y, region, avoid);
+    private changeDirection(region, avoid);
+    update(region: Region, rules: Rule[], avoid: Entity[]): boolean;
 }
 declare class AgentGenerator extends Generator {
     private startEntities;

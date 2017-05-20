@@ -223,6 +223,7 @@ class Marahel{
             case "automata":
                 return new AutomataGenerator(currentRegion, rules, parameters);
             case "agent":
+                return new AgentGenerator(currentRegion, rules, parameters);
             case "connector":
         }
         return null;

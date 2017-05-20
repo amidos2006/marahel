@@ -892,21 +892,31 @@ var DistanceEstimator = (function () {
     DistanceEstimator.prototype.calculate = function (iteration, position, region) {
         var max = 0;
         var min = Number.MAX_VALUE;
+        var maxChange = false;
+        var minChange = false;
         for (var _i = 0, _a = this.entities; _i < _a.length; _i++) {
             var e = _a[_i];
             var maxValue = this.getMax(position, region, Marahel.getEntityIndex(e.name));
             if (maxValue != -1 && maxValue > max) {
                 max = max;
+                maxChange = true;
             }
             var minValue = this.getMin(position, region, Marahel.getEntityIndex(e.name));
             if (minValue != -1 && minValue < min) {
                 min = minValue;
+                minChange = false;
             }
         }
         switch (this.type) {
             case "max":
+                if (!maxChange) {
+                    return -1;
+                }
                 return max;
             case "min":
+                if (!minChange) {
+                    return -1;
+                }
                 return min;
         }
     };
@@ -920,15 +930,27 @@ var Condition = (function () {
         var parts = line.split(",");
         var cParts = parts[0].split(/>=|<=|==|!=|>|</);
         this.leftSide = Marahel.getEstimator(cParts[0].trim());
-        this.operator = Marahel.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
-        this.rightSide = Marahel.getEstimator(cParts[1].trim());
+        if (cParts.length > 1) {
+            this.operator = Marahel.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
+            this.rightSide = Marahel.getEstimator(cParts[1].trim());
+        }
+        else {
+            this.operator = Marahel.getOperator(">");
+            this.rightSide = Marahel.getEstimator("0");
+        }
         if (parts.length > 1) {
             parts.splice(0, 1);
             this.nextCondition = new Condition(parts.join(","));
         }
     }
     Condition.prototype.check = function (iteration, position, region) {
-        var result = this.operator.check(this.leftSide.calculate(iteration, position, region), this.rightSide.calculate(iteration, position, region));
+        var left = this.leftSide.calculate(iteration, position, region);
+        var right = this.rightSide.calculate(iteration, position, region);
+        if ((this.leftSide instanceof DistanceEstimator && left == -1) ||
+            (this.rightSide instanceof DistanceEstimator && right == -1)) {
+            return true;
+        }
+        var result = this.operator.check(left, right);
         if (result && this.nextCondition != null) {
             result = result && this.nextCondition.check(iteration, position, region);
         }
@@ -1122,6 +1144,99 @@ var AutomataGenerator = (function (_super) {
     return AutomataGenerator;
 }(Generator));
 /// <reference path="Generator.ts"/>
+var Agent = (function () {
+    function Agent(lifespan, speed, change, entities, directions) {
+        this.position = new Point(0, 0);
+        this.currentLifespan = lifespan;
+        this.lifespan = lifespan;
+        this.currentSpeed = speed;
+        this.speed = speed;
+        this.currentChange = Marahel.getIntRandom(change.x, change.y);
+        this.change = change;
+        this.currentDirection = directions.locations[Marahel.getIntRandom(0, directions.locations.length)];
+        this.directions = [];
+        for (var i = 0; i < directions.locations.length; i++) {
+            this.directions.push(new Point(directions.locations[i].x, directions.locations[i].y));
+        }
+        this.entities = entities;
+    }
+    Agent.prototype.moveToLocation = function (region) {
+        var locations = [];
+        for (var x = 0; x < region.getWidth(); x++) {
+            for (var y = 0; y < region.getHeight(); y++) {
+                for (var _i = 0, _a = this.entities; _i < _a.length; _i++) {
+                    var e = _a[_i];
+                    if (region.getValue(x, y) == Marahel.getEntityIndex(e.name)) {
+                        locations.push(new Point(x, y));
+                    }
+                }
+            }
+        }
+        if (locations.length == 0) {
+            this.currentLifespan = -100;
+            return;
+        }
+        this.position = locations[Marahel.getIntRandom(0, locations.length)];
+    };
+    Agent.prototype.checkAllowed = function (x, y, region, avoid) {
+        for (var _i = 0, avoid_1 = avoid; _i < avoid_1.length; _i++) {
+            var e = avoid_1[_i];
+            if (region.getValue(x, y) == Marahel.getEntityIndex(e.name)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    Agent.prototype.changeDirection = function (region, avoid) {
+        Marahel.shuffleArray(this.directions);
+        for (var _i = 0, _a = this.directions; _i < _a.length; _i++) {
+            var d = _a[_i];
+            var newPosition = region.getRegionPosition(this.position.x + d.x, this.position.y + d.y);
+            if (!region.outRegion(newPosition.x, newPosition.y) &&
+                this.checkAllowed(newPosition.x, newPosition.y, region, avoid)) {
+                this.currentDirection = d;
+                this.position = newPosition;
+                return;
+            }
+        }
+        this.moveToLocation(region);
+    };
+    Agent.prototype.update = function (region, rules, avoid) {
+        if (this.currentLifespan <= 0) {
+            return false;
+        }
+        this.currentSpeed -= 1;
+        if (this.currentSpeed > 0) {
+            return true;
+        }
+        this.currentSpeed = this.speed;
+        this.currentLifespan -= 1;
+        this.currentChange -= 1;
+        if (this.currentChange <= 0) {
+            this.currentChange = Marahel.getIntRandom(this.change.x, this.change.y);
+            this.changeDirection(region, avoid);
+        }
+        else {
+            this.position = region.getRegionPosition(this.position.x + this.currentDirection.x, this.position.y + this.currentDirection.y);
+            if (region.outRegion(this.position.x, this.position.y) ||
+                !this.checkAllowed(this.position.x, this.position.y, region, avoid)) {
+                this.changeDirection(region, avoid);
+            }
+        }
+        if (this.lifespan <= -10) {
+            return false;
+        }
+        for (var _i = 0, rules_2 = rules; _i < rules_2.length; _i++) {
+            var r = rules_2[_i];
+            var applied = r.execute(this.currentLifespan / this.lifespan, this.position, region);
+            if (applied) {
+                break;
+            }
+        }
+        return true;
+    };
+    return Agent;
+}());
 var AgentGenerator = (function (_super) {
     __extends(AgentGenerator, _super);
     function AgentGenerator(currentRegion, rules, parameters) {
@@ -1161,7 +1276,25 @@ var AgentGenerator = (function (_super) {
         return _this;
     }
     AgentGenerator.prototype.applyGeneration = function () {
-        throw new Error("Method not implemented.");
+        _super.prototype.applyGeneration.call(this);
+        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
+            var r = _a[_i];
+            var agents = [];
+            var numberOfAgents = Marahel.getIntRandom(this.numAgents.x, this.numAgents.y);
+            for (var i = 0; i < numberOfAgents; i++) {
+                agents.push(new Agent(Marahel.getIntRandom(this.lifespan.x, this.lifespan.y), Marahel.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.startEntities, this.directions));
+                agents[agents.length - 1].moveToLocation(r);
+            }
+            var agentChanges = true;
+            while (agentChanges) {
+                for (var _b = 0, agents_1 = agents; _b < agents_1.length; _b++) {
+                    var a = agents_1[_b];
+                    agentChanges = false;
+                    agentChanges = agentChanges || a.update(r, this.rules, this.avoidEntities);
+                    Marahel.currentMap.switchBuffers();
+                }
+            }
+        }
     };
     return AgentGenerator;
 }(Generator));
@@ -1841,6 +1974,7 @@ var Marahel = (function () {
             case "automata":
                 return new AutomataGenerator(currentRegion, rules, parameters);
             case "agent":
+                return new AgentGenerator(currentRegion, rules, parameters);
             case "connector":
         }
         return null;
@@ -1868,36 +2002,24 @@ var data = {
     "entity": {
         "empty": { "color": "0xffffff" },
         "solid": { "color": "0x000000" },
-        "player": { "color": "0xff0000", "min": "1", "max": "1" }
+        "player": { "color": "0xff0000", "min": "0", "max": "1" }
     },
     "neighborhood": {
-        "all": "111,121,111",
+        "all": "111,131,111",
         "plus": "010,121,010"
     },
     "rule": [
         {
             "type": "automata",
             "region": { "name": "map" },
-            "parameters": { "iterations": 1 },
-            "rules": ["self(any)==1 -> self(solid)"]
+            "parameters": { "iterations": "1" },
+            "rules": ["self(any) -> self(solid)"]
         },
         {
-            "type": "automata",
-            "region": { "name": "all", "border": "1,2" },
-            "parameters": { "iterations": 1 },
-            "rules": ["self(any)==1 -> self(empty:2|solid)"]
-        },
-        {
-            "type": "automata",
-            "region": { "name": "all" },
-            "parameters": { "iterations": 2 },
-            "rules": ["self(solid)==1, all(empty)>5 -> self(empty)", "self(empty)==1, all(solid)>5 -> self(solid)"]
-        },
-        {
-            "type": "automata",
-            "region": { "name": "0" },
-            "parameters": { "iterations": 1 },
-            "rules": ["all(empty)>=6, random < 0.05 -> self(player)"]
+            "type": "agent",
+            "region": { "name": "map", "border": "1,2" },
+            "parameters": { "number": "1,5", "change": "10,15", "lifespan": "100,200", "directions": "plus" },
+            "rules": ["self(any), random<0.9 -> self(empty)", "self(any) -> all(empty)"]
         }
     ]
 };

@@ -1,5 +1,110 @@
 /// <reference path="Generator.ts"/>
 
+class Agent{
+    private position:Point;
+    private currentLifespan:number;
+    private lifespan:number;
+    private currentSpeed:number;
+    private speed:number;
+    private currentChange:number;
+    private change:Point;
+    private currentDirection:Point;
+    private directions:Point[];
+    private entities:Entity[];
+
+    constructor(lifespan:number, speed:number, change:Point, entities:Entity[], directions:Neighborhood){
+        this.position = new Point(0, 0);
+        this.currentLifespan = lifespan;
+        this.lifespan = lifespan;
+        this.currentSpeed = speed;
+        this.speed = speed;
+        this.currentChange = Marahel.getIntRandom(change.x, change.y);
+        this.change = change;
+        this.currentDirection = directions.locations[Marahel.getIntRandom(0, directions.locations.length)];
+        this.directions = [];
+        for(let i:number=0; i<directions.locations.length; i++){
+            this.directions.push(new Point(directions.locations[i].x, directions.locations[i].y));
+        }
+        this.entities = entities;
+    }
+
+    moveToLocation(region:Region):void{
+        let locations:Point[] = [];
+        for(let x:number=0; x<region.getWidth(); x++){
+            for(let y:number=0; y<region.getHeight(); y++){
+                for(let e of this.entities){
+                    if(region.getValue(x, y) == Marahel.getEntityIndex(e.name)){
+                        locations.push(new Point(x, y));
+                    }
+                }
+            }
+        }
+        if(locations.length == 0){
+            this.currentLifespan = -100;
+            return;
+        }
+        this.position = locations[Marahel.getIntRandom(0, locations.length)];
+    }
+
+    private checkAllowed(x:number, y:number, region:Region, avoid:Entity[]):boolean{
+        for(let e of avoid){
+            if(region.getValue(x, y) == Marahel.getEntityIndex(e.name)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private changeDirection(region:Region, avoid:Entity[]):void{
+        Marahel.shuffleArray(this.directions);
+        for(let d of this.directions){
+            let newPosition:Point = region.getRegionPosition(this.position.x + d.x, this.position.y + d.y);
+            if(!region.outRegion(newPosition.x, newPosition.y) && 
+                this.checkAllowed(newPosition.x, newPosition.y, region, avoid)){
+                this.currentDirection = d;
+                this.position = newPosition;
+                return;
+            }
+        }
+        this.moveToLocation(region);
+    }
+
+    update(region:Region, rules:Rule[], avoid:Entity[]):boolean{
+        if(this.currentLifespan <= 0){
+            return false;
+        }
+        this.currentSpeed -= 1;
+        if(this.currentSpeed > 0){
+            return true;
+        }
+        this.currentSpeed = this.speed;
+        this.currentLifespan -= 1;
+        this.currentChange -= 1;
+        if(this.currentChange <= 0){
+            this.currentChange = Marahel.getIntRandom(this.change.x, this.change.y);
+            this.changeDirection(region, avoid);
+        }
+        else{
+            this.position = region.getRegionPosition(this.position.x + this.currentDirection.x, 
+                this.position.y + this.currentDirection.y);
+            if(region.outRegion(this.position.x, this.position.y) ||
+                !this.checkAllowed(this.position.x, this.position.y, region, avoid)){
+                this.changeDirection(region, avoid);
+            }
+        }
+        if(this.lifespan <= -10){
+            return false;
+        }
+        for(let r of rules){
+            let applied:boolean = r.execute(this.currentLifespan/this.lifespan, this.position, region);
+            if(applied){
+                break;
+            }
+        }
+        return true;
+    }
+}
+
 class AgentGenerator extends Generator{
     private startEntities:Entity[];
     private avoidEntities:Entity[];
@@ -47,6 +152,23 @@ class AgentGenerator extends Generator{
     }
 
     applyGeneration(): void {
-        throw new Error("Method not implemented.");
+        super.applyGeneration();
+        for(let r of this.regions){
+            let agents:Agent[] = [];
+            let numberOfAgents:number = Marahel.getIntRandom(this.numAgents.x, this.numAgents.y);
+            for(let i:number=0; i<numberOfAgents; i++){
+                agents.push(new Agent(Marahel.getIntRandom(this.lifespan.x, this.lifespan.y), 
+                    Marahel.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.startEntities, this.directions));
+                agents[agents.length - 1].moveToLocation(r);
+            }
+            let agentChanges:boolean = true;
+            while(agentChanges){
+                for(let a of agents){
+                    agentChanges = false;
+                    agentChanges = agentChanges || a.update(r, this.rules, this.avoidEntities);
+                    Marahel.currentMap.switchBuffers();
+                }
+            }
+        }
     }
 }
