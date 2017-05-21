@@ -119,7 +119,7 @@ class Marahel{
         }
     }
 
-    static generate(outputType:number=0, seed?:number):any[][]{
+    static generate(outputType?:number, seed?:number):any[][]{
         if(!Marahel.rnd){
             throw new Error("Call initialize first.");
         }
@@ -135,13 +135,15 @@ class Marahel{
             }
         }
 
-        if(outputType == Marahel.COLOR_OUTPUT){
-            return Marahel.currentMap.getColorMap();
+        if(outputType){
+            if(outputType == Marahel.COLOR_OUTPUT){
+                return Marahel.currentMap.getColorMap();
+            }
+            if(outputType == Marahel.INDEX_OUTPUT){
+                return Marahel.currentMap.getIndexMap();
+            }
+            return Marahel.currentMap.getStringMap();
         }
-        if(outputType == Marahel.INDEX_OUTPUT){
-            return Marahel.currentMap.getIndexMap();
-        }
-        return Marahel.currentMap.getStringMap();
     }
 
     static getEntity(value:number|string):Entity{

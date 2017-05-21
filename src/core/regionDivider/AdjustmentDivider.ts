@@ -43,7 +43,7 @@ class AdjustmentDivider implements DividerInterface{
         let r:Region = new Region(0, 0, 0, 0);
         for(let i:number=0; i<AdjustmentDivider.RETRY_TRAILS; i++){
             this.changeRegion(map, r);
-            if(!this.checkIntersection(r, regions)){
+            if(!this.checkIntersection(r, regions) || this.allowIntersect){
                 break;
             }
         }

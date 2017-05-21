@@ -779,16 +779,27 @@ var AStar = (function () {
         var path = [];
         for (var _i = 0, start_1 = start; _i < start_1.length; _i++) {
             var s = start_1[_i];
+            var iterations = 0;
             for (var _a = 0, end_1 = end; _a < end_1.length; _a++) {
                 var e = end_1[_a];
                 var temp = AStar.getPath(s, e, directions, region, checkSolid);
                 if (temp.length < shortest) {
                     shortest = temp.length;
                     path = temp;
+                    iterations = 0;
                     if (shortest < 4) {
                         break;
                     }
                 }
+                else {
+                    iterations += 1;
+                    if (iterations > AStar.MAX_MULTI_TEST) {
+                        break;
+                    }
+                }
+            }
+            if (shortest < 4) {
+                break;
             }
         }
         return path;
@@ -796,6 +807,7 @@ var AStar = (function () {
     return AStar;
 }());
 AStar.MAX_ITERATIONS = 1000;
+AStar.MAX_MULTI_TEST = 10;
 var EntityListParser = (function () {
     function EntityListParser() {
     }
@@ -1347,6 +1359,13 @@ var Group = (function () {
         result.y /= this.points.length;
         return result;
     };
+    Group.prototype.sort = function (p) {
+        this.points.sort(function (a, b) {
+            var d1 = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
+            var d2 = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
+            return d1 - d2;
+        });
+    };
     Group.prototype.cleanPoints = function (region, allowed, neighbor) {
         for (var i = 0; i < this.points.length; i++) {
             var found = false;
@@ -1527,6 +1546,8 @@ var ConnectorGenerator = (function (_super) {
                 minDistance = Math.abs(c1.x - c2.x) + Math.abs(c1.y - c2.y);
             }
         }
+        groups[0].sort(groups[index].getCenter());
+        groups[index].sort(c1);
         var path = AStar.getPathMultipleStartEnd(groups[0].points, groups[index].points, this.neighbor.locations, region, function (x, y) { return false; });
         return [path[0], path[path.length - 1], new Point(0, index)];
     };
@@ -2197,7 +2218,6 @@ var Marahel = (function () {
         }
     };
     Marahel.generate = function (outputType, seed) {
-        if (outputType === void 0) { outputType = 0; }
         if (!Marahel.rnd) {
             throw new Error("Call initialize first.");
         }
@@ -2211,13 +2231,15 @@ var Marahel = (function () {
                 break;
             }
         }
-        if (outputType == Marahel.COLOR_OUTPUT) {
-            return Marahel.currentMap.getColorMap();
+        if (outputType) {
+            if (outputType == Marahel.COLOR_OUTPUT) {
+                return Marahel.currentMap.getColorMap();
+            }
+            if (outputType == Marahel.INDEX_OUTPUT) {
+                return Marahel.currentMap.getIndexMap();
+            }
+            return Marahel.currentMap.getStringMap();
         }
-        if (outputType == Marahel.INDEX_OUTPUT) {
-            return Marahel.currentMap.getIndexMap();
-        }
-        return Marahel.currentMap.getStringMap();
     };
     Marahel.getEntity = function (value) {
         if (typeof value == "string") {
@@ -2314,6 +2336,9 @@ Marahel.COLOR_OUTPUT = 1;
 Marahel.INDEX_OUTPUT = 2;
 Marahel.MAX_TRIALS = 10;
 /// <reference path="core/Marahel.ts"/>
+var fs = require("fs");
+var savePixels = require("save-pixels");
+var zeros = require("zeros");
 var data = {
     "metadata": {
         "min": "30x30",
@@ -2344,26 +2369,47 @@ var data = {
             "rules": ["self(any) -> self(solid)"]
         },
         {
-            "type": "automata",
-            "region": { "name": "all", "border": "1,2" },
-            "parameters": { "iterations": "1" },
-            "rules": ["self(any) -> self(empty:2|solid)"]
+            "type": "agent",
+            "region": { "name": "map", "border": "1,2" },
+            "parameters": { "number": "1,3", "change": "10,15", "lifespan": "80,150" },
+            "rules": ["self(any), random < 0.7 -> self(empty)", "self(any) -> all(empty)"]
         },
         {
             "type": "automata",
-            "region": { "name": "map" },
+            "region": { "name": "map", "border": "1,2" },
+            "parameters": { "iterations": "1" },
+            "rules": ["self(solid), random<0.2->self(empty)"]
+        },
+        {
+            "type": "automata",
+            "region": { "name": "map", "border": "1,2" },
             "parameters": { "iterations": "10" },
-            "rules": ["self(empty), all(solid)>6 -> self(solid)", "self(solid), all(empty)>5 -> self(empty)"]
+            "rules": ["self(solid), all(empty)>5->self(empty)", "self(empty),all(solid)>5->self(solid)"]
         },
         {
             "type": "connector",
             "region": { "name": "map" },
-            "parameters": { "type": "full", "neighborhood": "plus", "entities": "empty" },
-            "rules": ["self(solid)->self(empty)"]
+            "parameters": { "neighborhood": "plus", "entities": "empty", "type": "full" },
+            "rules": ["self(any)->self(empty)"]
+        },
+        {
+            "type": "automata",
+            "region": { "name": "map", "border": "1,2" },
+            "parameters": { "iterations": "10" },
+            "rules": ["self(empty), plus(empty)==1->self(solid)"]
         }
     ]
 };
 Marahel.initialize(data);
-var generatedMap = Marahel.generate(Marahel.INDEX_OUTPUT);
-Marahel.printIndexMap(generatedMap);
+Marahel.generate();
+var colorMap = Marahel.currentMap.getColorMap();
+var indexMap = Marahel.currentMap.getIndexMap();
+Marahel.printIndexMap(indexMap);
+var picture = zeros([colorMap[0].length, colorMap.length]);
+for (var y = 0; y < colorMap.length; y++) {
+    for (var x = 0; x < colorMap[y].length; x++) {
+        picture.set(x, y, colorMap[y][x]);
+    }
+}
+savePixels(picture, "png").pipe(fs.createWriteStream("out.png"));
 //# sourceMappingURL=Marahel.js.map

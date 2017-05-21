@@ -26,6 +26,7 @@ class LocationNode{
 
 class AStar{
     static MAX_ITERATIONS:number = 1000;
+    static MAX_MULTI_TEST:number = 10;
 
     private static convertNodeToPath(node:LocationNode):Point[]{
         let points:Point[] = [];
@@ -73,16 +74,28 @@ class AStar{
     static getPathMultipleStartEnd(start:Point[], end:Point[], directions:Point[], region:Region, checkSolid:Function):Point[]{
         let shortest:number = Number.MAX_VALUE;
         let path:Point[] = [];
+
         for(let s of start){
+            let iterations:number = 0;
             for(let e of end){
                 let temp:Point[] = AStar.getPath(s, e, directions, region, checkSolid);
                 if(temp.length < shortest){
                     shortest = temp.length;
                     path = temp;
+                    iterations = 0;
                     if(shortest < 4){
                         break;
                     }
                 }
+                else{
+                    iterations += 1;
+                    if(iterations > AStar.MAX_MULTI_TEST){
+                        break;
+                    }
+                }
+            }
+            if(shortest < 4){
+                break;
             }
         }
         return path;

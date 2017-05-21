@@ -163,6 +163,7 @@ declare class LocationNode {
 }
 declare class AStar {
     static MAX_ITERATIONS: number;
+    static MAX_MULTI_TEST: number;
     private static convertNodeToPath(node);
     static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
     static getPathMultipleStartEnd(start: Point[], end: Point[], directions: Point[], region: Region, checkSolid: Function): Point[];
@@ -266,6 +267,7 @@ declare class Group {
     constructor();
     addPoint(x: number, y: number): void;
     getCenter(): Point;
+    sort(p: Point): void;
     cleanPoints(region: Region, allowed: Entity[], neighbor: Neighborhood): void;
     combine(group: Group): void;
     distance(group: Group): number;
@@ -443,5 +445,10 @@ declare class Marahel {
     private static getGenerator(type, currentRegion, parameters, rules);
     static printIndexMap(generatedMap: number[][]): void;
 }
+declare let fs: any;
+declare let savePixels: any;
+declare let zeros: any;
 declare let data: any;
-declare let generatedMap: number[][];
+declare let colorMap: number[][];
+declare let indexMap: number[][];
+declare let picture: any;

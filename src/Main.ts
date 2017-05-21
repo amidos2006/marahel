@@ -1,5 +1,9 @@
 /// <reference path="core/Marahel.ts"/>
 
+let fs = require("fs");
+let savePixels = require("save-pixels");
+let zeros = require("zeros");
+
 let data:any = {
     "metadata": {
         "min":"30x30",
@@ -30,25 +34,48 @@ let data:any = {
             "rules":["self(any) -> self(solid)"]
         },
         {
-            "type":"automata",
-            "region":{"name":"all", "border":"1,2"},
-            "parameters": {"iterations":"1"},
-            "rules":["self(any) -> self(empty:2|solid)"]
+            "type":"agent",
+            "region":{"name":"map", "border":"1,2"},
+            "parameters": {"number":"1,3", "change":"10,15", "lifespan":"80,150"},
+            "rules":["self(any), random < 0.7 -> self(empty)", "self(any) -> all(empty)"]
         },
         {
             "type":"automata",
-            "region":{"name":"map"},
-            "parameters": {"iterations":"10"},
-            "rules":["self(empty), all(solid)>6 -> self(solid)", "self(solid), all(empty)>5 -> self(empty)"]
+            "region":{"name":"map", "border":"1,2"},
+            "parameters":{"iterations":"1"},
+            "rules":["self(solid), random<0.2->self(empty)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"map", "border":"1,2"},
+            "parameters":{"iterations":"10"},
+            "rules":["self(solid), all(empty)>5->self(empty)", "self(empty),all(solid)>5->self(solid)"]
         },
         {
             "type":"connector",
             "region":{"name":"map"},
-            "parameters":{"type":"full", "neighborhood":"plus", "entities":"empty"},
-            "rules":["self(solid)->self(empty)"]
+            "parameters":{"neighborhood":"plus", "entities": "empty", "type":"full"},
+            "rules":["self(any)->self(empty)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"map", "border":"1,2"},
+            "parameters":{"iterations":"10"},
+            "rules":["self(empty), plus(empty)==1->self(solid)"]
         }
     ]
 };
 Marahel.initialize(data);
-let generatedMap:number[][] = Marahel.generate(Marahel.INDEX_OUTPUT);
-Marahel.printIndexMap(generatedMap);
+Marahel.generate();
+let colorMap:number[][] = Marahel.currentMap.getColorMap();
+let indexMap:number[][] = Marahel.currentMap.getIndexMap();
+Marahel.printIndexMap(indexMap);
+
+let picture = zeros([colorMap[0].length, colorMap.length]);
+for(let y:number=0; y<colorMap.length; y++){
+    for(let x:number=0; x<colorMap[y].length; x++){
+        picture.set(x, y, colorMap[y][x])
+    }
+}
+
+savePixels(picture, "png").pipe(fs.createWriteStream("out.png"))

@@ -25,6 +25,14 @@ class Group{
         return result;
     }
 
+    sort(p:Point):void{
+        this.points.sort((a:Point, b:Point):number=>{
+            let d1:number = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
+            let d2:number = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
+            return d1 - d2;
+        })
+    }
+
     cleanPoints(region:Region, allowed:Entity[], neighbor:Neighborhood):void{
         for(let i:number=0; i<this.points.length; i++){
             let found:boolean = false;
@@ -217,6 +225,8 @@ class ConnectorGenerator extends Generator{
             }
         }
 
+        groups[0].sort(groups[index].getCenter());
+        groups[index].sort(c1);
         let path:Point[] = AStar.getPathMultipleStartEnd(groups[0].points, groups[index].points, 
                 this.neighbor.locations, region, (x:number, y:number)=>{return false;});
 
