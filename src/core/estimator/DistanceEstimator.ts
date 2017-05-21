@@ -4,7 +4,7 @@ class DistanceEstimator implements EstimatorInterface{
     private type:string;
     private neighbor:Neighborhood;
     private entities:Entity[];
-    private avoids:Entity[];
+    private allowed:Entity[];
 
     constructor(line:string){
         if(line.match("max")){
@@ -17,18 +17,22 @@ class DistanceEstimator implements EstimatorInterface{
         let parts:string[] = line.split(/\((.+)\)/)[1].split(",");
         this.neighbor = Marahel.getNeighborhood(parts[0].trim());
         this.entities = EntityListParser.parseList(parts[1]);
-        this.avoids = EntityListParser.parseList(parts[2]);
+        let allowedName:string = "any";
+        if(parts.length > 2){
+            allowedName = parts[2].trim();
+        }
+        this.allowed = EntityListParser.parseList(allowedName);
     }
 
     private getMax(position:Point, region:Region, entityIndex:number):number{
         let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
             (x:number, y:number)=>{
-                for(let a of this.avoids){
+                for(let a of this.allowed){
                     if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
-                        return true;
+                        return false;
                     }
                 }
-                return false;
+                return true;
             });
         if(values.length > 0){
             return -1;
@@ -45,12 +49,12 @@ class DistanceEstimator implements EstimatorInterface{
     private getMin(position:Point, region:Region, entityIndex:number):number{
         let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
             (x:number, y:number)=>{
-                for(let a of this.avoids){
+                for(let a of this.allowed){
                     if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
-                        return true;
+                        return false;
                     }
                 }
-                return false;
+                return true;
             });
         if(values.length > 0){
             return -1;

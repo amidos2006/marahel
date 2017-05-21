@@ -63,19 +63,21 @@ class Map{
         return this.mapValues[y][x];
     }
 
-    checkConstraints():boolean{
+    checkNumConstraints():boolean{
         let entities:Entity[] = Marahel.getAllEntities();
         for(let e of entities){
-            if(e.minValue > 0){
-                if(!(e.name in this.numEntities)){
-                    return false;
-                }
-                if(e.name in this.numEntities && this.numEntities[e.name] < e.minValue){
-                    return false;
-                }
+            if(this.getNumEntity(e.name) < e.minValue){
+                return false;
             }
         }
         return true;
+    }
+
+    getNumEntity(e:string){
+        if(e in this.numEntities){
+            return this.numEntities;
+        }
+        return 0;
     }
 
     getStringMap():string[][]{

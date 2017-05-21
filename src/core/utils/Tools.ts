@@ -16,7 +16,7 @@ class LocationNode{
     }
 
     estimate(x:number, y:number):number{
-        return Math.pow(x - this.x,2) + Math.pow(y - this.y, 2);
+        return Math.abs(x - this.x) + Math.abs(y - this.y);
     }
     
     toString():string{
@@ -48,6 +48,9 @@ class AStar{
                 for(let d of directions){
                     let p:Point = region.getRegionPosition(currentNode.x + d.x, currentNode.y + d.y);
                     let newLocation:LocationNode = new LocationNode(currentNode, p.x, p.y);
+                    if(newLocation.checkEnd(end.x, end.y)){
+                        return AStar.convertNodeToPath(newLocation);
+                    }
                     if(!checkSolid(newLocation.x, newLocation.y) && !region.outRegion(p.x, p.y)){
                         openNodes.push(newLocation);
                     }
@@ -65,6 +68,24 @@ class AStar{
             return AStar.convertNodeToPath(currentNode);
         }
         return [];
+    }
+
+    static getPathMultipleStartEnd(start:Point[], end:Point[], directions:Point[], region:Region, checkSolid:Function):Point[]{
+        let shortest:number = Number.MAX_VALUE;
+        let path:Point[] = [];
+        for(let s of start){
+            for(let e of end){
+                let temp:Point[] = AStar.getPath(s, e, directions, region, checkSolid);
+                if(temp.length < shortest){
+                    shortest = temp.length;
+                    path = temp;
+                    if(shortest < 4){
+                        break;
+                    }
+                }
+            }
+        }
+        return path;
     }
 }
 

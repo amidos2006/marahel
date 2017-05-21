@@ -68,7 +68,10 @@ class Neighborhood {
     getNeighbors(x:number, y:number, region:Region):Point[]{
         let result:Point[] = [];
         for(let l of this.locations){
-            result.push(region.getRegionPosition(x + l.x, y + l.y));
+            let p:Point = region.getRegionPosition(x + l.x, y + l.y);
+            if(!region.outRegion(p.x, p.y)){
+                result.push(p);
+            }
         }
         return result;
     }

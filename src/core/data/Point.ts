@@ -7,6 +7,10 @@ class Point{
         this.y = y;
     }
 
+    equal(p:Point):boolean{
+        return p.x == this.x && p.y == this.y;
+    }
+
     toString():string{
         return "(" + this.x + "," + this.y + ")";
     }

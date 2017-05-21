@@ -130,7 +130,7 @@ class Marahel{
 
         for(let i:number=0; i<Marahel.MAX_TRIALS; i++){
             Marahel.generateOneTime();
-            if(Marahel.currentMap.checkConstraints()){
+            if(Marahel.currentMap.checkNumConstraints()){
                 break;
             }
         }
@@ -225,7 +225,19 @@ class Marahel{
             case "agent":
                 return new AgentGenerator(currentRegion, rules, parameters);
             case "connector":
+                return new ConnectorGenerator(currentRegion, rules, parameters);
         }
         return null;
+    }
+
+    static printIndexMap(generatedMap:number[][]){
+        let result = "";
+        for(let y:number=0; y<generatedMap.length; y++){
+            for(let x:number=0; x<generatedMap[y].length; x++){
+                result += generatedMap[y][x];
+            }
+            result += "\n";
+        }
+        console.log(result);
     }
 }

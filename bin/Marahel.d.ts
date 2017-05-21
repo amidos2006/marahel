@@ -10,7 +10,8 @@ declare class Map {
     setValue(x: number, y: number, value: number): void;
     switchBuffers(): void;
     getValue(x: number, y: number): number;
-    checkConstraints(): boolean;
+    checkNumConstraints(): boolean;
+    getNumEntity(e: string): any;
     getStringMap(): string[][];
     getIndexMap(): number[][];
     getColorMap(): number[][];
@@ -20,6 +21,7 @@ declare class Point {
     x: number;
     y: number;
     constructor(x?: number, y?: number);
+    equal(p: Point): boolean;
     toString(): string;
 }
 declare class Entity {
@@ -163,6 +165,7 @@ declare class AStar {
     static MAX_ITERATIONS: number;
     private static convertNodeToPath(node);
     static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
+    static getPathMultipleStartEnd(start: Point[], end: Point[], directions: Point[], region: Region, checkSolid: Function): Point[];
 }
 declare class EntityListParser {
     static parseList(line: string): Entity[];
@@ -182,7 +185,7 @@ declare class DistanceEstimator implements EstimatorInterface {
     private type;
     private neighbor;
     private entities;
-    private avoids;
+    private allowed;
     constructor(line: string);
     private getMax(position, region, entityIndex);
     private getMin(position, region, entityIndex);
@@ -243,13 +246,12 @@ declare class Agent {
     private entities;
     constructor(lifespan: number, speed: number, change: Point, entities: Entity[], directions: Neighborhood);
     moveToLocation(region: Region): void;
-    private checkAllowed(x, y, region, avoid);
+    private checkAllowed(x, y, region, allow);
     private changeDirection(region, avoid);
-    update(region: Region, rules: Rule[], avoid: Entity[]): boolean;
+    update(region: Region, rules: Rule[], allow: Entity[]): boolean;
 }
 declare class AgentGenerator extends Generator {
-    private startEntities;
-    private avoidEntities;
+    private allowedEntities;
     private numAgents;
     private speed;
     private changeTime;
@@ -258,7 +260,35 @@ declare class AgentGenerator extends Generator {
     constructor(currentRegion: any, rules: string[], parameters: any);
     applyGeneration(): void;
 }
+declare class Group {
+    index: number;
+    points: Point[];
+    constructor();
+    addPoint(x: number, y: number): void;
+    getCenter(): Point;
+    cleanPoints(region: Region, allowed: Entity[], neighbor: Neighborhood): void;
+    combine(group: Group): void;
+    distance(group: Group): number;
+}
 declare class ConnectorGenerator extends Generator {
+    static MAX_ITERATIONS: number;
+    static SHORT_CONNECTION: number;
+    static RANDOM_CONNECTION: number;
+    static HUB_CONNECTION: number;
+    static FULL_CONNECTION: number;
+    private neighbor;
+    private entities;
+    private connectionType;
+    constructor(currentRegion: any, rules: string[], parameters: any);
+    private floodFill(x, y, label, labelBoard, region);
+    private getUnconnectedGroups(region);
+    private connect(start, end, region);
+    private connectRandom(groups, region);
+    private shortestGroup(groups, region);
+    private centerGroup(groups, region);
+    private connectShort(groups, region);
+    private connectFull(groups, region);
+    private connectHub(groups, region);
     applyGeneration(): void;
 }
 declare class Prando {
@@ -411,7 +441,7 @@ declare class Marahel {
     static getOperator(line: string): OperatorInterface;
     private static getDivider(type, numRegions, parameters);
     private static getGenerator(type, currentRegion, parameters, rules);
+    static printIndexMap(generatedMap: number[][]): void;
 }
 declare let data: any;
 declare let generatedMap: number[][];
-declare let result: string;

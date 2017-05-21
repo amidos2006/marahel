@@ -30,20 +30,25 @@ let data:any = {
             "rules":["self(any) -> self(solid)"]
         },
         {
-            "type":"agent",
-            "region":{"name":"map", "border":"1,2"},
-            "parameters": {"number":"1,5", "change":"10,15", "lifespan":"100,200", "directions":"plus"},
-            "rules":["self(any), random<0.9 -> self(empty)", "self(any) -> all(empty)"]
+            "type":"automata",
+            "region":{"name":"all", "border":"1,2"},
+            "parameters": {"iterations":"1"},
+            "rules":["self(any) -> self(empty:2|solid)"]
+        },
+        {
+            "type":"automata",
+            "region":{"name":"map"},
+            "parameters": {"iterations":"10"},
+            "rules":["self(empty), all(solid)>6 -> self(solid)", "self(solid), all(empty)>5 -> self(empty)"]
+        },
+        {
+            "type":"connector",
+            "region":{"name":"map"},
+            "parameters":{"type":"full", "neighborhood":"plus", "entities":"empty"},
+            "rules":["self(solid)->self(empty)"]
         }
     ]
 };
 Marahel.initialize(data);
 let generatedMap:number[][] = Marahel.generate(Marahel.INDEX_OUTPUT);
-let result = "";
-for(let y:number=0; y<generatedMap.length; y++){
-    for(let x:number=0; x<generatedMap[y].length; x++){
-        result += generatedMap[y][x];
-    }
-    result += "\n";
-}
-console.log(result);
+Marahel.printIndexMap(generatedMap);
