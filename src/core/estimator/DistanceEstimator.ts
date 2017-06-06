@@ -15,7 +15,7 @@ class DistanceEstimator implements EstimatorInterface{
         }
 
         let parts:string[] = line.split(/\((.+)\)/)[1].split(",");
-        this.neighbor = Marahel.getNeighborhood(parts[0].trim());
+        this.neighbor = Engine.getNeighborhood(parts[0].trim());
         this.entities = EntityListParser.parseList(parts[1]);
         let allowedName:string = "any";
         if(parts.length > 2){
@@ -28,7 +28,7 @@ class DistanceEstimator implements EstimatorInterface{
         let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
             (x:number, y:number)=>{
                 for(let a of this.allowed){
-                    if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
+                    if(region.getValue(x, y) == Engine.getEntityIndex(a.name)){
                         return false;
                     }
                 }
@@ -50,7 +50,7 @@ class DistanceEstimator implements EstimatorInterface{
         let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
             (x:number, y:number)=>{
                 for(let a of this.allowed){
-                    if(region.getValue(x, y) == Marahel.getEntityIndex(a.name)){
+                    if(region.getValue(x, y) == Engine.getEntityIndex(a.name)){
                         return false;
                     }
                 }
@@ -75,12 +75,12 @@ class DistanceEstimator implements EstimatorInterface{
         let maxChange:boolean = false;
         let minChange:boolean = false;
         for(let e of this.entities){
-            let maxValue:number = this.getMax(position, region, Marahel.getEntityIndex(e.name));
+            let maxValue:number = this.getMax(position, region, Engine.getEntityIndex(e.name));
             if(maxValue != -1 && maxValue > max){
                 max = max;
                 maxChange = true;
             }
-            let minValue:number = this.getMin(position, region, Marahel.getEntityIndex(e.name));
+            let minValue:number = this.getMin(position, region, Engine.getEntityIndex(e.name));
             if(minValue != -1 && minValue < min){
                 min = minValue;
                 minChange = false;

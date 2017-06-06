@@ -8,6 +8,126 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+// /// <reference path="core/Marahel.ts"/>
+// let fs = require("fs");
+// let savePixels = require("save-pixels");
+// let zeros = require("zeros");
+// let filename:string = "equal";
+// fs.readFile(filename + ".txt", {encoding: "utf8"}, function read(err, data){
+//     console.log(data);
+//     let lines:string[] = data.split("\n");
+//     let values:Point[] = [];
+//     for(let l of lines){
+//         if(l.trim().length == 0){
+//             continue;
+//         }
+//         let parts:string[] = l.split(",");
+//         values.push(new Point(parseFloat(parts[0]), parseFloat(parts[1])));
+//     }
+//     saveHeatMap(values)
+// });
+// let result:string = "";
+// fs.readFile("equal.txt", {encoding: "utf8"}, function read(err, data){
+//     console.log(data);
+//     let lines:string[] = data.split("\n");
+//     for(let l of lines){
+//         if(l.trim().length == 0){
+//             continue;
+//         }
+//         let parts:string[] = l.split(",");
+//         result += parts[2] + ",";
+//     }
+//     result += "\n";
+//     fs.readFile("bsp.txt", {encoding: "utf8"}, function read(err, data){
+//         console.log(data);
+//         let lines:string[] = data.split("\n");
+//         for(let l of lines){
+//             if(l.trim().length == 0){
+//                 continue;
+//             }
+//             let parts:string[] = l.split(",");
+//             result += parts[2] + ",";
+//         }
+//         result += "\n";
+//         fs.readFile("digger.txt", {encoding: "utf8"}, function read(err, data){
+//             console.log(data);
+//             let lines:string[] = data.split("\n");
+//             for(let l of lines){
+//                 if(l.trim().length == 0){
+//                     continue;
+//                 }
+//                 let parts:string[] = l.split(",");
+//                 result += parts[2] + ",";
+//             }
+//             result += "\n";
+//             fs.readFile("cave.txt", {encoding: "utf8"}, function read(err, data){
+//                 console.log(data);
+//                 let lines:string[] = data.split("\n");
+//                 for(let l of lines){
+//                     if(l.trim().length == 0){
+//                         continue;
+//                     }
+//                     let parts:string[] = l.split(",");
+//                     result += parts[2] + ",";
+//                 }
+//                 result += "\n";
+//                 fs.readFile("mine.txt", {encoding: "utf8"}, function read(err, data){
+//                     console.log(data);
+//                     let lines:string[] = data.split("\n");
+//                     for(let l of lines){
+//                         if(l.trim().length == 0){
+//                             continue;
+//                         }
+//                         let parts:string[] = l.split(",");
+//                         result += parts[2] + ",";
+//                     }
+//                     result += "\n";
+//                     let out = fs.createWriteStream("total.csv");
+//                     out.write(result);
+//                     out.end();
+//                     console.log("End :D")
+//                 });
+//             });
+//         });
+//     });
+// });
+// function saveHeatMap(values:Point[]){
+//     let colorMap: number[][] = [];
+//     for(let i:number=0; i<100; i++){
+//         colorMap.push([]);
+//         for(let j:number=0; j<100; j++){
+//             colorMap[i].push(0);
+//         }
+//     }
+//     for(let i:number=0; i<values.length; i++){
+//         let x:number = Math.floor(values[i].x/25);
+//         // x = Math.floor(100 * Math.log(x)/(2 * Math.log(100)));
+//         let y:number = colorMap.length - Math.floor(values[i].y);
+//         // y = Math.floor(100 * Math.log(y)/(2 * Math.log(100)));
+//         colorMap[y][x] += 1;
+//     }
+//     let max:number = 0;
+//     for(let i:number=0; i<colorMap.length; i++){
+//         for(let j:number=0; j<colorMap[i].length; j++){
+//             if(colorMap[i][j] > max){
+//                 max = colorMap[i][j];
+//             }
+//         }
+//     }
+//     for(let i:number=0; i<colorMap.length; i++){
+//         for(let j:number=0; j<colorMap[i].length; j++){
+//             colorMap[i][j] = Math.floor((colorMap[i][j] / max) * 255);
+//         }
+//     }
+//     let picture = zeros([colorMap[0].length, colorMap.length]);
+//     for (let y: number = 0; y < colorMap.length; y++) {
+//         for (let x: number = 0; x < colorMap[y].length; x++) {
+//             picture.set(x, y, colorMap[y][x])
+//         }
+//     }
+//     savePixels(picture, "png").pipe(fs.createWriteStream(filename + ".png"));
+//     console.log("Done");
+// }
 var Map = (function () {
     function Map(width, height) {
         this.numEntities = {};
@@ -365,7 +485,7 @@ var AdjustmentDivider = (function () {
         var r = new Region(0, 0, 0, 0);
         for (var i = 0; i < AdjustmentDivider.RETRY_TRAILS; i++) {
             this.changeRegion(map, r);
-            if (!this.checkIntersection(r, regions)) {
+            if (!this.checkIntersection(r, regions) || this.allowIntersect) {
                 break;
             }
         }
@@ -798,7 +918,7 @@ var AStar = (function () {
                     }
                 }
             }
-            if (shortest < 4) {
+            if (shortest < 4 || (shortest < Number.MAX_VALUE && iterations > AStar.MAX_MULTI_TEST)) {
                 break;
             }
         }
@@ -1363,6 +1483,9 @@ var Group = (function () {
         this.points.sort(function (a, b) {
             var d1 = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
             var d2 = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
+            if (d1 == d2) {
+                return Math.random() - 0.5;
+            }
             return d1 - d2;
         });
     };
@@ -2339,76 +2462,173 @@ Marahel.MAX_TRIALS = 10;
 var fs = require("fs");
 var savePixels = require("save-pixels");
 var zeros = require("zeros");
+// function floodFill(x: number, y: number, label: number, labelBoard: number[][], region: Region, neighbor: Neighborhood, entity: Entity): void {
+//     if (labelBoard[y][x] != -1) {
+//         return;
+//     }
+//     labelBoard[y][x] = label;
+//     let neighborLocations: Point[] = neighbor.getNeighbors(x, y, region);
+//     for (let p of neighborLocations) {
+//         if (region.getValue(p.x, p.y) == Marahel.getEntityIndex(entity.name)) {
+//             floodFill(p.x, p.y, label, labelBoard, region, neighbor, entity);
+//         }
+//     }
+// }
+// function getUnconnectedGroups(region: Region, entity: Entity): Group[] {
+//     let label: number = 0;
+//     let labelBoard: number[][] = [];
+//     for (let y: number = 0; y < region.getHeight(); y++) {
+//         labelBoard.push([]);
+//         for (let x: number = 0; x < region.getWidth(); x++) {
+//             labelBoard[y].push(-1);
+//         }
+//     }
+//     for (let y: number = 0; y < region.getHeight(); y++) {
+//         for (let x: number = 0; x < region.getWidth(); x++) {
+//             if (labelBoard[y][x] == -1) {
+//                 if (region.getValue(x, y) == Marahel.getEntityIndex(entity.name)) {
+//                     floodFill(x, y, label, labelBoard, region, Marahel.getNeighborhood("plus"), entity);
+//                     label += 1;
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+//     let groups: Group[] = [];
+//     for (let i: number = 0; i < label; i++) {
+//         groups.push(new Group());
+//         groups[i].index = i;
+//     }
+//     for (let y: number = 0; y < region.getHeight(); y++) {
+//         for (let x: number = 0; x < region.getWidth(); x++) {
+//             if (labelBoard[y][x] != -1) {
+//                 groups[labelBoard[y][x]].addPoint(x, y);
+//             }
+//         }
+//     }
+//     return groups;
+// }
+// function getGroupValue(map:Map):Point{
+//     let result:Point = new Point();
+//     Marahel.currentMap = map;
+//     result.x = getUnconnectedGroups(new Region(0, 0, map.width, map.height), Marahel.getEntity("solid")).length;
+//     result.y = getUnconnectedGroups(new Region(0, 0, map.width, map.height), Marahel.getEntity("empty")).length;
+//     return result;
+// }
+// function getNumberOpen(map:Region):number{
+//     let result:number=0;
+//     for(let x:number=0; x<map.getWidth(); x++){
+//         for(let y:number=0; y<map.getHeight(); y++){
+//             if(map.getValue(x, y) == Marahel.getEntityIndex("empty")){
+//                 result += 1;
+//             }
+//         }
+//     }
+//     return result;
+// }
 var data = {
     "metadata": {
-        "min": "30x30",
-        "max": "40x40"
+        "min": "50x50",
+        "max": "50x50"
     },
     "region": {
         "type": "bsp",
-        "number": "7",
+        "number": "1",
         "parameters": {
-            "min": "8x8",
-            "max": "15x15"
+            "min": "31x64",
+            "max": "80x36"
         }
     },
     "entity": {
         "empty": { "color": "0xffffff" },
         "solid": { "color": "0x000000" },
-        "player": { "color": "0xff0000", "min": "0", "max": "1" }
+        "player": { "color": "0x40963c", "min": "1", "max": "1" },
+        "treasure": { "color": "0xf4d442", "min": "5", "max": "10" },
+        "enemy": { "color": "0xd85050", "min": "10", "max": "15" }
     },
     "neighborhood": {
         "all": "111,131,111",
-        "plus": "010,121,010"
+        "plus": "010,121,010",
+        "vert": "1,2,1",
+        "horz": "121"
     },
     "rule": [
         {
-            "type": "automata",
-            "region": { "name": "map" },
-            "parameters": { "iterations": "1" },
-            "rules": ["self(any) -> self(solid)"]
-        },
-        {
-            "type": "agent",
-            "region": { "name": "map", "border": "1,2" },
-            "parameters": { "number": "1,3", "change": "10,15", "lifespan": "80,150" },
-            "rules": ["self(any), random < 0.7 -> self(empty)", "self(any) -> all(empty)"]
-        },
-        {
-            "type": "automata",
-            "region": { "name": "map", "border": "1,2" },
-            "parameters": { "iterations": "1" },
-            "rules": ["self(solid), random<0.2->self(empty)"]
-        },
-        {
-            "type": "automata",
-            "region": { "name": "map", "border": "1,2" },
-            "parameters": { "iterations": "10" },
-            "rules": ["self(solid), all(empty)>5->self(empty)", "self(empty),all(solid)>5->self(solid)"]
-        },
-        {
+            "region": { "name": "map", "border": "6,6" },
             "type": "connector",
-            "region": { "name": "map" },
-            "parameters": { "neighborhood": "plus", "entities": "empty", "type": "full" },
-            "rules": ["self(any)->self(empty)"]
-        },
-        {
-            "type": "automata",
-            "region": { "name": "map", "border": "1,2" },
-            "parameters": { "iterations": "10" },
-            "rules": ["self(empty), plus(empty)==1->self(solid)"]
+            "parameters": { "type": "full", "neighborhood": "all", "entities": "solid" },
+            "rules": ["noise != complete, noise != vert(empty) -> vert(empty:6|empty:2)", "3 > complete -> plus(empty:1|solid:4)", "random < noise, complete != 4 -> all(empty:8|solid:4)", "complete >= complete, random != noise, vert(solid) <= complete -> all(solid)"]
         }
     ]
 };
+// let maps: Map[] = [];
 Marahel.initialize(data);
+// for (let i: number = 0; i < 1; i++) {
+//     console.log("Generating " + i)
 Marahel.generate();
+//     maps.push(Marahel.currentMap);
+//     console.log("Finished " + i);
+// }
+// let values: Point[] = [];
+// let entropy:number[] = [];
+// for (let i: number = 0; i < maps.length; i++) {
+//     console.log("Analyzing " + i);
+//     let temp = getGroupValue(maps[i]);
+//     values.push(new Point(getNumberOpen(new Region(0,0, maps[i].width, maps[i].height)), temp.x + temp.y));
+//     let tempProbability:number[] = [];
+//     for(let x:number=0; x<maps[i].width; x+=10){
+//         for(let y:number=0; y<maps[i].height; y+=10){
+//             tempProbability.push(getNumberOpen(new Region(x,y, 10, 10))/100);
+//         }
+//     }
+//     let tempEntropy:number = 0;
+//     for(let p of tempProbability){
+//         if(p == 0 || p == 1){
+//             tempEntropy = 0;
+//         }
+//         else{
+//             tempEntropy += - p * Math.log(p)/Math.log(2) - p * Math.log(p)/Math.log(2);
+//         }
+//     }
+//     entropy.push(tempEntropy/tempProbability.length);
+//     console.log("Finished " + i);
+// }
+// let maxValue:Point = new Point(0, 0)
+// for(let i:number=0; i<values.length; i++){
+//     if(maxValue.x < values[i].x){
+//         maxValue.x = values[i].x;
+//     }
+//     if(maxValue.y < values[i].y){
+//         maxValue.y = values[i].y;
+//     }
+// }
+// console.log(maxValue);
+// let out = fs.createWriteStream("mine.txt");
+// for(let i:number=0; i<values.length; i++){
+//     console.log("Writing " + i);
+//     out.write(values[i].x + "," + values[i].y + "," + entropy[i] + "\n");
+// }
+// out.end();
+// console.log("Done.");
+// // let image: number[][] = [];
+// // for(let i:number=0; i<51; i++){
+// //     image.push([]);
+// //     for(let j:number=0; j<51; j++){
+// //         image[i].push(0);
+// //     }
+// // }
+// // for(let i:number=0; i<values.length; i++){
+// //     image[values[i].x][values[i].y] += 1;
+// // }
 var colorMap = Marahel.currentMap.getColorMap();
 var indexMap = Marahel.currentMap.getIndexMap();
 Marahel.printIndexMap(indexMap);
-var picture = zeros([colorMap[0].length, colorMap.length]);
+var picture = zeros([colorMap[0].length, colorMap.length, 3]);
 for (var y = 0; y < colorMap.length; y++) {
     for (var x = 0; x < colorMap[y].length; x++) {
-        picture.set(x, y, colorMap[y][x]);
+        picture.set(x, y, 0, colorMap[y][x] >> 16);
+        picture.set(x, y, 1, colorMap[y][x] >> 8 & 0xff);
+        picture.set(x, y, 2, colorMap[y][x] & 0xff);
     }
 }
 savePixels(picture, "png").pipe(fs.createWriteStream("out.png"));

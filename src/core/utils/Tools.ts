@@ -94,7 +94,7 @@ class AStar{
                     }
                 }
             }
-            if(shortest < 4){
+            if(shortest < 4 || (shortest < Number.MAX_VALUE && iterations > AStar.MAX_MULTI_TEST)){
                 break;
             }
         }
@@ -105,7 +105,7 @@ class AStar{
 class EntityListParser{
     static parseList(line:string):Entity[]{
         if(line.trim() == "any"){
-            return Marahel.getAllEntities().concat([Marahel.getEntity(-1)]);
+            return Engine.getAllEntities().concat([Engine.getEntity(-1)]);
         }
         let result:Entity[] = [];
         let eeParts:string[] = line.split("|");
@@ -116,7 +116,7 @@ class EntityListParser{
                 times = parseInt(nums[1]);
             }
             for(let i:number=0; i<times; i++){
-                result.push(Marahel.getEntity(nums[0].trim()));
+                result.push(Engine.getEntity(nums[0].trim()));
             }
         }
         return result;

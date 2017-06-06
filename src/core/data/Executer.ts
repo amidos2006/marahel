@@ -12,7 +12,7 @@ class Executer{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let eParts:string[] = parts[0].split(/\((.+)\)/);
-        this.neightbor = Marahel.getNeighborhood(eParts[0].trim());
+        this.neightbor = Engine.getNeighborhood(eParts[0].trim());
         this.entities = EntityListParser.parseList(eParts[1].trim());
 
         if(parts.length > 1){
@@ -22,8 +22,8 @@ class Executer{
     }
 
     apply(position:Point, region:Region):void{
-        let entity:Entity = this.entities[Marahel.getIntRandom(0, this.entities.length)];
-        this.neightbor.setTotal(Marahel.getEntityIndex(entity.name), position, region);
+        let entity:Entity = this.entities[Engine.getIntRandom(0, this.entities.length)];
+        this.neightbor.setTotal(Engine.getEntityIndex(entity.name), position, region);
         if(this.nextExecuter != null){
             this.nextExecuter.apply(position, region);
         }

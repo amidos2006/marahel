@@ -11,14 +11,14 @@ class Condition{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let cParts:string[] = parts[0].split(/>=|<=|==|!=|>|</);
-        this.leftSide = Marahel.getEstimator(cParts[0].trim());
+        this.leftSide = Engine.getEstimator(cParts[0].trim());
         if(cParts.length > 1){
-            this.operator = Marahel.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
-            this.rightSide = Marahel.getEstimator(cParts[1].trim());
+            this.operator = Engine.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
+            this.rightSide = Engine.getEstimator(cParts[1].trim());
         }
         else{
-            this.operator = Marahel.getOperator(">");
-            this.rightSide = Marahel.getEstimator("0");
+            this.operator = Engine.getOperator(">");
+            this.rightSide = Engine.getEstimator("0");
         }
 
         if(parts.length > 1){

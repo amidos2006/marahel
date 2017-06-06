@@ -64,10 +64,10 @@ class Region{
     getValue(x:number, y:number):number{
         let p:Point = this.getRegionPosition(x, y);
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
-            if(Marahel.borderType == Region.BORDER_NONE){
+            if(Engine.borderType == Region.BORDER_NONE){
                 return -1;
             }
-            return Marahel.borderType;
+            return Engine.borderType;
         }
         return Marahel.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
     }
@@ -86,7 +86,7 @@ class Region{
 
     getRegionPosition(x:number, y:number):Point{
         let p:Point = new Point(x, y);
-        if(Marahel.borderType == Region.BORDER_WRAP){
+        if(Engine.borderType == Region.BORDER_WRAP){
             if(p.x >= this.getWidth()){
                 p.x -= this.getWidth();
             }

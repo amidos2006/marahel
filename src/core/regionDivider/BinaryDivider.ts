@@ -19,13 +19,13 @@ class BinaryDivider implements DividerInterface{
     }
 
     private divideWidth(region:Region, allowedWidth:number):Region[]{
-        let rWidth:number = this.minWidth + Marahel.getIntRandom(0, allowedWidth);
+        let rWidth:number = this.minWidth + Engine.getIntRandom(0, allowedWidth);
         return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()), 
                 new Region(region.getX() + rWidth, region.getY(), region.getWidth() - rWidth, region.getHeight())];
     }
 
     private divideHeight(region:Region, allowedHeight:number):Region[]{
-        let rHeight:number = this.minHeight + Marahel.getIntRandom(0, allowedHeight);
+        let rHeight:number = this.minHeight + Engine.getIntRandom(0, allowedHeight);
         return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight), 
                 new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
     }
@@ -38,7 +38,7 @@ class BinaryDivider implements DividerInterface{
         let allowedWidth:number = region.getWidth() - 2 * this.minWidth;
         let allowedHeight:number = region.getHeight() - 2 * this.minHeight;
 
-        if(Marahel.getRandom() < 0.5){
+        if(Engine.getRandom() < 0.5){
             if(allowedWidth > 0){
                 return this.divideWidth(region, allowedWidth);
             }
@@ -73,7 +73,7 @@ class BinaryDivider implements DividerInterface{
     }
 
     private divideMaxSize(region:Region):Region[]{
-        if(Marahel.getRandom() < 0.5){
+        if(Engine.getRandom() < 0.5){
             if(region.getWidth() >= this.maxWidth){
                 return this.divideWidth(region, 0);
             }
@@ -102,7 +102,7 @@ class BinaryDivider implements DividerInterface{
         let results:Region[] = [new Region(0, 0, map.getWidth(), map.getHeight())];
         
         while(results.length<this.numberOfRegions || this.checkMaxSize(results)){
-            Marahel.shuffleArray(results);
+            Engine.shuffleArray(results);
             let prevLength:number = results.length;
             for(let i:number=0; i<results.length; i++){
                 if(this.testDivide(results[i])){
@@ -120,7 +120,7 @@ class BinaryDivider implements DividerInterface{
             }
         }
 
-        Marahel.shuffleArray(results);
+        Engine.shuffleArray(results);
         results = results.slice(0,this.numberOfRegions);
         return results;
     }

@@ -29,6 +29,9 @@ class Group{
         this.points.sort((a:Point, b:Point):number=>{
             let d1:number = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
             let d2:number = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
+            if(d1 == d2){
+                return Math.random()-0.5;
+            }
             return d1 - d2;
         })
     }
@@ -37,7 +40,7 @@ class Group{
         for(let i:number=0; i<this.points.length; i++){
             let found:boolean = false;
             for(let e of allowed){
-                if(neighbor.getTotal(Marahel.getEntityIndex(e.name),this.points[i], region) < neighbor.locations.length){
+                if(neighbor.getTotal(Engine.getEntityIndex(e.name),this.points[i], region) < neighbor.locations.length){
                     found = true;
                     break;
                 }
@@ -83,9 +86,9 @@ class ConnectorGenerator extends Generator{
     constructor(currentRegion:any, rules:string[], parameters:any){
         super(currentRegion, rules);
 
-        this.neighbor = Marahel.getNeighborhood("plus");
+        this.neighbor = Engine.getNeighborhood("plus");
         if(parameters["neighborhood"]){
-            this.neighbor = Marahel.getNeighborhood(parameters["neighborhood"].trim());
+            this.neighbor = Engine.getNeighborhood(parameters["neighborhood"].trim());
         }
         this.entities = EntityListParser.parseList("any");
         if(parameters["entities"]){
@@ -118,7 +121,7 @@ class ConnectorGenerator extends Generator{
         let neighborLocations:Point[] = this.neighbor.getNeighbors(x, y, region);
         for(let p of neighborLocations){
             for(let e of this.entities){
-                if(region.getValue(p.x, p.y) == Marahel.getEntityIndex(e.name)){
+                if(region.getValue(p.x, p.y) == Engine.getEntityIndex(e.name)){
                     this.floodFill(p.x, p.y, label, labelBoard, region);
                 }
             }
@@ -138,7 +141,7 @@ class ConnectorGenerator extends Generator{
             for(let x:number=0; x<region.getWidth(); x++){
                 if(labelBoard[y][x] == -1){
                     for(let e of this.entities){
-                        if(region.getValue(x, y) == Marahel.getEntityIndex(e.name)){
+                        if(region.getValue(x, y) == Engine.getEntityIndex(e.name)){
                             this.floodFill(x, y, label, labelBoard, region);
                             label+=1;
                             break;
@@ -200,10 +203,10 @@ class ConnectorGenerator extends Generator{
     private connectRandom(groups:Group[], region:Region):void{
         let index:number=0;
         while(groups.length > 1){
-            let i1:number=Marahel.getIntRandom(0,groups.length);
-            let i2:number=(i1+Marahel.getIntRandom(0, groups.length-1) + 1)%groups.length;
-            this.connect(groups[i1].points[Marahel.getIntRandom(0, groups[i1].points.length)], 
-                groups[i2].points[Marahel.getIntRandom(0, groups[i2].points.length)], region);
+            let i1:number=Engine.getIntRandom(0,groups.length);
+            let i2:number=(i1+Engine.getIntRandom(0, groups.length-1) + 1)%groups.length;
+            this.connect(groups[i1].points[Engine.getIntRandom(0, groups[i1].points.length)], 
+                groups[i2].points[Engine.getIntRandom(0, groups[i2].points.length)], region);
             groups[i1].combine(groups[i2]);
             groups.splice(i2, 1);
             index+=1;
@@ -274,13 +277,13 @@ class ConnectorGenerator extends Generator{
                 if(g1 == g2){
                     continue;
                 }
-                if(Marahel.getRandom() > probability){
+                if(Engine.getRandom() > probability){
                     probability += 1/groups.length;
                     continue;
                 }
                 probability = 1/groups.length;
-                let p1:Point = g1.points[Marahel.getIntRandom(0, g1.points.length)];
-                let p2:Point = g2.points[Marahel.getIntRandom(0, g2.points.length)];
+                let p1:Point = g1.points[Engine.getIntRandom(0, g1.points.length)];
+                let p2:Point = g2.points[Engine.getIntRandom(0, g2.points.length)];
                 this.connect(p1, p2, region);
             }
         }

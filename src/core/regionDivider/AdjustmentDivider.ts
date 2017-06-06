@@ -33,10 +33,10 @@ class AdjustmentDivider implements DividerInterface{
     }
 
     private changeRegion(map:Region, r:Region):void{
-        r.setX(Marahel.getIntRandom(0, map.getWidth() - this.maxWidth));
-        r.setY(Marahel.getIntRandom(0, map.getHeight() - this.maxHeight));
-        r.setWidth(Marahel.getIntRandom(this.minWidth, this.maxWidth));
-        r.setHeight(Marahel.getIntRandom(this.minHeight, this.maxHeight));
+        r.setX(Engine.getIntRandom(0, map.getWidth() - this.maxWidth));
+        r.setY(Engine.getIntRandom(0, map.getHeight() - this.maxHeight));
+        r.setWidth(Engine.getIntRandom(this.minWidth, this.maxWidth));
+        r.setHeight(Engine.getIntRandom(this.minHeight, this.maxHeight));
     }
 
     private getFitRegion(map:Region, regions:Region[]):Region{
@@ -64,7 +64,7 @@ class AdjustmentDivider implements DividerInterface{
     private adjustRegions(map:Region, regions:Region[]):void{
         let minIntersect:number = this.calculateIntersection(regions);
         for(let i:number=0; i<AdjustmentDivider.ADJUSTMENT_TRAILS; i++){
-            let r:Region = regions[Marahel.getIntRandom(0, regions.length)];
+            let r:Region = regions[Engine.getIntRandom(0, regions.length)];
             let temp:Region = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
             this.changeRegion(map, r);
             let value:number = this.calculateIntersection(regions);

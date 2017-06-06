@@ -18,9 +18,9 @@ class Agent{
         this.lifespan = lifespan;
         this.currentSpeed = speed;
         this.speed = speed;
-        this.currentChange = Marahel.getIntRandom(change.x, change.y);
+        this.currentChange = Engine.getIntRandom(change.x, change.y);
         this.change = change;
-        this.currentDirection = directions.locations[Marahel.getIntRandom(0, directions.locations.length)];
+        this.currentDirection = directions.locations[Engine.getIntRandom(0, directions.locations.length)];
         this.directions = [];
         for(let i:number=0; i<directions.locations.length; i++){
             this.directions.push(new Point(directions.locations[i].x, directions.locations[i].y));
@@ -33,7 +33,7 @@ class Agent{
         for(let x:number=0; x<region.getWidth(); x++){
             for(let y:number=0; y<region.getHeight(); y++){
                 for(let e of this.entities){
-                    if(region.getValue(x, y) == Marahel.getEntityIndex(e.name)){
+                    if(region.getValue(x, y) == Engine.getEntityIndex(e.name)){
                         locations.push(new Point(x, y));
                     }
                 }
@@ -43,12 +43,12 @@ class Agent{
             this.currentLifespan = -100;
             return;
         }
-        this.position = locations[Marahel.getIntRandom(0, locations.length)];
+        this.position = locations[Engine.getIntRandom(0, locations.length)];
     }
 
     private checkAllowed(x:number, y:number, region:Region, allow:Entity[]):boolean{
         for(let e of allow){
-            if(region.getValue(x, y) == Marahel.getEntityIndex(e.name)){
+            if(region.getValue(x, y) == Engine.getEntityIndex(e.name)){
                 return true;
             }
         }
@@ -56,7 +56,7 @@ class Agent{
     }
 
     private changeDirection(region:Region, avoid:Entity[]):void{
-        Marahel.shuffleArray(this.directions);
+        Engine.shuffleArray(this.directions);
         for(let d of this.directions){
             let newPosition:Point = region.getRegionPosition(this.position.x + d.x, this.position.y + d.y);
             if(!region.outRegion(newPosition.x, newPosition.y) && 
@@ -81,7 +81,7 @@ class Agent{
         this.currentLifespan -= 1;
         this.currentChange -= 1;
         if(this.currentChange <= 0){
-            this.currentChange = Marahel.getIntRandom(this.change.x, this.change.y);
+            this.currentChange = Engine.getIntRandom(this.change.x, this.change.y);
             this.changeDirection(region, allow);
         }
         else{
@@ -140,9 +140,9 @@ class AgentGenerator extends Generator{
             this.lifespan.x = parseInt(parameters["lifespan"].split(",")[0]);
             this.lifespan.y = parseInt(parameters["lifespan"].split(",")[1]);
         }
-        this.directions = Marahel.getNeighborhood("plus");
+        this.directions = Engine.getNeighborhood("plus");
         if(parameters["directions"]){
-            this.directions = Marahel.getNeighborhood(parameters["directions"]);
+            this.directions = Engine.getNeighborhood(parameters["directions"]);
         }
     }
 
@@ -150,10 +150,10 @@ class AgentGenerator extends Generator{
         super.applyGeneration();
         for(let r of this.regions){
             let agents:Agent[] = [];
-            let numberOfAgents:number = Marahel.getIntRandom(this.numAgents.x, this.numAgents.y);
+            let numberOfAgents:number = Engine.getIntRandom(this.numAgents.x, this.numAgents.y);
             for(let i:number=0; i<numberOfAgents; i++){
-                agents.push(new Agent(Marahel.getIntRandom(this.lifespan.x, this.lifespan.y), 
-                    Marahel.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.allowedEntities, this.directions));
+                agents.push(new Agent(Engine.getIntRandom(this.lifespan.x, this.lifespan.y), 
+                    Engine.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.allowedEntities, this.directions));
                 agents[agents.length - 1].moveToLocation(r);
             }
             let agentChanges:boolean = true;

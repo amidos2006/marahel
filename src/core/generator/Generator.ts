@@ -38,7 +38,7 @@ abstract class Generator{
                 this.borderType = Region.BORDER_NONE;
             }
             else{
-                this.borderType = Marahel.getEntityIndex(currentRegion["borderType"].trim());
+                this.borderType = Engine.getEntityIndex(currentRegion["borderType"].trim());
             }
         }
 
@@ -75,10 +75,10 @@ abstract class Generator{
     }
 
     applyGeneration():void{
-        Marahel.replacingType = this.replacingType;
-        Marahel.borderType = this.borderType;
+        Engine.replacingType = this.replacingType;
+        Engine.borderType = this.borderType;
         for(let r of this.regions){
-            r.border = Marahel.getIntRandom(this.minBorder, this.maxBorder);
+            r.border = Engine.getIntRandom(this.minBorder, this.maxBorder);
         }
     }
 }
