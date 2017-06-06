@@ -56,19 +56,6 @@ declare class Region {
     getDistances(start: Point, neighbor: Neighborhood, value: number, checkSolid: Function): number[];
     intersect(pr: Region | Point): boolean;
 }
-declare class Neighborhood {
-    width: number;
-    height: number;
-    name: string;
-    locations: Point[];
-    private printing;
-    constructor(name: string, line: string);
-    getTotal(value: number, center: Point, region: Region): number;
-    setTotal(value: number, center: Point, region: Region): void;
-    getPath(start: Point, end: Point, region: Region, checkSolid: Function): Point[];
-    getNeighbors(x: number, y: number, region: Region): Point[];
-    toString(): string;
-}
 interface DividerInterface {
     getRegions(map: Region): Region[];
 }
@@ -412,13 +399,31 @@ declare class Noise {
     perlin3(x: number, y: number, z: number): number;
 }
 declare class Marahel {
+    static MAX_TRIALS: number;
+    static currentMap: Map;
+    static initialize(data: any): void;
+    static generate(outputType?: number, seed?: number): any[][];
+    static printIndexMap(generatedMap: number[][]): void;
+}
+declare class Neighborhood {
+    width: number;
+    height: number;
+    name: string;
+    locations: Point[];
+    private printing;
+    constructor(name: string, line: string);
+    getTotal(value: number, center: Point, region: Region): number;
+    setTotal(value: number, center: Point, region: Region): void;
+    getPath(start: Point, end: Point, region: Region, checkSolid: Function): Point[];
+    getNeighbors(x: number, y: number, region: Region): Point[];
+    toString(): string;
+}
+declare class Engine {
     static STRING_OUTPUT: number;
     static COLOR_OUTPUT: number;
     static INDEX_OUTPUT: number;
-    static MAX_TRIALS: number;
     static replacingType: number;
     static borderType: number;
-    static currentMap: Map;
     private static rnd;
     private static noise;
     private static minDim;
@@ -445,10 +450,3 @@ declare class Marahel {
     private static getGenerator(type, currentRegion, parameters, rules);
     static printIndexMap(generatedMap: number[][]): void;
 }
-declare let fs: any;
-declare let savePixels: any;
-declare let zeros: any;
-declare let data: any;
-declare let colorMap: number[][];
-declare let indexMap: number[][];
-declare let picture: any;

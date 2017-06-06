@@ -25,29 +25,29 @@ class Map{
             }
         }
         this.numEntities["undefined"] = this.width * this.height;
-        Marahel.replacingType = Map.REPLACE_BACK;
+        Engine.replacingType = Map.REPLACE_BACK;
     }
 
     setValue(x:number, y:number, value:number):void{
-        let e:Entity = Marahel.getEntity(value);
+        let e:Entity = Engine.getEntity(value);
         if(e.name in this.numEntities && e.maxValue > 0 && this.numEntities[e.name] >= e.maxValue){
             return;
         }
-        this.numEntities[Marahel.getEntity(this.mapValues[y][x]).name] -= 1;
+        this.numEntities[Engine.getEntity(this.mapValues[y][x]).name] -= 1;
         if(!(e.name in this.numEntities)){
             this.numEntities[e.name] = 0;
         }
         this.numEntities[e.name] += 1;
-        if(Marahel.replacingType == Map.REPLACE_SAME){
+        if(Engine.replacingType == Map.REPLACE_SAME){
             this.mapValues[y][x] = value;
         }
-        if(Marahel.replacingType == Map.REPLACE_BACK){
+        if(Engine.replacingType == Map.REPLACE_BACK){
             this.backValues[y][x] = value;
         }
     }
 
     switchBuffers():void{
-        if(Marahel.replacingType == Map.REPLACE_BACK){
+        if(Engine.replacingType == Map.REPLACE_BACK){
             let temp:number[][] = this.mapValues;
             this.mapValues = this.backValues;
             this.backValues = temp;
@@ -64,7 +64,7 @@ class Map{
     }
 
     checkNumConstraints():boolean{
-        let entities:Entity[] = Marahel.getAllEntities();
+        let entities:Entity[] = Engine.getAllEntities();
         for(let e of entities){
             if(this.getNumEntity(e.name) < e.minValue){
                 return false;
@@ -85,7 +85,7 @@ class Map{
         for(let y:number=0; y<this.mapValues.length; y++){
             result.push([]);
             for(let x:number=0; x<this.mapValues[y].length; x++){
-                result[y].push(Marahel.getEntity(this.mapValues[y][x]).name);
+                result[y].push(Engine.getEntity(this.mapValues[y][x]).name);
             }
         }
         return result;
@@ -107,7 +107,7 @@ class Map{
         for(let y:number=0; y<this.mapValues.length; y++){
             result.push([]);
             for(let x:number=0; x<this.mapValues[y].length; x++){
-                result[y].push(Marahel.getEntity(this.mapValues[y][x]).color);
+                result[y].push(Engine.getEntity(this.mapValues[y][x]).color);
             }
         }
         return result;
