@@ -161,7 +161,7 @@ class AgentGenerator extends Generator{
                 for(let a of agents){
                     agentChanges = false;
                     agentChanges = agentChanges || a.update(r, this.rules, this.allowedEntities);
-                    Marahel.currentMap.switchBuffers();
+                    Engine.currentMap.switchBuffers();
                 }
             }
         }

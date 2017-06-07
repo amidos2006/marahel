@@ -45,7 +45,7 @@ class AutomataGenerator extends Generator{
                         }
                     }
                 }
-                Marahel.currentMap.switchBuffers();
+                Engine.currentMap.switchBuffers();
             }
         }
     }

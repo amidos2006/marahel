@@ -322,7 +322,7 @@ class ConnectorGenerator extends Generator{
                     this.connectFull(groups, r);
                     break;
                 }
-                Marahel.currentMap.switchBuffers();
+                Engine.currentMap.switchBuffers();
             }
         }
     }

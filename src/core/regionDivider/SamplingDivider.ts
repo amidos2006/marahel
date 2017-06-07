@@ -1,9 +1,6 @@
 /// <reference path="DividerInterface.ts"/>
 
-class AdjustmentDivider implements DividerInterface{
-    public static ADJUSTMENT_TRAILS:number = 1000;
-    public static RETRY_TRAILS:number = 100;
-
+class SamplingDivider implements DividerInterface{
     private numberOfRegions:number;
     private minWidth:number;
     private minHeight:number;
@@ -41,7 +38,7 @@ class AdjustmentDivider implements DividerInterface{
 
     private getFitRegion(map:Region, regions:Region[]):Region{
         let r:Region = new Region(0, 0, 0, 0);
-        for(let i:number=0; i<AdjustmentDivider.RETRY_TRAILS; i++){
+        for(let i:number=0; i<Marahel.SAMPLING_TRAILS; i++){
             this.changeRegion(map, r);
             if(!this.checkIntersection(r, regions) || this.allowIntersect){
                 break;
@@ -63,7 +60,7 @@ class AdjustmentDivider implements DividerInterface{
 
     private adjustRegions(map:Region, regions:Region[]):void{
         let minIntersect:number = this.calculateIntersection(regions);
-        for(let i:number=0; i<AdjustmentDivider.ADJUSTMENT_TRAILS; i++){
+        for(let i:number=0; i<Marahel.SAMPLING_TRAILS; i++){
             let r:Region = regions[Engine.getIntRandom(0, regions.length)];
             let temp:Region = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
             this.changeRegion(map, r);

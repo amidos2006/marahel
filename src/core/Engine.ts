@@ -2,9 +2,8 @@
 /// <reference path="data/Point.ts"/>
 /// <reference path="data/Entity.ts"/>
 /// <reference path="data/Neighborhood.ts"/>
-/// <reference path="regionDivider/AdjustmentDivider.ts"/>
+/// <reference path="regionDivider/SamplingDivider.ts"/>
 /// <reference path="regionDivider/BinaryDivider.ts"/>
-/// <reference path="regionDivider/DiggerDivider.ts"/>
 /// <reference path="regionDivider/EqualDivider.ts"/>
 /// <reference path="operator/OperatorInterface.ts"/>
 /// <reference path="operator/LargerEqualOperator.ts"/>
@@ -24,11 +23,14 @@
 /// <reference path="utils/Noise.ts"/>
 
 class Engine{
-    public static STRING_OUTPUT:number = 0;
-    public static COLOR_OUTPUT:number = 1;
-    public static INDEX_OUTPUT:number = 2;
-
+    /**
+     * 
+     */
     public static replacingType:number;
+    /**
+     * the last generated map, equal to null if generate is not called
+     */
+    public static currentMap:Map;
     public static borderType:number;
 
     private static rnd:Prando;
@@ -106,9 +108,9 @@ class Engine{
     }
 
     private static generateOneTime():void{
-        Marahel.currentMap = new Map(Engine.getIntRandom(Engine.minDim.x, Engine.maxDim.x), 
+        Engine.currentMap = new Map(Engine.getIntRandom(Engine.minDim.x, Engine.maxDim.x), 
             Engine.getIntRandom(Engine.minDim.y, Engine.maxDim.y));
-        let mapRegion:Region = new Region(0, 0, Marahel.currentMap.width, Marahel.currentMap.height);
+        let mapRegion:Region = new Region(0, 0, Engine.currentMap.width, Engine.currentMap.height);
         let regions:Region[] = Engine.regionDivider.getRegions(mapRegion);
         for(let g of Engine.generators){
             g.selectRegions(mapRegion, regions);
@@ -125,21 +127,21 @@ class Engine{
             Engine.noise.seed(seed);
         }
 
-        for(let i:number=0; i<Marahel.MAX_TRIALS; i++){
+        for(let i:number=0; i<Marahel.GENERATION_MAX_TRIALS; i++){
             Engine.generateOneTime();
-            if(Marahel.currentMap.checkNumConstraints()){
+            if(Engine.currentMap.checkNumConstraints()){
                 break;
             }
         }
 
         if(outputType){
-            if(outputType == Engine.COLOR_OUTPUT){
-                return Marahel.currentMap.getColorMap();
+            if(outputType == Marahel.COLOR_OUTPUT){
+                return Engine.currentMap.getColorMap();
             }
-            if(outputType == Engine.INDEX_OUTPUT){
-                return Marahel.currentMap.getIndexMap();
+            if(outputType == Marahel.INDEX_OUTPUT){
+                return Engine.currentMap.getIndexMap();
             }
-            return Marahel.currentMap.getStringMap();
+            return Engine.currentMap.getStringMap();
         }
     }
 
@@ -209,10 +211,8 @@ class Engine{
             return new EqualDivider(numRegions, parameters);
             case "bsp":
             return new BinaryDivider(numRegions, parameters);
-            case "digger":
-            return new DiggerDivider(numRegions, parameters);
             case "sampling":
-            return new AdjustmentDivider(numRegions, parameters);
+            return new SamplingDivider(numRegions, parameters);
         }
         return null;
     }

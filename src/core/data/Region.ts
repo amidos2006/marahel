@@ -58,7 +58,7 @@ class Region{
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
             return;
         }
-        Marahel.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
+        Engine.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
     }
 
     getValue(x:number, y:number):number{
@@ -69,14 +69,14 @@ class Region{
             }
             return Engine.borderType;
         }
-        return Marahel.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
+        return Engine.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
     }
 
     getEntityNumber(value:number):number{
         let result:number = 0;
         for(let x:number=0; x<this.getWidth(); x++){
             for(let y:number=0; y<this.getHeight(); y++){
-                if(Marahel.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                if(Engine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
                     result += 1;
                 }
             }
@@ -115,7 +115,7 @@ class Region{
         let results:number[]=[];
         for(let x:number=0; x<this.getWidth(); x++){
             for(let y:number=0; y<this.getHeight(); y++){
-                if(Marahel.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                if(Engine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
                     let path:Point[] = neighbor.getPath(start, new Point(x, y), this, checkSolid);
                     if(path.length > 0){
                         results.push(path.length);

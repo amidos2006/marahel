@@ -25,9 +25,6 @@ class LocationNode{
 }
 
 class AStar{
-    static MAX_ITERATIONS:number = 1000;
-    static MAX_MULTI_TEST:number = 10;
-
     private static convertNodeToPath(node:LocationNode):Point[]{
         let points:Point[] = [];
         while(node != null){
@@ -61,7 +58,7 @@ class AStar{
                 });
             }
             iterations += 1;
-            if(iterations >= AStar.MAX_ITERATIONS){
+            if(iterations >= Marahel.CONNECTOR_TRIALS){
                 break;
             }
         }
@@ -89,12 +86,13 @@ class AStar{
                 }
                 else{
                     iterations += 1;
-                    if(iterations > AStar.MAX_MULTI_TEST){
+                    if(iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS){
                         break;
                     }
                 }
             }
-            if(shortest < 4 || (shortest < Number.MAX_VALUE && iterations > AStar.MAX_MULTI_TEST)){
+            if(shortest < 4 || (shortest < Number.MAX_VALUE && 
+                iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS)){
                 break;
             }
         }
