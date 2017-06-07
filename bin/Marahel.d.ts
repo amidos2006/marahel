@@ -353,10 +353,7 @@ declare class Condition {
     constructor(line: string);
     check(iteration: number, position: Point, region: Region): boolean;
 }
-interface ExecuterInterface {
-    apply(position: Point, region: Region): void;
-}
-declare class ChangeExecuter {
+declare class Executer {
     private neightbor;
     private entities;
     private nextExecuter;

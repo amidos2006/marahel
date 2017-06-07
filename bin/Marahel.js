@@ -1704,41 +1704,37 @@ var Condition = (function () {
     };
     return Condition;
 }());
-/// <reference path="../data/Region.ts"/>
-/// <reference path="../data/Point.ts"/>
 /// <reference path="../Marahel.ts"/>
 /// <reference path="../data/Neighborhood.ts"/>
 /// <reference path="../data/Entity.ts"/>
-/// <reference path="ExecuterInterface.ts"/>
-var ChangeExecuter = (function () {
-    function ChangeExecuter(line) {
+var Executer = (function () {
+    function Executer(line) {
         var parts = line.split(",");
         var eParts = parts[0].split(/\((.+)\)/);
         this.neightbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());
         this.entities = EntityListParser.parseList(eParts[1].trim());
         if (parts.length > 1) {
             parts.splice(0, 1);
-            this.nextExecuter = new ChangeExecuter(parts.join(","));
+            this.nextExecuter = new Executer(parts.join(","));
         }
     }
-    ChangeExecuter.prototype.apply = function (position, region) {
+    Executer.prototype.apply = function (position, region) {
         var entity = this.entities[Random.getIntRandom(0, this.entities.length)];
         this.neightbor.setTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
         if (this.nextExecuter != null) {
             this.nextExecuter.apply(position, region);
         }
     };
-    return ChangeExecuter;
+    return Executer;
 }());
-/// <reference path="../Marahel.ts"/>
 /// <reference path="Condition.ts"/>
-/// <reference path="../executer/ChangeExecuter.ts"/>
+/// <reference path="Executer.ts"/>
 /// <reference path="Point.ts"/>
 /// <reference path="Region.ts"/>
 var Rule = (function () {
     function Rule(lines) {
         this.condition = new Condition(lines[0].split("->")[0]);
-        this.executer = new ChangeExecuter(lines[0].split("->")[1]);
+        this.executer = new Executer(lines[0].split("->")[1]);
         this.nextRule = null;
         if (lines.length > 1) {
             lines.splice(0, 1);

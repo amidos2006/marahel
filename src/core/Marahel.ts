@@ -78,7 +78,26 @@ class Marahel{
         if(!Marahel.marahelEngine){
             throw new Error("Call initialize first.");
         }
-        return Marahel.marahelEngine.generate(outputType, seed);
+        if(seed){
+            Random.changeSeed(seed);
+        }
+
+        for(let i:number=0; i<Marahel.GENERATION_MAX_TRIALS; i++){
+            this.marahelEngine.generate();
+            if(this.marahelEngine.currentMap.checkNumConstraints()){
+                break;
+            }
+        }
+
+        if(outputType){
+            if(outputType == Marahel.COLOR_OUTPUT){
+                return this.marahelEngine.currentMap.getColorMap();
+            }
+            if(outputType == Marahel.INDEX_OUTPUT){
+                return this.marahelEngine.currentMap.getIndexMap();
+            }
+        }
+        return this.marahelEngine.currentMap.getStringMap();
     }
 
     /**
