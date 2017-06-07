@@ -11,14 +11,14 @@ class Condition{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let cParts:string[] = parts[0].split(/>=|<=|==|!=|>|</);
-        this.leftSide = Engine.getEstimator(cParts[0].trim());
+        this.leftSide = Factory.getEstimator(cParts[0].trim());
         if(cParts.length > 1){
-            this.operator = Engine.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
-            this.rightSide = Engine.getEstimator(cParts[1].trim());
+            this.operator = Factory.getOperator(parts[0].match(/>=|<=|==|!=|>|</)[0].trim());
+            this.rightSide = Factory.getEstimator(cParts[1].trim());
         }
         else{
-            this.operator = Engine.getOperator(">");
-            this.rightSide = Engine.getEstimator("0");
+            this.operator = Factory.getOperator(">");
+            this.rightSide = Factory.getEstimator("0");
         }
 
         if(parts.length > 1){

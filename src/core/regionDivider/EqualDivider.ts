@@ -21,8 +21,8 @@ class EqualDivider implements DividerInterface{
     getRegions(map:Region): Region[] {
         let result:Region[] = [];
 
-        let currentWidth:number = Engine.getIntRandom(this.minWidth, this.maxWidth);
-        let currentHeight:number = Engine.getIntRandom(this.minHeight, this.maxHeight);
+        let currentWidth:number = Random.getIntRandom(this.minWidth, this.maxWidth);
+        let currentHeight:number = Random.getIntRandom(this.minHeight, this.maxHeight);
 
         let roomWidth:number = Math.floor(map.getWidth() / currentWidth);
         let roomHeight:number = Math.floor(map.getHeight() / currentHeight);
@@ -42,7 +42,7 @@ class EqualDivider implements DividerInterface{
             }
         }
 
-        Engine.shuffleArray(result);
+        Random.shuffleArray(result);
         result = result.slice(0,this.numberOfRegions);
         return result;
     }

@@ -40,13 +40,19 @@ class Marahel{
     public static SAMPLING_TRAILS:number = 100;
 
     /**
+     * don't change values by hand. it is an istance of the core system. 
+     * it could be used for advanced level generation.
+     */
+    public static marahelEngine:Engine;
+
+    /**
      * Get entity name from index value. Used if you are using INDEX_OUTPUT
      * @param index integer value corresponding to index in the map.
      * @return entity name corresponding to the index.
      *         returns "undefined" otherwise.
      */
-    static getEntityName(index:number):string{
-        return Engine.getEntity(index).name;
+    public static getEntityName(index:number):string{
+        return Marahel.marahelEngine.getEntity(index).name;
     }
 
     /**
@@ -55,8 +61,8 @@ class Marahel{
      * @param data a JSON object that defines the behavior of Marahel
      *              check http://www.akhalifa.com/marahel/ for more details
      */
-    static initialize(data:any):void{
-        Engine.initialize(data);
+    public static initialize(data:any):void{
+        Marahel.marahelEngine = new Engine(data);
     }
 
     /**
@@ -68,15 +74,18 @@ class Marahel{
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    static generate(outputType?:number, seed?:number):any[][]{
-        return Engine.generate(outputType, seed);
+    public static generate(outputType?:number, seed?:number):any[][]{
+        if(!Marahel.marahelEngine){
+            throw new Error("Call initialize first.");
+        }
+        return Marahel.marahelEngine.generate(outputType, seed);
     }
 
     /**
      * print the index generate map in the console in a 2D array format
      * @param generatedMap the map required to be printed
      */
-    static printIndexMap(generatedMap:number[][]):void{
+    public static printIndexMap(generatedMap:number[][]):void{
         let result = "";
         for(let y:number=0; y<generatedMap.length; y++){
             for(let x:number=0; x<generatedMap[y].length; x++){

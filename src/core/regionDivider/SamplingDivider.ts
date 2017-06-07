@@ -30,10 +30,10 @@ class SamplingDivider implements DividerInterface{
     }
 
     private changeRegion(map:Region, r:Region):void{
-        r.setX(Engine.getIntRandom(0, map.getWidth() - this.maxWidth));
-        r.setY(Engine.getIntRandom(0, map.getHeight() - this.maxHeight));
-        r.setWidth(Engine.getIntRandom(this.minWidth, this.maxWidth));
-        r.setHeight(Engine.getIntRandom(this.minHeight, this.maxHeight));
+        r.setX(Random.getIntRandom(0, map.getWidth() - this.maxWidth));
+        r.setY(Random.getIntRandom(0, map.getHeight() - this.maxHeight));
+        r.setWidth(Random.getIntRandom(this.minWidth, this.maxWidth));
+        r.setHeight(Random.getIntRandom(this.minHeight, this.maxHeight));
     }
 
     private getFitRegion(map:Region, regions:Region[]):Region{
@@ -61,7 +61,7 @@ class SamplingDivider implements DividerInterface{
     private adjustRegions(map:Region, regions:Region[]):void{
         let minIntersect:number = this.calculateIntersection(regions);
         for(let i:number=0; i<Marahel.SAMPLING_TRAILS; i++){
-            let r:Region = regions[Engine.getIntRandom(0, regions.length)];
+            let r:Region = regions[Random.getIntRandom(0, regions.length)];
             let temp:Region = new Region(r.getX(), r.getY(), r.getWidth(), r.getHeight());
             this.changeRegion(map, r);
             let value:number = this.calculateIntersection(regions);

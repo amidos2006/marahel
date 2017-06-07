@@ -12,13 +12,13 @@ class NumberEstimator implements EstimatorInterface{
             return iteration;
         }
         if(this.name == "random"){
-            return Engine.getRandom();
+            return Random.getRandom();
         }
         if(this.name == "noise"){
-            return Engine.getNoise(position.x/region.getWidth(), position.y/region.getHeight());
+            return Random.getNoise(position.x/region.getWidth(), position.y/region.getHeight());
         }
         if(isNaN(parseFloat(this.name))){
-            return region.getEntityNumber(Engine.getEntityIndex(this.name));
+            return region.getEntityNumber(Marahel.marahelEngine.getEntityIndex(this.name));
         }
         return parseFloat(this.name);
     }

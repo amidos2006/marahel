@@ -16,9 +16,9 @@ class AutomataGenerator extends Generator{
         if(parameters["start"]){
             this.start = new Point(parseInt(parameters["start"].split(",")[0]), parseInt(parameters["start"].split(",")[1]));
         }
-        this.explore = Engine.getNeighborhood("sequential");
+        this.explore = Marahel.marahelEngine.getNeighborhood("sequential");
         if(parameters["exploration"]){
-            this.explore = Engine.getNeighborhood(parameters["exploration"]);
+            this.explore = Marahel.marahelEngine.getNeighborhood(parameters["exploration"]);
         }
     }
 
@@ -45,7 +45,7 @@ class AutomataGenerator extends Generator{
                         }
                     }
                 }
-                Engine.currentMap.switchBuffers();
+                Marahel.marahelEngine.currentMap.switchBuffers();
             }
         }
     }

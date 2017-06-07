@@ -1,4 +1,23 @@
 /// <reference path="../data/Point.ts"/>
+/// <reference path="Prando.ts"/>
+/// <reference path="Noise.ts"/>
+/// <reference path="../regionDivider/SamplingDivider.ts"/>
+/// <reference path="../regionDivider/BinaryDivider.ts"/>
+/// <reference path="../regionDivider/EqualDivider.ts"/>
+/// <reference path="../operator/OperatorInterface.ts"/>
+/// <reference path="../operator/LargerEqualOperator.ts"/>
+/// <reference path="../operator/LessEqualOperator.ts"/>
+/// <reference path="../operator/LargerOperator.ts"/>
+/// <reference path="../operator/LessOperator.ts"/>
+/// <reference path="../operator/EqualOperator.ts"/>
+/// <reference path="../operator/NotEqualOperator.ts"/>
+/// <reference path="../estimator/NeighborhoodEstimator.ts"/>
+/// <reference path="../estimator/NumberEstimator.ts"/>
+/// <reference path="../estimator/DistanceEstimator.ts"/>
+/// <reference path="../estimator/EstimatorInterface.ts"/>
+/// <reference path="../generator/AutomataGenerator.ts"/>
+/// <reference path="../generator/AgentGenerator.ts"/>
+/// <reference path="../generator/ConnectorGenerator.ts"/>
 
 class LocationNode{
     x:number;
@@ -103,7 +122,7 @@ class AStar{
 class EntityListParser{
     static parseList(line:string):Entity[]{
         if(line.trim() == "any"){
-            return Engine.getAllEntities().concat([Engine.getEntity(-1)]);
+            return Marahel.marahelEngine.getAllEntities().concat([Marahel.marahelEngine.getEntity(-1)]);
         }
         let result:Entity[] = [];
         let eeParts:string[] = line.split("|");
@@ -114,9 +133,104 @@ class EntityListParser{
                 times = parseInt(nums[1]);
             }
             for(let i:number=0; i<times; i++){
-                result.push(Engine.getEntity(nums[0].trim()));
+                result.push(Marahel.marahelEngine.getEntity(nums[0].trim()));
             }
         }
         return result;
+    }
+}
+
+class Random{
+    private static rnd:Prando;
+    private static noise:Noise;
+
+    public static initialize():void{
+        this.rnd = new Prando();
+        this.noise = new Noise();
+    }
+
+    public static changeSeed(seed:number):void{
+        this.rnd = new Prando(seed);
+        this.noise.seed(seed);
+    }
+
+	public static getRandom():number{
+        return this.rnd.next();
+    }
+
+    public static getIntRandom(min:number, max:number):number{
+        return this.rnd.nextInt(min, max - 1);
+    }
+
+    public static getNoise(x:number, y:number):number{
+        return this.noise.perlin2(x, y);
+    }
+
+    public static shuffleArray(array:any[]):void{
+        for(let i:number=0; i<array.length; i++){
+            let i1:number = this.getIntRandom(0, array.length);
+            let i2:number = this.getIntRandom(0, array.length);
+            let temp:any = array[i1];
+            array[i1] = array[i2];
+            array[i2] = temp;
+        }
+    }
+}
+
+class Factory{
+    public static getEstimator(line:string):EstimatorInterface{
+        let parts:string[] = line.split(/\((.+)\)/);
+        if(line.match(/\((.+)\)/) == null){
+            return new NumberEstimator(line);
+        }
+        else if(line.match("Dist")){
+            return new DistanceEstimator(line);
+        }
+        return new NeighborhoodEstimator(line);
+    }
+
+    public static getOperator(line:string):OperatorInterface{
+        line = line.trim()
+        switch(line){
+            case ">=":
+            return new LargerEqualOperator();
+            case "<=":
+            return new LessEqualOperator();
+            case "=":
+            case "==":
+            return new EqualOperator();
+            case "<>":
+            case "!=":
+            return new NotEqualOperator();
+            case ">":
+            return new LargerOperator();
+            case "<":
+            return new LessOperator();
+        }
+        return null;
+    }
+
+    public static getDivider(type:string, numRegions:number, parameters:any):DividerInterface{
+        switch(type.trim()){
+            case "equal":
+            return new EqualDivider(numRegions, parameters);
+            case "bsp":
+            return new BinaryDivider(numRegions, parameters);
+            case "sampling":
+            return new SamplingDivider(numRegions, parameters);
+        }
+        return null;
+    }
+
+    public static getGenerator(type:string, currentRegion:any, parameters:any, rules:string[]):Generator{
+        switch(type.trim()){
+            case "automata":
+                return new AutomataGenerator(currentRegion, rules, parameters);
+            case "agent":
+                return new AgentGenerator(currentRegion, rules, parameters);
+            case "connector":
+                return new ConnectorGenerator(currentRegion, rules, parameters);
+        }
+        return null;
     }
 }

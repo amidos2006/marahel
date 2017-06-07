@@ -7,7 +7,7 @@ class NeighborhoodEstimator implements EstimatorInterface{
 
     constructor(line:string){
         let parts:string[] = line.split(/\((.+)\)/);
-        this.neighbor = Engine.getNeighborhood(parts[0].trim());
+        this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
         
         this.entities = EntityListParser.parseList(parts[1]);
     }
@@ -15,7 +15,7 @@ class NeighborhoodEstimator implements EstimatorInterface{
     calculate(iteration:number, position:Point, region:Region):number{
         let result:number = 0;
         for(let entity of this.entities){
-            result += this.neighbor.getTotal(Engine.getEntityIndex(entity.name), position, region);
+            result += this.neighbor.getTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
         }
         return result;
     }

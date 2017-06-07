@@ -1,8 +1,6 @@
 /// <reference path="../Marahel.ts"/>
-/// <reference path="Neighborhood.ts"/>
-/// <reference path="Entity.ts"/>
-/// <reference path="Region.ts"/>
-/// <reference path="Point.ts"/>
+/// <reference path="../data/Neighborhood.ts"/>
+/// <reference path="../data/Entity.ts"/>
 
 class Executer{
     private neightbor:Neighborhood;
@@ -12,7 +10,7 @@ class Executer{
     constructor(line:string){
         let parts:string[] = line.split(",");
         let eParts:string[] = parts[0].split(/\((.+)\)/);
-        this.neightbor = Engine.getNeighborhood(eParts[0].trim());
+        this.neightbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());
         this.entities = EntityListParser.parseList(eParts[1].trim());
 
         if(parts.length > 1){
@@ -22,8 +20,8 @@ class Executer{
     }
 
     apply(position:Point, region:Region):void{
-        let entity:Entity = this.entities[Engine.getIntRandom(0, this.entities.length)];
-        this.neightbor.setTotal(Engine.getEntityIndex(entity.name), position, region);
+        let entity:Entity = this.entities[Random.getIntRandom(0, this.entities.length)];
+        this.neightbor.setTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
         if(this.nextExecuter != null){
             this.nextExecuter.apply(position, region);
         }

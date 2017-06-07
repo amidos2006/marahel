@@ -58,25 +58,25 @@ class Region{
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
             return;
         }
-        Engine.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
+        Marahel.marahelEngine.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
     }
 
     getValue(x:number, y:number):number{
         let p:Point = this.getRegionPosition(x, y);
         if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
-            if(Engine.borderType == Region.BORDER_NONE){
+            if(Marahel.marahelEngine.borderType == Region.BORDER_NONE){
                 return -1;
             }
-            return Engine.borderType;
+            return Marahel.marahelEngine.borderType;
         }
-        return Engine.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
+        return Marahel.marahelEngine.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
     }
 
     getEntityNumber(value:number):number{
         let result:number = 0;
         for(let x:number=0; x<this.getWidth(); x++){
             for(let y:number=0; y<this.getHeight(); y++){
-                if(Engine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                if(Marahel.marahelEngine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
                     result += 1;
                 }
             }
@@ -86,7 +86,7 @@ class Region{
 
     getRegionPosition(x:number, y:number):Point{
         let p:Point = new Point(x, y);
-        if(Engine.borderType == Region.BORDER_WRAP){
+        if(Marahel.marahelEngine.borderType == Region.BORDER_WRAP){
             if(p.x >= this.getWidth()){
                 p.x -= this.getWidth();
             }
@@ -115,7 +115,7 @@ class Region{
         let results:number[]=[];
         for(let x:number=0; x<this.getWidth(); x++){
             for(let y:number=0; y<this.getHeight(); y++){
-                if(Engine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                if(Marahel.marahelEngine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
                     let path:Point[] = neighbor.getPath(start, new Point(x, y), this, checkSolid);
                     if(path.length > 0){
                         results.push(path.length);
