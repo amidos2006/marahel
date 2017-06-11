@@ -1,4 +1,4 @@
-declare class Map {
+declare class MarahelMap {
     static REPLACE_SAME: number;
     static REPLACE_BACK: number;
     width: number;
@@ -30,77 +30,6 @@ declare class Entity {
     minValue: number;
     maxValue: number;
     constructor(name: string, parameters: any);
-}
-/**
- * main class for Marahel where user can a
- */
-declare class Marahel {
-    /**
-     * defines the output maps as 2D matrix of strings
-     */
-    static STRING_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of colors
-     */
-    static COLOR_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of integers
-     */
-    static INDEX_OUTPUT: number;
-    /**
-     * maximum number of generation trials before considering a
-     * failure generation
-     */
-    static GENERATION_MAX_TRIALS: number;
-    /**
-     * maximum number of combinations that A* will use before
-     * considering finding the optimum
-     */
-    static CONNECTOR_TRIALS: number;
-    /**
-     * maximum number of trials for multiple A* restarts before
-     * considering the current one is the best
-     */
-    static CONNECTOR_MULTI_TEST_TRIALS: number;
-    /**
-     * maximum number of trails done by the sampling divider algorithm
-     * to resolve collision between regions
-     */
-    static SAMPLING_TRAILS: number;
-    /**
-     * don't change values by hand. it is an istance of the core system.
-     * it could be used for advanced level generation.
-     */
-    static marahelEngine: Engine;
-    /**
-     * Get entity name from index value. Used if you are using INDEX_OUTPUT
-     * @param index integer value corresponding to index in the map.
-     * @return entity name corresponding to the index.
-     *         returns "undefined" otherwise.
-     */
-    static getEntityName(index: number): string;
-    /**
-     * Initialize Marahel to a certain behavior.
-     * Must be called before using Marahel to generate levels
-     * @param data a JSON object that defines the behavior of Marahel
-     *              check http://www.akhalifa.com/marahel/ for more details
-     */
-    static initialize(data: any): void;
-    /**
-     * Generate a new map using the specified generator
-     * @param outputType (optional) the representation of the output.
-     *                   default is Marahel.STRING_OUTPUT.
-     *                   either Marahel.STRING_OUTPUT, Marahel.COLOR_OUTPUT,
-     *                   Marahel.INDEX_OUTPUT
-     * @param seed (optional) the seed for the random number generator
-     * @return the generated map in form of 2D matrix
-     */
-    static generate(outputType?: number, seed?: number): any[][];
-    /**
-     * print the index generate map in the console in a 2D array format
-     * @param generatedMap the map required to be printed
-     */
-    static printIndexMap(generatedMap: number[][]): void;
 }
 declare class Region {
     static BORDER_WRAP: number;
@@ -446,61 +375,309 @@ declare class ConnectorGenerator extends Generator {
     private connectHub(groups, region);
     applyGeneration(): void;
 }
+/**
+ * basic node used in the A* algorithm
+ */
 declare class LocationNode {
+    /**
+     * x position on the map
+     */
     x: number;
+    /**
+     * y position on the map
+     */
     y: number;
+    /**
+     * parent of the node, null if root
+     */
     parent: LocationNode;
+    /**
+     * constructor
+     * @param parent current parent of the node
+     * @param x map x position
+     * @param y map y position
+     */
     constructor(parent?: LocationNode, x?: number, y?: number);
+    /**
+     * check if the current node is the end node
+     * @param x end location x position
+     * @param y end location y position
+     * @return true if its the end location, false otherwise
+     */
     checkEnd(x: number, y: number): boolean;
+    /**
+     * get an estimate between the current node and
+     * end location using manhattan distance
+     * @param x end location x position
+     * @param y end location y position
+     * @return the manhattan distance towards the exit
+     */
     estimate(x: number, y: number): number;
+    /**
+     * return printable version of the location node
+     * @return
+     */
     toString(): string;
 }
+/**
+ * A* algorithm used by the connector generator
+ */
 declare class AStar {
+    /**
+     * get the path from the root node to the input node
+     * @param node destination node where u need path between the root and itself
+     * @return a list of points that specify the path between the root and node
+     */
     private static convertNodeToPath(node);
+    /**
+     * Get path between start point and end point in a certain region
+     * @param start start location
+     * @param end destination
+     * @param directions allowed directions for the A*
+     * @param region the allowed region the algorithm should work in
+     * @param checkSolid function that return true in locations not allowed
+     * @return a list of points that represent the path between start and end points
+     */
     static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
+    /**
+     * get path between multiple start locations and ending location
+     * @param start start location
+     * @param end destination
+     * @param directions allowed directions for the A*
+     * @param region the allowed region the algorithm should work in
+     * @param checkSolid function that return true in locations not allowed
+     * @return a list of points that represent the path between start and end points
+     */
     static getPathMultipleStartEnd(start: Point[], end: Point[], directions: Point[], region: Region, checkSolid: Function): Point[];
 }
+/**
+ * parses list of entities to an actual entity array
+ * e.g solid:2|empty:3|player => [solid, solid, empty, empty, player]
+ * where the array elements are entity objects
+ */
 declare class EntityListParser {
+    /**
+     * convert the user input into an array of entities
+     * @param line input line by user
+     * @return list of entities that is equivalent to the user input
+     */
     static parseList(line: string): Entity[];
 }
+/**
+ * Interface for Prando and Noise classes
+ */
 declare class Random {
+    /**
+     * Prando object used in the random class
+     */
     private static rnd;
+    /**
+     * Noise object used in the random class
+     */
     private static noise;
+    /**
+     * initialize the parameters of the system
+     */
     static initialize(): void;
+    /**
+     *
+     * @param seed
+     */
     static changeSeed(seed: number): void;
+    /**
+     *
+     * @return
+     */
     static getRandom(): number;
+    /**
+     *
+     * @param min
+     * @param max
+     * @return
+     */
     static getIntRandom(min: number, max: number): number;
+    /**
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     static getNoise(x: number, y: number): number;
+    /**
+     *
+     * @param array
+     */
     static shuffleArray(array: any[]): void;
 }
+/**
+ * transform a string to its corresponding class
+ */
 declare class Factory {
     static getEstimator(line: string): EstimatorInterface;
     static getOperator(line: string): OperatorInterface;
     static getDivider(type: string, numRegions: number, parameters: any): DividerInterface;
     static getGenerator(type: string, currentRegion: any, parameters: any, rules: string[]): Generator;
 }
+/**
+ * core class of Marahel framework
+ */
 declare class Engine {
     /**
-     *
+     * type of replacing entities on the map (Map.REPLACE_SAME, Map.REPLACE_BACK)
+     * either replace on the same board or in using a buffer and swap the buffer
+     * after each iteration
      */
     replacingType: number;
     /**
      * the last generated map, equal to null if generate is not called
      */
-    currentMap: Map;
+    currentMap: MarahelMap;
+    /**
+     * type of the game borders (Region.BORDER_WRAP, Region.BORDER_NONE, integer >= 0)
+     * either an index for entity, the borders are wrapped around,
+     * or the borders are not calculated.
+     */
     borderType: number;
+    /**
+     * minimum map size
+     */
     private minDim;
+    /**
+     * maximum map size
+     */
     private maxDim;
+    /**
+     * generator entities
+     */
     private entities;
+    /**
+     * entity to index dictionary
+     */
     private entityIndex;
+    /**
+     * dictionary of neighborhoods
+     */
     private neighbors;
+    /**
+     * current region divider
+     */
     private regionDivider;
+    /**
+     * list of generators that defines the level generator behavior
+     */
     private generators;
-    constructor(data: any);
-    private generateOneTime();
-    generate(outputType?: number, seed?: number): any[][];
+    /**
+     * constructor where it initialize different parts of Marahel
+     */
+    constructor();
+    /**
+     * Initialize the current level generator using a JSON object
+     * @param data JSON object that definse the current level generator
+     */
+    initialize(data: any): void;
+    /**
+     * generate a new map using the defined generator
+     */
+    generate(): void;
+    /**
+     * get entity object using its name or index. It returns undefined entity otherwise
+     * @param value name or index of the required entity
+     * @return the entity selected using "value" or "undefined" entity otherwise
+     */
     getEntity(value: number | string): Entity;
+    /**
+     * get all entities defined in the system
+     * @return an array of all the entities defined in the generator
+     */
     getAllEntities(): Entity[];
+    /**
+     * get entity index using its name. returns -1 if not found
+     * @param name entity name
+     * @return entity index from its name. returns -1 if not found
+     */
     getEntityIndex(name: string): number;
+    /**
+     * get a neighborhood with a certain name or self neighborhood otherwise
+     * @param name neighborhood name
+     * @return neighborhood object with the input name or self neighborhood otherwise
+     */
     getNeighborhood(name: string): Neighborhood;
 }
+/**
+ * the main interface for Marahel with the users
+ */
+declare class Marahel {
+    /**
+     * defines the output maps as 2D matrix of strings
+     */
+    static STRING_OUTPUT: number;
+    /**
+     * defines the output maps as 2D matrix of colors
+     */
+    static COLOR_OUTPUT: number;
+    /**
+     * defines the output maps as 2D matrix of integers
+     */
+    static INDEX_OUTPUT: number;
+    /**
+     * maximum number of generation trials before considering a
+     * failure generation
+     */
+    static GENERATION_MAX_TRIALS: number;
+    /**
+     * maximum number of combinations that A* will use before
+     * considering finding the optimum
+     */
+    static CONNECTOR_TRIALS: number;
+    /**
+     * maximum number of trials for multiple A* restarts before
+     * considering the current one is the best
+     */
+    static CONNECTOR_MULTI_TEST_TRIALS: number;
+    /**
+     * maximum number of trails done by the sampling divider algorithm
+     * to resolve collision between regions
+     */
+    static SAMPLING_TRAILS: number;
+    /**
+     * don't change values by hand. it is an istance of the core system.
+     * it could be used for advanced level generation.
+     */
+    static marahelEngine: Engine;
+    /**
+     * Get entity name from index value. Used if you are using INDEX_OUTPUT
+     * @param index integer value corresponding to index in the map.
+     * @return entity name corresponding to the index.
+     *         returns "undefined" otherwise.
+     */
+    static getEntityName(index: number): string;
+    /**
+     * Initialize Marahel to a certain behavior.
+     * Must be called before using Marahel to generate levels
+     * @param data a JSON object that defines the behavior of Marahel
+     *              check http://www.akhalifa.com/marahel/ for more details
+     */
+    static initialize(data: any): void;
+    /**
+     * Generate a new map using the specified generator
+     * @param outputType (optional) the representation of the output.
+     *                   default is Marahel.STRING_OUTPUT.
+     *                   either Marahel.STRING_OUTPUT, Marahel.COLOR_OUTPUT,
+     *                   Marahel.INDEX_OUTPUT
+     * @param seed (optional) the seed for the random number generator
+     * @return the generated map in form of 2D matrix
+     */
+    static generate(outputType?: number, seed?: number): any[][];
+    /**
+     * print the index generate map in the console in a 2D array format
+     * @param generatedMap the map required to be printed
+     */
+    static printIndexMap(generatedMap: number[][]): void;
+}
+declare let fs: any;
+declare let savePixels: any;
+declare let zeros: any;
+declare let data: any;
+declare let colorMap: number[][];
+declare let indexMap: number[][];
+declare let picture: any;

@@ -1,4 +1,4 @@
-class Map{
+class MarahelMap{
     public static REPLACE_SAME:number = 0;
     public static REPLACE_BACK:number = 1;
 
@@ -25,7 +25,7 @@ class Map{
             }
         }
         this.numEntities["undefined"] = this.width * this.height;
-        Marahel.marahelEngine.replacingType = Map.REPLACE_BACK;
+        Marahel.marahelEngine.replacingType = MarahelMap.REPLACE_BACK;
     }
 
     setValue(x:number, y:number, value:number):void{
@@ -38,16 +38,16 @@ class Map{
             this.numEntities[e.name] = 0;
         }
         this.numEntities[e.name] += 1;
-        if(Marahel.marahelEngine.replacingType == Map.REPLACE_SAME){
+        if(Marahel.marahelEngine.replacingType == MarahelMap.REPLACE_SAME){
             this.mapValues[y][x] = value;
         }
-        if(Marahel.marahelEngine.replacingType == Map.REPLACE_BACK){
+        if(Marahel.marahelEngine.replacingType == MarahelMap.REPLACE_BACK){
             this.backValues[y][x] = value;
         }
     }
 
     switchBuffers():void{
-        if(Marahel.marahelEngine.replacingType == Map.REPLACE_BACK){
+        if(Marahel.marahelEngine.replacingType == MarahelMap.REPLACE_BACK){
             let temp:number[][] = this.mapValues;
             this.mapValues = this.backValues;
             this.backValues = temp;

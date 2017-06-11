@@ -8,14 +8,38 @@ class BinaryDivider implements DividerInterface{
     private maxHeight:number;
 
     constructor(numberOfRegions:number, parameters:any){
-        this.numberOfRegions = numberOfRegions;
+        this.numberOfRegions = 1;
+        if(numberOfRegions){
+            this.numberOfRegions = numberOfRegions;
+        }
 
-        let parts:string[] = parameters["min"].split("x");
-        this.minWidth = parseInt(parts[0]);
-        this.minHeight = parseInt(parts[1]);
-        parts = parameters["max"].split("x");
-        this.maxWidth = parseInt(parts[0]);
-        this.maxHeight = parseInt(parts[1]);
+        this.minWidth = 0;
+        this.minHeight = 0;
+        this.maxWidth = Number.MAX_VALUE;
+        this.maxHeight = Number.MAX_VALUE;
+        if(parameters){
+            let parts:string[] = [];
+            if(parameters["min"]){
+                parts = parameters["min"].split("x");
+                this.minWidth = parseInt(parts[0]);
+                this.minHeight = parseInt(parts[1]);
+            }
+            if(parameters["max"]){
+                parts = parameters["max"].split("x");
+                this.maxWidth = parseInt(parts[0]);
+                this.maxHeight = parseInt(parts[1]);
+            }
+        }
+        if(this.maxWidth < this.minWidth){
+            let temp:number = this.maxWidth;
+            this.maxWidth = this.minWidth;
+            this.minWidth = temp;
+        }
+        if(this.maxHeight < this.minHeight){
+            let temp:number = this.maxHeight;
+            this.maxHeight = this.minHeight;
+            this.minHeight = temp;
+        }
     }
 
     private divideWidth(region:Region, allowedWidth:number):Region[]{

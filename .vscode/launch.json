@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}/src/Main.ts",
+            "program": "${workspaceRoot}/src/Test.ts",
             "cwd": "${workspaceRoot}",
             "outFiles": [
                 "${workspaceRoot}/bin/Marahel.js"

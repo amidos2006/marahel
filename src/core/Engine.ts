@@ -1,9 +1,12 @@
-/// <reference path="data/Map.ts"/>
+/// <reference path="data/MarahelMap.ts"/>
 /// <reference path="data/Point.ts"/>
 /// <reference path="data/Entity.ts"/>
 /// <reference path="data/Neighborhood.ts"/>
 /// <reference path="utils/Tools.ts"/>
 
+/**
+ * core class of Marahel framework
+ */
 class Engine{
     /**
      * type of replacing entities on the map (Map.REPLACE_SAME, Map.REPLACE_BACK)
@@ -14,7 +17,7 @@ class Engine{
     /**
      * the last generated map, equal to null if generate is not called
      */
-    public currentMap:Map;
+    public currentMap:MarahelMap;
     /**
      * type of the game borders (Region.BORDER_WRAP, Region.BORDER_NONE, integer >= 0)
      * either an index for entity, the borders are wrapped around, 
@@ -52,16 +55,20 @@ class Engine{
     private generators:Generator[];
 
     /**
+     * constructor where it initialize different parts of Marahel
+     */
+    public constructor(){
+        // initialize different parts of the system
+        Random.initialize();
+        this.replacingType = MarahelMap.REPLACE_BACK;
+        this.borderType = Region.BORDER_NONE;
+    }
+
+    /**
      * Initialize the current level generator using a JSON object
      * @param data JSON object that definse the current level generator
      */
-    public constructor(data:any){
-        // initialize different parts of the system
-        Random.initialize();
-
-        this.replacingType = Map.REPLACE_BACK;
-        this.borderType = Region.BORDER_NONE;
-
+    public initialize(data:any):void{
         // define the maximum and minimum sizes of the generated maps
         this.minDim = new Point(parseInt(data["metadata"]["min"].split("x")[0]), 
             parseInt(data["metadata"]["min"].split("x")[1]));
@@ -103,7 +110,7 @@ class Engine{
         for(let g of data["rule"]){
             let gen:Generator = Factory.getGenerator(g["type"], g["region"], g["parameters"], g["rules"]);
             if(gen != null){
-                this.generators.push();
+                this.generators.push(gen);
             }
             else{
                 throw new Error("Undefined generator - " + g.toString());
@@ -116,7 +123,7 @@ class Engine{
      */
     public generate():void{
         // create a map object with randomly selected dimensions between minDim and maxDim
-        this.currentMap = new Map(Random.getIntRandom(this.minDim.x, this.maxDim.x), 
+        this.currentMap = new MarahelMap(Random.getIntRandom(this.minDim.x, this.maxDim.x), 
             Random.getIntRandom(this.minDim.y, this.maxDim.y));
         // define a region that covers the whole map
         let mapRegion:Region = new Region(0, 0, this.currentMap.width, this.currentMap.height);

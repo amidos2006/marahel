@@ -19,13 +19,13 @@ abstract class Generator{
         }
         this.regionsName = currentRegion["name"].trim();
 
-        this.replacingType = Map.REPLACE_BACK;
+        this.replacingType = MarahelMap.REPLACE_BACK;
         if(currentRegion["replacingType"]){
             if(currentRegion["replacingType"].trim() == "same"){
-                this.replacingType = Map.REPLACE_SAME;
+                this.replacingType = MarahelMap.REPLACE_SAME;
             }
             else if(currentRegion["replacingType"].trim() == "buffer"){
-                this.replacingType = Map.REPLACE_BACK
+                this.replacingType = MarahelMap.REPLACE_BACK
             }
         }
         

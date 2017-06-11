@@ -1,7 +1,7 @@
 /// <reference path="Engine.ts"/>
 
 /**
- * main class for Marahel where user can a
+ * the main interface for Marahel with the users
  */
 class Marahel{
     /**
@@ -62,7 +62,8 @@ class Marahel{
      *              check http://www.akhalifa.com/marahel/ for more details
      */
     public static initialize(data:any):void{
-        Marahel.marahelEngine = new Engine(data);
+        Marahel.marahelEngine = new Engine();
+        Marahel.marahelEngine.initialize(data);
     }
 
     /**
