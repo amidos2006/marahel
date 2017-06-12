@@ -7,6 +7,7 @@ abstract class Generator{
     protected rules:Rule[];
     protected minBorder:number;
     protected maxBorder:number;
+    protected sameBorders:boolean;
     protected replacingType:number;
     protected borderType:number;
     
@@ -17,7 +18,14 @@ abstract class Generator{
             this.minBorder = parseInt(currentRegion["border"].split(",")[0]);
             this.maxBorder = parseInt(currentRegion["border"].split(",")[1]);
         }
-        this.regionsName = currentRegion["name"].trim();
+        this.sameBorders = false;
+        if(currentRegion["sameBorder"]){
+            this.sameBorders = currentRegion["sameBorder"].toLowerCase() == "true";
+        }
+        this.regionsName = "map";
+        if(currentRegion["name"]){
+            this.regionsName = currentRegion["name"].trim();
+        }
 
         this.replacingType = MarahelMap.REPLACE_BACK;
         if(currentRegion["replacingType"]){
@@ -78,7 +86,17 @@ abstract class Generator{
         Marahel.marahelEngine.replacingType = this.replacingType;
         Marahel.marahelEngine.borderType = this.borderType;
         for(let r of this.regions){
-            r.border = Random.getIntRandom(this.minBorder, this.maxBorder);
+            r.borderLeft = Random.getIntRandom(this.minBorder, this.maxBorder);
+            if(this.sameBorders){
+                r.borderRight = r.borderLeft;
+                r.borderUp = r.borderLeft;
+                r.borderDown = r.borderLeft;
+            }
+            else{
+                r.borderRight = Random.getIntRandom(this.minBorder, this.maxBorder);
+                r.borderUp = Random.getIntRandom(this.minBorder, this.maxBorder);
+                r.borderDown = Random.getIntRandom(this.minBorder, this.maxBorder);
+            }
         }
     }
 }

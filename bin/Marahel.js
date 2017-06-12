@@ -420,7 +420,16 @@ var Point = (function () {
     };
     return Point;
 }());
+/**
+ * Entity class carry the information about a certain entity
+ */
 var Entity = (function () {
+    /**
+     * Constructor for the entity class
+     * @param name entity name
+     * @param parameters entity parameters such as color,
+     *                   minimum number, and/or maximum number
+     */
     function Entity(name, parameters) {
         this.name = name;
         this.color = -1;
@@ -441,13 +450,19 @@ var Entity = (function () {
 /// <reference path="../Marahel.ts"/>
 /// <reference path="Neighborhood.ts"/>
 /// <reference path="Point.ts"/>
+/**
+ *
+ */
 var Region = (function () {
     function Region(x, y, width, height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.border = 0;
+        this.borderLeft = 0;
+        this.borderRight = 0;
+        this.borderUp = 0;
+        this.borderDown = 0;
     }
     Region.prototype.setX = function (value) {
         this.x = value;
@@ -462,16 +477,16 @@ var Region = (function () {
         this.height = value;
     };
     Region.prototype.getX = function () {
-        return this.x + this.border;
+        return this.x + this.borderLeft;
     };
     Region.prototype.getY = function () {
-        return this.y + this.border;
+        return this.y + this.borderUp;
     };
     Region.prototype.getWidth = function () {
-        return this.width - 2 * this.border;
+        return this.width - this.borderLeft - this.borderRight;
     };
     Region.prototype.getHeight = function () {
-        return this.height - 2 * this.border;
+        return this.height - this.borderUp - this.borderDown;
     };
     Region.prototype.setValue = function (x, y, value) {
         var p = this.getRegionPosition(x, y);
@@ -1108,7 +1123,16 @@ var Noise = (function () {
 /// <reference path="../Marahel.ts"/>
 /// <reference path="../Data/Region.ts"/>
 /// <reference path="DividerInterface.ts"/>
+/**
+ * Divide the map into regions by sampling different ones
+ * that doesn't intersect with each other
+ */
 var SamplingDivider = (function () {
+    /**
+     * create a new sampling divider
+     * @param numberOfRegions number of required regions
+     * @param parameters sampling parameters
+     */
     function SamplingDivider(numberOfRegions, parameters) {
         this.numberOfRegions = 1;
         if (this.numberOfRegions) {
@@ -1118,7 +1142,6 @@ var SamplingDivider = (function () {
         this.minHeight = 1;
         this.maxHeight = 1;
         this.maxWidth = 1;
-        this.allowIntersect = true;
         if (parameters) {
             var parts = [];
             if (parameters["min"]) {
@@ -1130,9 +1153,6 @@ var SamplingDivider = (function () {
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
                 this.maxHeight = parseInt(parts[1]);
-            }
-            if (parameters["allowIntersection"]) {
-                this.allowIntersect = parameters["allowIntersection"] == "true";
             }
         }
         if (this.maxWidth < this.minWidth) {
@@ -1146,6 +1166,13 @@ var SamplingDivider = (function () {
             this.minHeight = temp;
         }
     }
+    /**
+     * Check if a region is interesecting with any other region
+     * @param r region to be tested with other regions
+     * @param regions current regions
+     * @return true if r is not intersecting with any region in regions
+     *              and false otherwise
+     */
     SamplingDivider.prototype.checkIntersection = function (r, regions) {
         for (var _i = 0, regions_1 = regions; _i < regions_1.length; _i++) {
             var cr = regions_1[_i];
@@ -1155,22 +1182,40 @@ var SamplingDivider = (function () {
         }
         return false;
     };
+    /**
+     * change the current region to a new one
+     * @param map generated map region to define the map boundries
+     * @param r region object to be changed
+     */
     SamplingDivider.prototype.changeRegion = function (map, r) {
         r.setX(Random.getIntRandom(0, map.getWidth() - this.maxWidth));
         r.setY(Random.getIntRandom(0, map.getHeight() - this.maxHeight));
         r.setWidth(Random.getIntRandom(this.minWidth, this.maxWidth));
         r.setHeight(Random.getIntRandom(this.minHeight, this.maxHeight));
     };
+    /**
+     * get a fit region that is in the map and doesn't intersect with
+     * any of the others
+     * @param map generated map
+     * @param regions previous generated regions
+     * @return a suitable new region that doesn't intersect
+     *         with any of the previous ones
+     */
     SamplingDivider.prototype.getFitRegion = function (map, regions) {
         var r = new Region(0, 0, 0, 0);
         for (var i = 0; i < Marahel.SAMPLING_TRAILS; i++) {
             this.changeRegion(map, r);
-            if (!this.checkIntersection(r, regions) || this.allowIntersect) {
+            if (!this.checkIntersection(r, regions)) {
                 break;
             }
         }
         return r;
     };
+    /**
+     * get the number of interesections between the regions
+     * @param regions current generated regions
+     * @return the number of intersection in the current array
+     */
     SamplingDivider.prototype.calculateIntersection = function (regions) {
         var results = 0;
         for (var _i = 0, regions_2 = regions; _i < regions_2.length; _i++) {
@@ -1181,6 +1226,11 @@ var SamplingDivider = (function () {
         }
         return results - regions.length;
     };
+    /**
+     * a hill climber algorithm to decrease the numebr of interesections between regions
+     * @param map generated map
+     * @param regions current generated regions
+     */
     SamplingDivider.prototype.adjustRegions = function (map, regions) {
         var minIntersect = this.calculateIntersection(regions);
         for (var i = 0; i < Marahel.SAMPLING_TRAILS; i++) {
@@ -1202,12 +1252,17 @@ var SamplingDivider = (function () {
             }
         }
     };
+    /**
+     * divide the map into different regions using sampling
+     * @param map generated map
+     * @return an array of regions that are selected using sampling methodology
+     */
     SamplingDivider.prototype.getRegions = function (map) {
         var results = [];
         while (results.length < this.numberOfRegions) {
             results.push(this.getFitRegion(map, results));
         }
-        if (!this.allowIntersect && this.calculateIntersection(results) > 0) {
+        if (this.calculateIntersection(results) > 0) {
             this.adjustRegions(map, results);
         }
         return results;
@@ -1215,7 +1270,15 @@ var SamplingDivider = (function () {
     return SamplingDivider;
 }());
 /// <reference path="DividerInterface.ts"/>
+/**
+ * Binary Space Partitioning Algorithm
+ */
 var BinaryDivider = (function () {
+    /**
+     * Constructor for the binary space partitioning class
+     * @param numberOfRegions number of required regions
+     * @param parameters to initialize the bsp algorithm
+     */
     function BinaryDivider(numberOfRegions, parameters) {
         this.numberOfRegions = 1;
         if (numberOfRegions) {
@@ -1249,19 +1312,41 @@ var BinaryDivider = (function () {
             this.minHeight = temp;
         }
     }
+    /**
+     * divide on the region width
+     * @param region the region that will be divided over its width
+     * @param allowedWidth the amount of width the system is allowed during division
+     * @return two regions after division
+     */
     BinaryDivider.prototype.divideWidth = function (region, allowedWidth) {
         var rWidth = this.minWidth + Random.getIntRandom(0, allowedWidth);
         return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()),
             new Region(region.getX() + rWidth, region.getY(), region.getWidth() - rWidth, region.getHeight())];
     };
+    /**
+     * divide on the region height
+     * @param region the regions that will be divided over its height
+     * @param allowedHeight the amount of height the system is allowed during the division
+     * @return two regions after division
+     */
     BinaryDivider.prototype.divideHeight = function (region, allowedHeight) {
         var rHeight = this.minHeight + Random.getIntRandom(0, allowedHeight);
         return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight),
             new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
     };
+    /**
+     * test if the region should be further divided
+     * @param region the tested region
+     * @return true if the region is bigger than twice minWidth or twice minHeight
+     */
     BinaryDivider.prototype.testDivide = function (region) {
         return (region.getWidth() >= 2 * this.minWidth || region.getHeight() >= 2 * this.minHeight);
     };
+    /**
+     * divide a region randomly either on width or height
+     * @param region the region required to be divided
+     * @return two regions after the division
+     */
     BinaryDivider.prototype.divide = function (region) {
         var allowedWidth = region.getWidth() - 2 * this.minWidth;
         var allowedHeight = region.getHeight() - 2 * this.minHeight;
@@ -1288,6 +1373,13 @@ var BinaryDivider = (function () {
             return this.divideHeight(region, 0);
         }
     };
+    /**
+     * check if any of the regions have a width or height more than
+     * maxWidht or maxHeight
+     * @param regions all the regions
+     * @return true if any of the regions have the width or the height
+     *         bigger than maxWidth or maxHeight
+     */
     BinaryDivider.prototype.checkMaxSize = function (regions) {
         for (var _i = 0, regions_3 = regions; _i < regions_3.length; _i++) {
             var r = regions_3[_i];
@@ -1297,6 +1389,11 @@ var BinaryDivider = (function () {
         }
         return false;
     };
+    /**
+     * divided the on the maximum size diminsion
+     * @param region the region that will be divided
+     * @return two regions after the division
+     */
     BinaryDivider.prototype.divideMaxSize = function (region) {
         if (Random.getRandom() < 0.5) {
             if (region.getWidth() >= this.maxWidth) {
@@ -1321,6 +1418,12 @@ var BinaryDivider = (function () {
             return this.divideHeight(region, 0);
         }
     };
+    /**
+     * divide the generated map using BSP till satisfy all the constraints
+     * @param map the generated map
+     * @return an array of regions that fits all the constraints and
+     *         divided using BSP
+     */
     BinaryDivider.prototype.getRegions = function (map) {
         var results = [new Region(0, 0, map.getWidth(), map.getHeight())];
         while (results.length < this.numberOfRegions || this.checkMaxSize(results)) {
@@ -1348,7 +1451,15 @@ var BinaryDivider = (function () {
     return BinaryDivider;
 }());
 /// <reference path="DividerInterface.ts"/>
+/**
+ * Equal Divider class that divides the map into a grid of equal size regions
+ */
 var EqualDivider = (function () {
+    /**
+     * constructor for the EqualDivider class
+     * @param numberOfRegions number of required regions
+     * @param parameters to initialize the EqualDivider
+     */
     function EqualDivider(numberOfRegions, parameters) {
         this.numberOfRegions = 1;
         if (numberOfRegions) {
@@ -1382,6 +1493,11 @@ var EqualDivider = (function () {
             this.minHeight = temp;
         }
     }
+    /**
+     * get regions in the map using equal dividing algorithm
+     * @param map the generated map
+     * @return an array of regions based on equal division of the map
+     */
     EqualDivider.prototype.getRegions = function (map) {
         var result = [];
         var currentWidth = Random.getIntRandom(this.minWidth, this.maxWidth);
@@ -1411,54 +1527,111 @@ var EqualDivider = (function () {
 }());
 /// <reference path="../Marahel.ts"/>
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Larger than or Equal operator used to check the left value is larger than
+ * or equal to the right value
+ */
 var LargerEqualOperator = (function () {
     function LargerEqualOperator() {
     }
+    /**
+     * check the leftValue is larger than or equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left larger than or equal to the right and false otherwise
+     */
     LargerEqualOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue >= rightValue;
     };
     return LargerEqualOperator;
 }());
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Less than or Equal operator to check if the left value is less than or
+ * equal to the right value
+ */
 var LessEqualOperator = (function () {
     function LessEqualOperator() {
     }
+    /**
+     * check the leftValue is less than or equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left less than or equal to the right and false otherwise
+     */
     LessEqualOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue <= rightValue;
     };
     return LessEqualOperator;
 }());
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Larger than operator used to check the left value is
+ * larger than the right value
+ */
 var LargerOperator = (function () {
     function LargerOperator() {
     }
+    /**
+     * check the leftValue is larger than the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left larger than the right and false otherwise
+     */
     LargerOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue > rightValue;
     };
     return LargerOperator;
 }());
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Less than operator used to check if the left value is less than the right value
+ */
 var LessOperator = (function () {
     function LessOperator() {
     }
+    /**
+     * check the leftValue is less than the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left less than the right and false otherwise
+     */
     LessOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue < rightValue;
     };
     return LessOperator;
 }());
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Equal operator used to check if the two values are equal or not
+ */
 var EqualOperator = (function () {
     function EqualOperator() {
     }
+    /**
+     * check the leftValue is equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left equal to the right and false otherwise
+     */
     EqualOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue == rightValue;
     };
     return EqualOperator;
 }());
 /// <reference path="OperatorInterface.ts"/>
+/**
+ * Not equal operator used to check if the two values are not equal
+ */
 var NotEqualOperator = (function () {
     function NotEqualOperator() {
     }
+    /**
+     * check the values are not equal
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if not equal and false otherwise
+     */
     NotEqualOperator.prototype.check = function (leftValue, rightValue) {
         return leftValue != rightValue;
     };
@@ -1605,7 +1778,14 @@ var DistanceEstimator = (function () {
 /// <reference path="../Marahel.ts"/>
 /// <reference path="../estimator/EstimatorInterface.ts"/>
 /// <reference path="../operator/OperatorInterface.ts"/>
+/**
+ * Condition class is used as a part of the Rule class (Left hand side of any rule)
+ */
 var Condition = (function () {
+    /**
+     * Constructor for the condition class
+     * @param line user input line
+     */
     function Condition(line) {
         var parts = line.split(",");
         var cParts = parts[0].split(/>=|<=|==|!=|>|</);
@@ -1623,6 +1803,13 @@ var Condition = (function () {
             this.nextCondition = new Condition(parts.join(","));
         }
     }
+    /**
+     * Check if the condition is true or false including all the anded conditions
+     * @param iteration the percentage of completion of the generator
+     * @param position the current position where the algorithm is testing
+     * @param region allowed region to check on
+     * @return true if all conditions are true and false otherwise
+     */
     Condition.prototype.check = function (iteration, position, region) {
         var left = this.leftSide.calculate(iteration, position, region);
         var right = this.rightSide.calculate(iteration, position, region);
@@ -1641,20 +1828,32 @@ var Condition = (function () {
 /// <reference path="../Marahel.ts"/>
 /// <reference path="../data/Neighborhood.ts"/>
 /// <reference path="../data/Entity.ts"/>
+/**
+ * Executer class (Right hand side of the rule)
+ */
 var Executer = (function () {
+    /**
+     * Constructor for the exectuer class
+     * @param line user input data
+     */
     function Executer(line) {
         var parts = line.split(",");
         var eParts = parts[0].split(/\((.+)\)/);
-        this.neightbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());
+        this.neighbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());
         this.entities = EntityListParser.parseList(eParts[1].trim());
         if (parts.length > 1) {
             parts.splice(0, 1);
             this.nextExecuter = new Executer(parts.join(","));
         }
     }
+    /**
+     * Apply all the executers on the current selected region
+     * @param position current position of the generator
+     * @param region allowed region to apply the executer
+     */
     Executer.prototype.apply = function (position, region) {
         var entity = this.entities[Random.getIntRandom(0, this.entities.length)];
-        this.neightbor.setTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
+        this.neighbor.setTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
         if (this.nextExecuter != null) {
             this.nextExecuter.apply(position, region);
         }
@@ -1665,7 +1864,14 @@ var Executer = (function () {
 /// <reference path="Executer.ts"/>
 /// <reference path="Point.ts"/>
 /// <reference path="Region.ts"/>
+/**
+ * Rule class used to apply any of the generators
+ */
 var Rule = (function () {
+    /**
+     *
+     * @param lines
+     */
     function Rule(lines) {
         this.condition = new Condition(lines[0].split("->")[0]);
         this.executer = new Executer(lines[0].split("->")[1]);
@@ -1675,15 +1881,13 @@ var Rule = (function () {
             this.nextRule = new Rule(lines);
         }
     }
-    Rule.prototype.checkRule = function (iteration, position, region) {
-        if (this.condition.check(iteration, position, region)) {
-            return true;
-        }
-        else if (this.nextRule != null) {
-            return this.nextRule.checkRule(iteration, position, region);
-        }
-        return false;
-    };
+    /**
+     *
+     * @param iteration
+     * @param position
+     * @param region
+     * @return
+     */
     Rule.prototype.execute = function (iteration, position, region) {
         if (this.condition.check(iteration, position, region)) {
             this.executer.apply(position, region);
@@ -1706,7 +1910,14 @@ var Generator = (function () {
             this.minBorder = parseInt(currentRegion["border"].split(",")[0]);
             this.maxBorder = parseInt(currentRegion["border"].split(",")[1]);
         }
-        this.regionsName = currentRegion["name"].trim();
+        this.sameBorders = false;
+        if (currentRegion["sameBorder"]) {
+            this.sameBorders = currentRegion["sameBorder"].toLowerCase() == "true";
+        }
+        this.regionsName = "map";
+        if (currentRegion["name"]) {
+            this.regionsName = currentRegion["name"].trim();
+        }
         this.replacingType = MarahelMap.REPLACE_BACK;
         if (currentRegion["replacingType"]) {
             if (currentRegion["replacingType"].trim() == "same") {
@@ -1764,7 +1975,17 @@ var Generator = (function () {
         Marahel.marahelEngine.borderType = this.borderType;
         for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
             var r = _a[_i];
-            r.border = Random.getIntRandom(this.minBorder, this.maxBorder);
+            r.borderLeft = Random.getIntRandom(this.minBorder, this.maxBorder);
+            if (this.sameBorders) {
+                r.borderRight = r.borderLeft;
+                r.borderUp = r.borderLeft;
+                r.borderDown = r.borderLeft;
+            }
+            else {
+                r.borderRight = Random.getIntRandom(this.minBorder, this.maxBorder);
+                r.borderUp = Random.getIntRandom(this.minBorder, this.maxBorder);
+                r.borderDown = Random.getIntRandom(this.minBorder, this.maxBorder);
+            }
         }
     };
     return Generator;
@@ -2500,41 +2721,41 @@ var Random = (function () {
         this.noise = new Noise();
     };
     /**
-     *
-     * @param seed
+     * change thre noise and random seeds
+     * @param seed new seed for the random and noise objects
      */
     Random.changeSeed = function (seed) {
         this.rnd = new Prando(seed);
         this.noise.seed(seed);
     };
     /**
-     *
-     * @return
+     * get random number between 0 and 1
+     * @return a random value between 0 (inclusive) and 1 (exclusive)
      */
     Random.getRandom = function () {
         return this.rnd.next();
     };
     /**
-     *
-     * @param min
-     * @param max
-     * @return
+     * get random integer between min and max
+     * @param min min value for the random integer
+     * @param max max value for the random integer
+     * @return a random integer between min (inclusive) and max (exclusive)
      */
     Random.getIntRandom = function (min, max) {
         return this.rnd.nextInt(min, max - 1);
     };
     /**
-     *
-     * @param x
-     * @param y
-     * @return
+     * get 2D perlin noise value based on the location x and y
+     * @param x x location
+     * @param y y location
+     * @return noise value based on the location x and y
      */
     Random.getNoise = function (x, y) {
         return this.noise.perlin2(x, y);
     };
     /**
-     *
-     * @param array
+     * shuffle an array in place
+     * @param array input array to be shuffled
      */
     Random.shuffleArray = function (array) {
         for (var i = 0; i < array.length; i++) {
@@ -2553,6 +2774,11 @@ var Random = (function () {
 var Factory = (function () {
     function Factory() {
     }
+    /**
+     * create an estimator based on the user input
+     * @param line user input to be parsed
+     * @return Number Estimator, Distance Estimator, or NeighborhoodEstimator
+     */
     Factory.getEstimator = function (line) {
         var parts = line.split(/\((.+)\)/);
         if (line.match(/\((.+)\)/) == null) {
@@ -2563,6 +2789,11 @@ var Factory = (function () {
         }
         return new NeighborhoodEstimator(line);
     };
+    /**
+     * get the correct operator based on the user input
+     * @param line user input to be parsed to operator
+     * @return >=, <=, >, <, == (=), or != (<>)
+     */
     Factory.getOperator = function (line) {
         line = line.trim();
         switch (line) {
@@ -2583,6 +2814,13 @@ var Factory = (function () {
         }
         return null;
     };
+    /**
+     * get the correct divider based on the user input
+     * @param type input type of the divider
+     * @param numRegions number of region after division
+     * @param parameters parameters for the divider
+     * @return EqualDivider, BinaryDivider, or SamplingDivider
+     */
     Factory.getDivider = function (type, numRegions, parameters) {
         switch (type.trim()) {
             case "equal":
@@ -2594,6 +2832,14 @@ var Factory = (function () {
         }
         return null;
     };
+    /**
+     * get the specified generator by the user
+     * @param type generator type
+     * @param currentRegion region applied on
+     * @param parameters generator parameters
+     * @param rules generator rules
+     * @return AutomataGenerator, AgentGenerator, or ConnectorGenerator
+     */
     Factory.getGenerator = function (type, currentRegion, parameters, rules) {
         switch (type.trim()) {
             case "automata":

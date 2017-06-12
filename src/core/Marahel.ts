@@ -40,7 +40,7 @@ class Marahel{
     public static SAMPLING_TRAILS:number = 100;
 
     /**
-     * don't change values by hand. it is an istance of the core system. 
+     * don't change values by hand. it is an instance of the core system. 
      * it could be used for advanced level generation.
      */
     public static marahelEngine:Engine;

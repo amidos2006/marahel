@@ -24,17 +24,44 @@ declare class Point {
     equal(p: Point): boolean;
     toString(): string;
 }
+/**
+ * Entity class carry the information about a certain entity
+ */
 declare class Entity {
+    /**
+     * name of the entity
+     */
     name: string;
+    /**
+     * entity color
+     */
     color: number;
+    /**
+     * minimum number of entity in the map
+     */
     minValue: number;
+    /**
+     * maximum number of entity in the map
+     */
     maxValue: number;
+    /**
+     * Constructor for the entity class
+     * @param name entity name
+     * @param parameters entity parameters such as color,
+     *                   minimum number, and/or maximum number
+     */
     constructor(name: string, parameters: any);
 }
+/**
+ *
+ */
 declare class Region {
     static BORDER_WRAP: number;
     static BORDER_NONE: number;
-    border: number;
+    borderLeft: number;
+    borderRight: number;
+    borderUp: number;
+    borderDown: number;
     private x;
     private y;
     private width;
@@ -187,67 +214,290 @@ declare class Noise {
     perlin2(x: number, y: number): number;
     perlin3(x: number, y: number, z: number): number;
 }
+/**
+ * Interface that all divider algorithms should have
+ */
 interface DividerInterface {
+    /**
+     * get non-interesection regions in the map
+     * @param map generated map
+     * @return an array of regions that doens't intersect and in the map
+     */
     getRegions(map: Region): Region[];
 }
+/**
+ * Divide the map into regions by sampling different ones
+ * that doesn't intersect with each other
+ */
 declare class SamplingDivider implements DividerInterface {
+    /**
+     * number of regions required
+     */
     private numberOfRegions;
+    /**
+     * min width for any region
+     */
     private minWidth;
+    /**
+     * min height for any region
+     */
     private minHeight;
+    /**
+     * max width for any region
+     */
     private maxWidth;
+    /**
+     * max height for any region
+     */
     private maxHeight;
-    private allowIntersect;
+    /**
+     * create a new sampling divider
+     * @param numberOfRegions number of required regions
+     * @param parameters sampling parameters
+     */
     constructor(numberOfRegions: number, parameters: any);
+    /**
+     * Check if a region is interesecting with any other region
+     * @param r region to be tested with other regions
+     * @param regions current regions
+     * @return true if r is not intersecting with any region in regions
+     *              and false otherwise
+     */
     private checkIntersection(r, regions);
+    /**
+     * change the current region to a new one
+     * @param map generated map region to define the map boundries
+     * @param r region object to be changed
+     */
     private changeRegion(map, r);
+    /**
+     * get a fit region that is in the map and doesn't intersect with
+     * any of the others
+     * @param map generated map
+     * @param regions previous generated regions
+     * @return a suitable new region that doesn't intersect
+     *         with any of the previous ones
+     */
     private getFitRegion(map, regions);
+    /**
+     * get the number of interesections between the regions
+     * @param regions current generated regions
+     * @return the number of intersection in the current array
+     */
     private calculateIntersection(regions);
+    /**
+     * a hill climber algorithm to decrease the numebr of interesections between regions
+     * @param map generated map
+     * @param regions current generated regions
+     */
     private adjustRegions(map, regions);
+    /**
+     * divide the map into different regions using sampling
+     * @param map generated map
+     * @return an array of regions that are selected using sampling methodology
+     */
     getRegions(map: Region): Region[];
 }
+/**
+ * Binary Space Partitioning Algorithm
+ */
 declare class BinaryDivider implements DividerInterface {
+    /**
+     * number of reuired regions
+     */
     private numberOfRegions;
+    /**
+     * minimum width for any region
+     */
     private minWidth;
+    /**
+     * minimum height for any region
+     */
     private minHeight;
+    /**
+     * maximum width for any region
+     */
     private maxWidth;
+    /**
+     * maximum height for any region
+     */
     private maxHeight;
+    /**
+     * Constructor for the binary space partitioning class
+     * @param numberOfRegions number of required regions
+     * @param parameters to initialize the bsp algorithm
+     */
     constructor(numberOfRegions: number, parameters: any);
+    /**
+     * divide on the region width
+     * @param region the region that will be divided over its width
+     * @param allowedWidth the amount of width the system is allowed during division
+     * @return two regions after division
+     */
     private divideWidth(region, allowedWidth);
+    /**
+     * divide on the region height
+     * @param region the regions that will be divided over its height
+     * @param allowedHeight the amount of height the system is allowed during the division
+     * @return two regions after division
+     */
     private divideHeight(region, allowedHeight);
+    /**
+     * test if the region should be further divided
+     * @param region the tested region
+     * @return true if the region is bigger than twice minWidth or twice minHeight
+     */
     private testDivide(region);
+    /**
+     * divide a region randomly either on width or height
+     * @param region the region required to be divided
+     * @return two regions after the division
+     */
     private divide(region);
+    /**
+     * check if any of the regions have a width or height more than
+     * maxWidht or maxHeight
+     * @param regions all the regions
+     * @return true if any of the regions have the width or the height
+     *         bigger than maxWidth or maxHeight
+     */
     private checkMaxSize(regions);
+    /**
+     * divided the on the maximum size diminsion
+     * @param region the region that will be divided
+     * @return two regions after the division
+     */
     private divideMaxSize(region);
+    /**
+     * divide the generated map using BSP till satisfy all the constraints
+     * @param map the generated map
+     * @return an array of regions that fits all the constraints and
+     *         divided using BSP
+     */
     getRegions(map: Region): Region[];
 }
+/**
+ * Equal Divider class that divides the map into a grid of equal size regions
+ */
 declare class EqualDivider implements DividerInterface {
+    /**
+     * number of required regions
+     */
     private numberOfRegions;
+    /**
+     * minimum number of regions in the x direction
+     */
     private minWidth;
+    /**
+     * minimum number of regions in the y direction
+     */
     private minHeight;
+    /**
+     * maximum number of regions in the x direction
+     */
     private maxWidth;
+    /**
+     * maximum number of regions in the y direction
+     */
     private maxHeight;
+    /**
+     * constructor for the EqualDivider class
+     * @param numberOfRegions number of required regions
+     * @param parameters to initialize the EqualDivider
+     */
     constructor(numberOfRegions: number, parameters: any);
+    /**
+     * get regions in the map using equal dividing algorithm
+     * @param map the generated map
+     * @return an array of regions based on equal division of the map
+     */
     getRegions(map: Region): Region[];
 }
+/**
+ * All opertaors must inherit from it
+ */
 interface OperatorInterface {
+    /**
+     * check the result of the operator
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the result is correct and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Larger than or Equal operator used to check the left value is larger than
+ * or equal to the right value
+ */
 declare class LargerEqualOperator implements OperatorInterface {
+    /**
+     * check the leftValue is larger than or equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left larger than or equal to the right and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Less than or Equal operator to check if the left value is less than or
+ * equal to the right value
+ */
 declare class LessEqualOperator implements OperatorInterface {
+    /**
+     * check the leftValue is less than or equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left less than or equal to the right and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Larger than operator used to check the left value is
+ * larger than the right value
+ */
 declare class LargerOperator implements OperatorInterface {
+    /**
+     * check the leftValue is larger than the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left larger than the right and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Less than operator used to check if the left value is less than the right value
+ */
 declare class LessOperator implements OperatorInterface {
+    /**
+     * check the leftValue is less than the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left less than the right and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Equal operator used to check if the two values are equal or not
+ */
 declare class EqualOperator implements OperatorInterface {
+    /**
+     * check the leftValue is equal to the rightValue
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if the left equal to the right and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Not equal operator used to check if the two values are not equal
+ */
 declare class NotEqualOperator implements OperatorInterface {
+    /**
+     * check the values are not equal
+     * @param leftValue the value on the left hand side
+     * @param rightValue the value on the righ hand side
+     * @return true if not equal and false otherwise
+     */
     check(leftValue: number, rightValue: number): boolean;
 }
 interface EstimatorInterface {
@@ -274,27 +524,96 @@ declare class DistanceEstimator implements EstimatorInterface {
     private getMin(position, region, entityIndex);
     calculate(iteration: number, position: Point, region: Region): number;
 }
+/**
+ * Condition class is used as a part of the Rule class (Left hand side of any rule)
+ */
 declare class Condition {
+    /**
+     * left hand side of the condition
+     */
     private leftSide;
+    /**
+     * comparison operator
+     */
     private operator;
+    /**
+     * right hand side of the operator
+     */
     private rightSide;
+    /**
+     * next anded conditions
+     */
     private nextCondition;
+    /**
+     * Constructor for the condition class
+     * @param line user input line
+     */
     constructor(line: string);
+    /**
+     * Check if the condition is true or false including all the anded conditions
+     * @param iteration the percentage of completion of the generator
+     * @param position the current position where the algorithm is testing
+     * @param region allowed region to check on
+     * @return true if all conditions are true and false otherwise
+     */
     check(iteration: number, position: Point, region: Region): boolean;
 }
+/**
+ * Executer class (Right hand side of the rule)
+ */
 declare class Executer {
-    private neightbor;
+    /**
+     * used neighborhood to apply the executer
+     */
+    private neighbor;
+    /**
+     * entities that will be applied in the region using neighbor
+     */
     private entities;
+    /**
+     * next anded executer
+     */
     private nextExecuter;
+    /**
+     * Constructor for the exectuer class
+     * @param line user input data
+     */
     constructor(line: string);
+    /**
+     * Apply all the executers on the current selected region
+     * @param position current position of the generator
+     * @param region allowed region to apply the executer
+     */
     apply(position: Point, region: Region): void;
 }
+/**
+ * Rule class used to apply any of the generators
+ */
 declare class Rule {
+    /**
+     * Left hand side of the rule
+     */
     private condition;
+    /**
+     * Right hand side of the rule
+     */
     private executer;
+    /**
+     * next rule to test if the current one failed
+     */
     private nextRule;
+    /**
+     *
+     * @param lines
+     */
     constructor(lines: string[]);
-    checkRule(iteration: number, position: Point, region: Region): boolean;
+    /**
+     *
+     * @param iteration
+     * @param position
+     * @param region
+     * @return
+     */
     execute(iteration: number, position: Point, region: Region): boolean;
 }
 declare abstract class Generator {
@@ -303,6 +622,7 @@ declare abstract class Generator {
     protected rules: Rule[];
     protected minBorder: number;
     protected maxBorder: number;
+    protected sameBorders: boolean;
     protected replacingType: number;
     protected borderType: number;
     constructor(currentRegion: any, rules: string[]);
@@ -480,32 +800,32 @@ declare class Random {
      */
     static initialize(): void;
     /**
-     *
-     * @param seed
+     * change thre noise and random seeds
+     * @param seed new seed for the random and noise objects
      */
     static changeSeed(seed: number): void;
     /**
-     *
-     * @return
+     * get random number between 0 and 1
+     * @return a random value between 0 (inclusive) and 1 (exclusive)
      */
     static getRandom(): number;
     /**
-     *
-     * @param min
-     * @param max
-     * @return
+     * get random integer between min and max
+     * @param min min value for the random integer
+     * @param max max value for the random integer
+     * @return a random integer between min (inclusive) and max (exclusive)
      */
     static getIntRandom(min: number, max: number): number;
     /**
-     *
-     * @param x
-     * @param y
-     * @return
+     * get 2D perlin noise value based on the location x and y
+     * @param x x location
+     * @param y y location
+     * @return noise value based on the location x and y
      */
     static getNoise(x: number, y: number): number;
     /**
-     *
-     * @param array
+     * shuffle an array in place
+     * @param array input array to be shuffled
      */
     static shuffleArray(array: any[]): void;
 }
@@ -513,9 +833,34 @@ declare class Random {
  * transform a string to its corresponding class
  */
 declare class Factory {
+    /**
+     * create an estimator based on the user input
+     * @param line user input to be parsed
+     * @return Number Estimator, Distance Estimator, or NeighborhoodEstimator
+     */
     static getEstimator(line: string): EstimatorInterface;
+    /**
+     * get the correct operator based on the user input
+     * @param line user input to be parsed to operator
+     * @return >=, <=, >, <, == (=), or != (<>)
+     */
     static getOperator(line: string): OperatorInterface;
+    /**
+     * get the correct divider based on the user input
+     * @param type input type of the divider
+     * @param numRegions number of region after division
+     * @param parameters parameters for the divider
+     * @return EqualDivider, BinaryDivider, or SamplingDivider
+     */
     static getDivider(type: string, numRegions: number, parameters: any): DividerInterface;
+    /**
+     * get the specified generator by the user
+     * @param type generator type
+     * @param currentRegion region applied on
+     * @param parameters generator parameters
+     * @param rules generator rules
+     * @return AutomataGenerator, AgentGenerator, or ConnectorGenerator
+     */
     static getGenerator(type: string, currentRegion: any, parameters: any, rules: string[]): Generator;
 }
 /**

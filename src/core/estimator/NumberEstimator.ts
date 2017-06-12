@@ -1,12 +1,30 @@
 /// <reference path="EstimatorInterface.ts"/>
 
+/**
+ * Number estimator is most common used estimator. It can return completion percentage, 
+ * random value, noise value, constant value, or number of entities in the selected region
+ */
 class NumberEstimator implements EstimatorInterface{
+    /**
+     * current specified name
+     */
     private name:string;
 
+    /**
+     * Constructor for Number Estimator
+     * @param line user input
+     */
     constructor(line:string){
         this.name = line;
     }
 
+    /**
+     * Calculates the value for the specified name
+     * @param iteration completion percentage
+     * @param position current position
+     * @param region current region
+     * @return estimated value for the name
+     */
     calculate(iteration:number, position:Point, region:Region):number{
         if(this.name == "complete"){
             return iteration;
