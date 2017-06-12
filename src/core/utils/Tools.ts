@@ -330,6 +330,13 @@ class Factory{
         return null;
     }
 
+    /**
+     * get the correct divider based on the user input
+     * @param type input type of the divider
+     * @param numRegions number of region after division
+     * @param parameters parameters for the divider
+     * @return EqualDivider, BinaryDivider, or SamplingDivider
+     */
     public static getDivider(type:string, numRegions:number, parameters:any):DividerInterface{
         switch(type.trim()){
             case "equal":
@@ -342,6 +349,14 @@ class Factory{
         return null;
     }
 
+    /**
+     * get the specified generator by the user
+     * @param type generator type
+     * @param currentRegion region applied on
+     * @param parameters generator parameters
+     * @param rules generator rules
+     * @return AutomataGenerator, AgentGenerator, or ConnectorGenerator
+     */
     public static getGenerator(type:string, currentRegion:any, parameters:any, rules:string[]):Generator{
         switch(type.trim()){
             case "automata":

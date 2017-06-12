@@ -1,12 +1,35 @@
 /// <reference path="DividerInterface.ts"/>
 
+/**
+ * Equal Divider class that divides the map into a grid of equal size regions
+ */
 class EqualDivider implements DividerInterface{
+    /**
+     * number of required regions
+     */
     private numberOfRegions:number;
+    /**
+     * minimum number of regions in the x direction
+     */
     private minWidth:number;
+    /**
+     * minimum number of regions in the y direction
+     */
     private minHeight:number;
+    /**
+     * maximum number of regions in the x direction
+     */
     private maxWidth:number;
+    /**
+     * maximum number of regions in the y direction
+     */
     private maxHeight:number;
 
+    /**
+     * constructor for the EqualDivider class
+     * @param numberOfRegions number of required regions
+     * @param parameters to initialize the EqualDivider
+     */
     constructor(numberOfRegions:number, parameters:any){
         this.numberOfRegions = 1;
         if(numberOfRegions){
@@ -42,6 +65,11 @@ class EqualDivider implements DividerInterface{
         }
     }
 
+    /**
+     * get regions in the map using equal dividing algorithm
+     * @param map the generated map
+     * @return an array of regions based on equal division of the map
+     */
     getRegions(map:Region): Region[] {
         let result:Region[] = [];
 
