@@ -70,4 +70,4 @@
 //     }
 // }
 
-// savePixels(picture, "png").pipe(fs.createWriteStream("out.png"));
+// savePixels(picture, "png").pipe(fs.createWriteStream("bin/out.png"));

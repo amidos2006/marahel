@@ -6,6 +6,10 @@ stats/
 ###########################
 analysis/
 
+# Output Files #
+################
+bin/out.png
+
 # OS generated files #
 ######################
 .DS_Store
