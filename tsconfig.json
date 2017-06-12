@@ -3,5 +3,9 @@
         "target": "es5",
         "sourceMap": true,
         "outDir": "bin"
-    }
+    },
+    "exclude": [
+        "bin/*",
+        "analysis/*"
+    ]
 }

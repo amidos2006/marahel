@@ -1,27 +1,119 @@
+/**
+ * Map class that represent the current generated map
+ */
 declare class MarahelMap {
+    /**
+     * static value to define same place replacing technique
+     */
     static REPLACE_SAME: number;
+    /**
+     * static value to define back buffer replacing technique
+     */
     static REPLACE_BACK: number;
+    /**
+     * width of the generated map
+     */
     width: number;
+    /**
+     * height of the generated map
+     */
     height: number;
+    /**
+     * front buffer values
+     */
     private mapValues;
+    /**
+     * back buffer values
+     */
     private backValues;
+    /**
+     * dictionary of number of entities
+     */
     private numEntities;
+    /**
+     * constructor for the map class
+     * @param width width of the map
+     * @param height height of the map
+     */
     constructor(width: number, height: number);
+    /**
+     * set a certain location with an entity index
+     * @param x x position
+     * @param y y position
+     * @param value entity index
+     */
     setValue(x: number, y: number, value: number): void;
+    /**
+     * switch the two buffers
+     */
     switchBuffers(): void;
+    /**
+     * get a certain location
+     * @param x x position
+     * @param y y position
+     * @return entity index in the defined location
+     */
     getValue(x: number, y: number): number;
+    /**
+     * check entity number constraints
+     * @return true if all entity number constraints are satisfied and false otherwise
+     */
     checkNumConstraints(): boolean;
-    getNumEntity(e: string): any;
+    /**
+     * get number of a certain entity in the map
+     * @param e entity name to check
+     * @return number of a certain entity in the map
+     */
+    getNumEntity(e: string): number;
+    /**
+     * get the generated map inform of 2D matrix of entity names
+     * @return 2D matrix of entity names
+     */
     getStringMap(): string[][];
+    /**
+     * get the generated map in form of 2D matrix of entity indexes
+     * @return 2D matrix of entity indexes
+     */
     getIndexMap(): number[][];
+    /**
+     * get the generated map in form of 2D matrix of colors
+     * @return 2D matrix of entity colors
+     */
     getColorMap(): number[][];
+    /**
+     * string representation for the current map
+     * @return string corresponding to the 2D matrix of indexes
+     */
     toString(): string;
 }
+/**
+ * Point class carries the x and y position of the point
+ */
 declare class Point {
+    /**
+     * x position
+     */
     x: number;
+    /**
+     * y position
+     */
     y: number;
+    /**
+     * Constructor for the point class
+     * @param x input x position
+     * @param y input y position
+     */
     constructor(x?: number, y?: number);
+    /**
+     * check if the input point equal to this point
+     * @param p input point
+     * @return true if p equals to this point and false otherwise
+     */
     equal(p: Point): boolean;
+    /**
+     *
+     * @return string represent the information in the point class
+     */
     toString(): string;
 }
 /**
@@ -53,47 +145,286 @@ declare class Entity {
     constructor(name: string, parameters: any);
 }
 /**
+ * the main interface for Marahel with the users
+ */
+declare class Marahel {
+    /**
+     * defines the output maps as 2D matrix of strings
+     */
+    static STRING_OUTPUT: number;
+    /**
+     * defines the output maps as 2D matrix of colors
+     */
+    static COLOR_OUTPUT: number;
+    /**
+     * defines the output maps as 2D matrix of integers
+     */
+    static INDEX_OUTPUT: number;
+    /**
+     * maximum number of generation trials before considering a
+     * failure generation
+     */
+    static GENERATION_MAX_TRIALS: number;
+    /**
+     * maximum number of combinations that A* will use before
+     * considering finding the optimum
+     */
+    static CONNECTOR_TRIALS: number;
+    /**
+     * maximum number of trials for multiple A* restarts before
+     * considering the current one is the best
+     */
+    static CONNECTOR_MULTI_TEST_TRIALS: number;
+    /**
+     * maximum number of trails done by the sampling divider algorithm
+     * to resolve collision between regions
+     */
+    static SAMPLING_TRAILS: number;
+    /**
+     * don't change values by hand. it is an instance of the core system.
+     * it could be used for advanced level generation.
+     */
+    static marahelEngine: Engine;
+    /**
+     * Get entity name from index value. Used if you are using INDEX_OUTPUT
+     * @param index integer value corresponding to index in the map.
+     * @return entity name corresponding to the index.
+     *         returns "undefined" otherwise.
+     */
+    static getEntityName(index: number): string;
+    /**
+     * Initialize Marahel to a certain behavior.
+     * Must be called before using Marahel to generate levels
+     * @param data a JSON object that defines the behavior of Marahel
+     *              check http://www.akhalifa.com/marahel/ for more details
+     */
+    static initialize(data: any): void;
+    /**
+     * Generate a new map using the specified generator
+     * @param outputType (optional) the representation of the output.
+     *                   default is Marahel.STRING_OUTPUT.
+     *                   either Marahel.STRING_OUTPUT, Marahel.COLOR_OUTPUT,
+     *                   Marahel.INDEX_OUTPUT
+     * @param seed (optional) the seed for the random number generator
+     * @return the generated map in form of 2D matrix
+     */
+    static generate(outputType?: number, seed?: number): any[][];
+    /**
+     * print the index generate map in the console in a 2D array format
+     * @param generatedMap the map required to be printed
+     */
+    static printIndexMap(generatedMap: number[][]): void;
+}
+/**
  *
  */
 declare class Region {
+    /**
+     * static variable for the wrapping borders
+     */
     static BORDER_WRAP: number;
+    /**
+     * static variable for the none borders
+     */
     static BORDER_NONE: number;
+    /**
+     * the border size from the left
+     */
     borderLeft: number;
+    /**
+     * the border size from the right
+     */
     borderRight: number;
+    /**
+     * the border size from the top
+     */
     borderUp: number;
+    /**
+     * the border size from the bottom
+     */
     borderDown: number;
+    /**
+     * the x position of the region
+     */
     private x;
+    /**
+     * the y position of the region
+     */
     private y;
+    /**
+     * the width of the region
+     */
     private width;
+    /**
+     * the height of the region
+     */
     private height;
+    /**
+     * Constructor for the region class
+     * @param x x position for the region
+     * @param y y position for the region
+     * @param width width of the region
+     * @param height height of the region
+     */
     constructor(x: number, y: number, width: number, height: number);
+    /**
+     * set x position in the region
+     * @param value used to set the x position
+     */
     setX(value: number): void;
+    /**
+     * set y position in the region
+     * @param value used to set the y position
+     */
     setY(value: number): void;
+    /**
+     * set width of the region
+     * @param value used to set the width
+     */
     setWidth(value: number): void;
+    /**
+     * set height of the region
+     * @param value used to set the height
+     */
     setHeight(value: number): void;
+    /**
+     * get x position of the region after adding the left border
+     * @return x position after adding the left border
+     */
     getX(): number;
+    /**
+     * get y position of the region after adding the upper border
+     * @return y position after adding the top border
+     */
     getY(): number;
+    /**
+     * get width of the region after removing the left and right borders
+     * @return width of the region after removing the left and right borders
+     */
     getWidth(): number;
+    /**
+     * get height of the region after removing the upper and lower borders
+     * @return height of the region after removing the upper and lower borders
+     */
     getHeight(): number;
+    /**
+     * set the value of a certain location in this region
+     * @param x input x position
+     * @param y input y position
+     * @param value
+     */
     setValue(x: number, y: number, value: number): void;
+    /**
+     * Get the value of a certain location in this region
+     * @param x input x position
+     * @param y input y position
+     * @return entity index of the specified location
+     */
     getValue(x: number, y: number): number;
+    /**
+     * get number of a certain entity in this region
+     * @param value index of the entity
+     * @return number of times this entity appears in the region
+     */
     getEntityNumber(value: number): number;
+    /**
+     * fix the current input location to adapt correct location
+     * (if the borders are wrapped)
+     * @param x input x position
+     * @param y input y position
+     * @return the fixed location in the region
+     */
     getRegionPosition(x: number, y: number): Point;
+    /**
+     * check if the input point is in region or not
+     * @param x input x position
+     * @param y input y position
+     * @return true if the input location in the region or false otherwise
+     */
     outRegion(x: number, y: number): boolean;
+    /**
+     * get distances between start point and all entities with index "value"
+     * @param start start location
+     * @param neighbor neighborhood for checking
+     * @param value entity index
+     * @param checkSolid solid tiles
+     * @return array of distances between current location and all entities with index "value"
+     */
     getDistances(start: Point, neighbor: Neighborhood, value: number, checkSolid: Function): number[];
+    /**
+     * check if the input point/region intersect with this region
+     * @param pr either a point or region class to test against
+     * @return true if the current region intersect with the input region/point
+     *         and false otherwise
+     */
     intersect(pr: Region | Point): boolean;
 }
+/**
+ * Neighborhood class carries information about the user defined neighborhoods
+ */
 declare class Neighborhood {
+    /**
+     * width of the neighborhood
+     */
     width: number;
+    /**
+     * height of the neighborhood
+     */
     height: number;
+    /**
+     * name of the neighborhood
+     */
     name: string;
+    /**
+     * the locations relative to the center of neighborhood
+     */
     locations: Point[];
+    /**
+     * user input definition of neighborhood
+     */
     private printing;
+    /**
+     * Constructor for neighborhood class
+     * @param name name of the neighborhood
+     * @param line input definition of the neighborhood
+     */
     constructor(name: string, line: string);
+    /**
+     * get number of a certain entity using this neighborhood
+     * @param value entity index
+     * @param center position for the neighborhood
+     * @param region the current region
+     * @return number of times the entity index in the neighborhood
+     */
     getTotal(value: number, center: Point, region: Region): number;
+    /**
+     * set all relative location using neighborhood to an entity
+     * @param value entity index
+     * @param center position for the neighborhood
+     * @param region the current region
+     */
     setTotal(value: number, center: Point, region: Region): void;
+    /**
+     * Get path between start and end location in a certain region using this neighborhood
+     * @param start start location
+     * @param end end location
+     * @param region the allowed region
+     * @param checkSolid function to define which locations are solid
+     * @return list of points that specify the path between start and end points
+     */
     getPath(start: Point, end: Point, region: Region, checkSolid: Function): Point[];
+    /**
+     * get neighboring locations using this neighborhood
+     * @param x x center position
+     * @param y y center position
+     * @param region the current region
+     * @return a list of surrounding locations using this neighborhood
+     */
     getNeighbors(x: number, y: number, region: Region): Point[];
+    /**
+     * get a string representation for this neighborhood
+     * @return a string represent this neighborhood
+     */
     toString(): string;
 }
 declare class Prando {
@@ -500,28 +831,125 @@ declare class NotEqualOperator implements OperatorInterface {
      */
     check(leftValue: number, rightValue: number): boolean;
 }
+/**
+ * Estimator interface used by the condition class
+ */
 interface EstimatorInterface {
+    /**
+     * calculate the estimator value
+     * @param iteration percentage of the generator
+     * @param position position of the generator
+     * @param region current selected region
+     * @return estimated number
+     */
     calculate(iteration: number, position: Point, region: Region): number;
 }
+/**
+ * Neighborhood estimator calculates the number of entities using a certain neighborhood
+ */
 declare class NeighborhoodEstimator implements EstimatorInterface {
+    /**
+     * used neighborhood
+     */
     private neighbor;
+    /**
+     * entities used for calculation
+     */
     private entities;
+    /**
+     * Constructor for the neighborhood estimator
+     * @param line user input
+     */
     constructor(line: string);
+    /**
+     * Calculates the number of entities using a certain neighborhood
+     * @param iteration percentage of completion of the generator
+     * @param position current position
+     * @param region current region
+     * @return number of entities using a certain neighborhood
+     */
     calculate(iteration: number, position: Point, region: Region): number;
 }
+/**
+ * Number estimator is most common used estimator. It can return completion percentage,
+ * random value, noise value, constant value, or number of entities in the selected region
+ */
 declare class NumberEstimator implements EstimatorInterface {
+    /**
+     * current specified name
+     */
     private name;
+    /**
+     * Constructor for Number Estimator
+     * @param line user input
+     */
     constructor(line: string);
+    /**
+     * Calculates the value for the specified name
+     * @param iteration completion percentage
+     * @param position current position
+     * @param region current region
+     * @return estimated value for the name
+     */
     calculate(iteration: number, position: Point, region: Region): number;
 }
+/**
+ * Distance estimator is used as part of condition to get min, max, or avg
+ * distance to one or a group of entities
+ */
 declare class DistanceEstimator implements EstimatorInterface {
+    /**
+     * type of the distance estimator (minimum, maximum, average)
+     */
     private type;
+    /**
+     * neighborhood used in measuring distance
+     */
     private neighbor;
+    /**
+     * entities used in measuring the distance to
+     */
     private entities;
+    /**
+     * allowed movement tiles
+     */
     private allowed;
+    /**
+     * Constructor for the distance estimator
+     * @param line input line by user
+     */
     constructor(line: string);
+    /**
+     * get maximum distance between current location and entity index
+     * @param position current location
+     * @param region current region
+     * @param entityIndex checked entity index
+     * @return maximum distance between current location and entity index
+     */
     private getMax(position, region, entityIndex);
+    /**
+     * get minimum distance between current location and entity index
+     * @param position current location
+     * @param region current region
+     * @param entityIndex checked entity index
+     * @return minimum distance between current location and entity index
+     */
     private getMin(position, region, entityIndex);
+    /**
+     * get average distance between current location and entity index
+     * @param position current location
+     * @param region current region
+     * @param entityIndex checked entity index
+     * @return average distance between current location and entity index
+     */
+    private getAvg(position, region, entityIndex);
+    /**
+     * get the distance from the current location to a specified sprite
+     * @param iteration percentage of the current generator
+     * @param position current position
+     * @param region current region
+     * @return distance from the current position to the specified entity
+     */
     calculate(iteration: number, position: Point, region: Region): number;
 }
 /**
@@ -575,7 +1003,7 @@ declare class Executer {
      */
     private nextExecuter;
     /**
-     * Constructor for the exectuer class
+     * Constructor for the executer class
      * @param line user input data
      */
     constructor(line: string);
@@ -603,16 +1031,16 @@ declare class Rule {
      */
     private nextRule;
     /**
-     *
-     * @param lines
+     * Constructor for the Rule class
+     * @param lines user input rules
      */
     constructor(lines: string[]);
     /**
-     *
-     * @param iteration
-     * @param position
-     * @param region
-     * @return
+     * Execute the rule chain on the current region
+     * @param iteration the percentage of the finished generator
+     * @param position the current position of the generator
+     * @param region current selected region
+     * @return true if any of the rules has been applied and false otherwise
      */
     execute(iteration: number, position: Point, region: Region): boolean;
 }
@@ -948,81 +1376,3 @@ declare class Engine {
      */
     getNeighborhood(name: string): Neighborhood;
 }
-/**
- * the main interface for Marahel with the users
- */
-declare class Marahel {
-    /**
-     * defines the output maps as 2D matrix of strings
-     */
-    static STRING_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of colors
-     */
-    static COLOR_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of integers
-     */
-    static INDEX_OUTPUT: number;
-    /**
-     * maximum number of generation trials before considering a
-     * failure generation
-     */
-    static GENERATION_MAX_TRIALS: number;
-    /**
-     * maximum number of combinations that A* will use before
-     * considering finding the optimum
-     */
-    static CONNECTOR_TRIALS: number;
-    /**
-     * maximum number of trials for multiple A* restarts before
-     * considering the current one is the best
-     */
-    static CONNECTOR_MULTI_TEST_TRIALS: number;
-    /**
-     * maximum number of trails done by the sampling divider algorithm
-     * to resolve collision between regions
-     */
-    static SAMPLING_TRAILS: number;
-    /**
-     * don't change values by hand. it is an istance of the core system.
-     * it could be used for advanced level generation.
-     */
-    static marahelEngine: Engine;
-    /**
-     * Get entity name from index value. Used if you are using INDEX_OUTPUT
-     * @param index integer value corresponding to index in the map.
-     * @return entity name corresponding to the index.
-     *         returns "undefined" otherwise.
-     */
-    static getEntityName(index: number): string;
-    /**
-     * Initialize Marahel to a certain behavior.
-     * Must be called before using Marahel to generate levels
-     * @param data a JSON object that defines the behavior of Marahel
-     *              check http://www.akhalifa.com/marahel/ for more details
-     */
-    static initialize(data: any): void;
-    /**
-     * Generate a new map using the specified generator
-     * @param outputType (optional) the representation of the output.
-     *                   default is Marahel.STRING_OUTPUT.
-     *                   either Marahel.STRING_OUTPUT, Marahel.COLOR_OUTPUT,
-     *                   Marahel.INDEX_OUTPUT
-     * @param seed (optional) the seed for the random number generator
-     * @return the generated map in form of 2D matrix
-     */
-    static generate(outputType?: number, seed?: number): any[][];
-    /**
-     * print the index generate map in the console in a 2D array format
-     * @param generatedMap the map required to be printed
-     */
-    static printIndexMap(generatedMap: number[][]): void;
-}
-declare let fs: any;
-declare let savePixels: any;
-declare let zeros: any;
-declare let data: any;
-declare let colorMap: number[][];
-declare let indexMap: number[][];
-declare let picture: any;
