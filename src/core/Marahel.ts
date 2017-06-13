@@ -27,12 +27,16 @@ class Marahel{
      * maximum number of combinations that A* will use before 
      * considering finding the optimum
      */
-    public static CONNECTOR_TRIALS:number = 1000;
+    public static A_STAR_TRIALS:number = 1000;
     /**
      * maximum number of trials for multiple A* restarts before 
      * considering the current one is the best
      */
-    public static CONNECTOR_MULTI_TEST_TRIALS:number = 10;
+    public static A_STAR_MULTI_TEST_TRIALS:number = 10;
+    /**
+     * maximum number of trials used by the connector algorithm
+     */
+    public static CONNECTOR_MAX_TRIALS:number = 100;
     /**
      * maximum number of trails done by the sampling divider algorithm 
      * to resolve collision between regions

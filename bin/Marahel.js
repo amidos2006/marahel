@@ -74,7 +74,7 @@ var __extends = (this && this.__extends) || (function () {
 //         picture.set(x, y, 2, colorMap[y][x] & 0xff);
 //     }
 // }
-// savePixels(picture, "png").pipe(fs.createWriteStream("out.png")); 
+// savePixels(picture, "png").pipe(fs.createWriteStream("bin/out.png")); 
 /**
  * Map class that represent the current generated map
  */
@@ -2084,7 +2084,15 @@ var Rule = (function () {
 }());
 /// <reference path="../data/Region.ts"/>
 /// <reference path="../data/Rule.ts"/>
+/**
+ * Base Generator class
+ */
 var Generator = (function () {
+    /**
+     *
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     */
     function Generator(currentRegion, rules) {
         this.minBorder = 0;
         this.maxBorder = 0;
@@ -2121,11 +2129,7 @@ var Generator = (function () {
                 this.borderType = Marahel.marahelEngine.getEntityIndex(currentRegion["borderType"].trim());
             }
         }
-        this.rules = [];
-        for (var _i = 0, rules_1 = rules; _i < rules_1.length; _i++) {
-            var r = rules_1[_i];
-            this.rules.push(new Rule(rules));
-        }
+        this.rules = new Rule(rules);
     }
     Generator.prototype.selectRegions = function (map, regions) {
         if (this.regionsName == "map") {
@@ -2203,16 +2207,10 @@ var AutomataGenerator = (function (_super) {
                     currentPoint = r.getRegionPosition(currentPoint.x, currentPoint.y);
                     if (!visited[currentPoint.toString()] && !r.outRegion(currentPoint.x, currentPoint.y)) {
                         visited[currentPoint.toString()] = true;
-                        for (var _b = 0, _c = this.rules; _b < _c.length; _b++) {
-                            var rule = _c[_b];
-                            var applied = rule.execute(i / this.numIterations, currentPoint, r);
-                            if (applied) {
-                                break;
-                            }
-                        }
+                        this.rules.execute(i / this.numIterations, currentPoint, r);
                         var neighbors = this.explore.getNeighbors(currentPoint.x, currentPoint.y, r);
-                        for (var _d = 0, neighbors_1 = neighbors; _d < neighbors_1.length; _d++) {
-                            var n = neighbors_1[_d];
+                        for (var _b = 0, neighbors_1 = neighbors; _b < neighbors_1.length; _b++) {
+                            var n = neighbors_1[_b];
                             exploreList.push(n);
                         }
                     }
@@ -2306,13 +2304,7 @@ var Agent = (function () {
         if (this.lifespan <= -10) {
             return false;
         }
-        for (var _i = 0, rules_2 = rules; _i < rules_2.length; _i++) {
-            var r = rules_2[_i];
-            var applied = r.execute(this.currentLifespan / this.lifespan, this.position, region);
-            if (applied) {
-                break;
-            }
-        }
+        rules.execute(this.currentLifespan / this.lifespan, this.position, region);
         return true;
     };
     return Agent;
@@ -2540,15 +2532,7 @@ var ConnectorGenerator = (function (_super) {
             }
             var i = -1;
             for (i = 1; i < path.length - 1; i++) {
-                var applied = false;
-                for (var _i = 0, _a = this.rules; _i < _a.length; _i++) {
-                    var rule = _a[_i];
-                    applied = rule.execute(i / path.length, path[i], region);
-                    if (applied) {
-                        break;
-                    }
-                }
-                if (!applied) {
+                if (!this.rules.execute(i / path.length, path[i], region)) {
                     blocked[path[i].x + "," + path[i].y] = true;
                     currentPosition = path[i - 1];
                 }

@@ -67,7 +67,7 @@ class SamplingDivider implements DividerInterface{
     }
     
     /**
-     * Check if a region is interesecting with any other region
+     * Check if a region is intersecting with any other region
      * @param r region to be tested with other regions
      * @param regions current regions
      * @return true if r is not intersecting with any region in regions 
@@ -84,7 +84,7 @@ class SamplingDivider implements DividerInterface{
 
     /**
      * change the current region to a new one
-     * @param map generated map region to define the map boundries
+     * @param map generated map region to define the map boundaries
      * @param r region object to be changed
      */
     private changeRegion(map:Region, r:Region):void{
@@ -115,7 +115,7 @@ class SamplingDivider implements DividerInterface{
     }
 
     /**
-     * get the number of interesections between the regions
+     * get the number of intersections between the regions
      * @param regions current generated regions
      * @return the number of intersection in the current array
      */
@@ -130,7 +130,7 @@ class SamplingDivider implements DividerInterface{
     }
 
     /**
-     * a hill climber algorithm to decrease the numebr of interesections between regions
+     * a hill climber algorithm to decrease the number of intersections between regions
      * @param map generated map
      * @param regions current generated regions
      */

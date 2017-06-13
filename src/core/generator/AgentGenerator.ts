@@ -1,22 +1,63 @@
 /// <reference path="Generator.ts"/>
 
+/**
+ * Agent class used in the AgentGenerator Algorithm
+ */
 class Agent{
+    /**
+     * current position of the agent
+     */
     private position:Point;
+    /**
+     * current lifespan of the agent
+     */
     private currentLifespan:number;
+    /**
+     * total lifespan of the agent
+     */
     private lifespan:number;
+    /**
+     * current agent speed
+     */
     private currentSpeed:number;
-    private speed:number;
+    /**
+     * when does the agent apply rules
+     */
+    private speed:Point;
+    /**
+     * amount of time when the agent change direction
+     */
     private currentChange:number;
+    /**
+     * total amount of time the agent change direction
+     */
     private change:Point;
+    /**
+     * current agent direction
+     */
     private currentDirection:Point;
+    /**
+     * allowed directions by the agent
+     */
     private directions:Point[];
+    /**
+     * starting entity
+     */
     private entities:Entity[];
 
-    constructor(lifespan:number, speed:number, change:Point, entities:Entity[], directions:Neighborhood){
+    /**
+     * Constructor for the agent class
+     * @param lifespan current lifespan after it reach zero the agent dies
+     * @param speed current agent speed to apply rules
+     * @param change amount of time the agent change direction at
+     * @param entities starting location of the agent
+     * @param directions current allowed directions
+     */
+    constructor(lifespan:number, speed:Point, change:Point, entities:Entity[], directions:Neighborhood){
         this.position = new Point(0, 0);
         this.currentLifespan = lifespan;
         this.lifespan = lifespan;
-        this.currentSpeed = speed;
+        this.currentSpeed = Random.getIntRandom(speed.x, speed.y);
         this.speed = speed;
         this.currentChange = Random.getIntRandom(change.x, change.y);
         this.change = change;
@@ -28,6 +69,10 @@ class Agent{
         this.entities = entities;
     }
 
+    /**
+     * move the agent to an allowed location used when the agent get stuck
+     * @param region the applied region
+     */
     moveToLocation(region:Region):void{
         let locations:Point[] = [];
         for(let x:number=0; x<region.getWidth(); x++){
@@ -46,8 +91,15 @@ class Agent{
         this.position = locations[Random.getIntRandom(0, locations.length)];
     }
 
-    private checkAllowed(x:number, y:number, region:Region, allow:Entity[]):boolean{
-        for(let e of allow){
+    /**
+     * check if the current location is allowed
+     * @param x x position
+     * @param y y position
+     * @param region current region
+     * @return true if the location is allowed for the agent and false otherwise
+     */
+    private checkAllowed(x:number, y:number, region:Region):boolean{
+        for(let e of this.entities){
             if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(e.name)){
                 return true;
             }
@@ -55,12 +107,17 @@ class Agent{
         return false;
     }
 
-    private changeDirection(region:Region, avoid:Entity[]):void{
+    /**
+     * change the current direction of the agent or jump to 
+     * new location if no location found
+     * @param region the applied region
+     */
+    private changeDirection(region:Region):void{
         Random.shuffleArray(this.directions);
         for(let d of this.directions){
             let newPosition:Point = region.getRegionPosition(this.position.x + d.x, this.position.y + d.y);
             if(!region.outRegion(newPosition.x, newPosition.y) && 
-                this.checkAllowed(newPosition.x, newPosition.y, region, avoid)){
+                this.checkAllowed(newPosition.x, newPosition.y, region)){
                 this.currentDirection = d;
                 this.position = newPosition;
                 return;
@@ -69,7 +126,13 @@ class Agent{
         this.moveToLocation(region);
     }
 
-    update(region:Region, rules:Rule[], allow:Entity[]):boolean{
+    /**
+     * update the current agent
+     * @param region current applied region
+     * @param rules rules to be applied when its time to react
+     * @return true if the agent is still alive and false otherwise
+     */
+    update(region:Region, rules:Rule):boolean{
         if(this.currentLifespan <= 0){
             return false;
         }
@@ -77,42 +140,64 @@ class Agent{
         if(this.currentSpeed > 0){
             return true;
         }
-        this.currentSpeed = this.speed;
+        this.currentSpeed = Random.getIntRandom(this.speed.x, this.speed.y);
         this.currentLifespan -= 1;
         this.currentChange -= 1;
         if(this.currentChange <= 0){
             this.currentChange = Random.getIntRandom(this.change.x, this.change.y);
-            this.changeDirection(region, allow);
+            this.changeDirection(region);
         }
         else{
             this.position = region.getRegionPosition(this.position.x + this.currentDirection.x, 
                 this.position.y + this.currentDirection.y);
             if(region.outRegion(this.position.x, this.position.y) ||
-                !this.checkAllowed(this.position.x, this.position.y, region, allow)){
-                this.changeDirection(region, allow);
+                !this.checkAllowed(this.position.x, this.position.y, region)){
+                this.changeDirection(region);
             }
         }
         if(this.lifespan <= -10){
             return false;
         }
-        for(let r of rules){
-            let applied:boolean = r.execute(this.currentLifespan/this.lifespan, this.position, region);
-            if(applied){
-                break;
-            }
-        }
+        rules.execute(this.currentLifespan/this.lifespan, this.position, region);
         return true;
     }
 }
 
+/**
+ * Agent based generator
+ */
 class AgentGenerator extends Generator{
+    /**
+     * number of entities the agent can move on it
+     */
     private allowedEntities:Entity[];
+    /**
+     * number of spawned agents
+     */
     private numAgents:Point;
+    /**
+     * speed of the agent to apply the rules
+     */
     private speed:Point;
+    /**
+     * time before the agent change its direction
+     */
     private changeTime:Point;
+    /**
+     * lifespan for the agents
+     */
     private lifespan:Point;
+    /**
+     * directions allowed for the agents
+     */
     private directions:Neighborhood;
 
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the agent generator
+     */
     constructor(currentRegion:any, rules:string[], parameters:any){
         super(currentRegion, rules);
 
@@ -146,21 +231,24 @@ class AgentGenerator extends Generator{
         }
     }
 
-    applyGeneration(): void {
+    /**
+     * Apply the agent based algorithm on the regions array
+     */
+    applyGeneration():void {
         super.applyGeneration();
         for(let r of this.regions){
             let agents:Agent[] = [];
             let numberOfAgents:number = Random.getIntRandom(this.numAgents.x, this.numAgents.y);
             for(let i:number=0; i<numberOfAgents; i++){
                 agents.push(new Agent(Random.getIntRandom(this.lifespan.x, this.lifespan.y), 
-                    Random.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.allowedEntities, this.directions));
+                    this.speed, this.changeTime, this.allowedEntities, this.directions));
                 agents[agents.length - 1].moveToLocation(r);
             }
             let agentChanges:boolean = true;
             while(agentChanges){
                 for(let a of agents){
                     agentChanges = false;
-                    agentChanges = agentChanges || a.update(r, this.rules, this.allowedEntities);
+                    agentChanges = agentChanges || a.update(r, this.rules);
                     Marahel.marahelEngine.currentMap.switchBuffers();
                 }
             }

@@ -1,16 +1,48 @@
 /// <reference path="../data/Region.ts"/>
 /// <reference path="../data/Rule.ts"/>
 
+/**
+ * Base Generator class
+ */
 abstract class Generator{
+    /**
+     * name of the region that the generator will be applied onto it
+     */
     protected regionsName:string;
+    /**
+     * list of the selected regions
+     */
     protected regions:Region[];
-    protected rules:Rule[];
+    /**
+     * generation rules to be applied
+     */
+    protected rules:Rule;
+    /**
+     * minimum size of the border
+     */
     protected minBorder:number;
+    /**
+     * maximum size of the border
+     */
     protected maxBorder:number;
+    /**
+     * borders are same in all 4 directions
+     */
     protected sameBorders:boolean;
+    /**
+     * replacing type (same location, back buffer)
+     */
     protected replacingType:number;
+    /**
+     * border type (entity, none, wrapping)
+     */
     protected borderType:number;
     
+    /**
+     * Constructor for the generator class
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     */
     constructor(currentRegion:any, rules:string[]){
         this.minBorder = 0;
         this.maxBorder = 0;
@@ -49,13 +81,15 @@ abstract class Generator{
                 this.borderType = Marahel.marahelEngine.getEntityIndex(currentRegion["borderType"].trim());
             }
         }
-
-        this.rules = [];
-        for(let r of rules){
-            this.rules.push(new Rule(rules));
-        }
+        
+        this.rules = new Rule(rules);
     }
 
+    /**
+     * select the correct region based on the regionName
+     * @param map the whole map
+     * @param regions list of all the regions from the divider algorithm
+     */
     selectRegions(map:Region, regions:Region[]):void{
         if(this.regionsName == "map"){
             this.regions = [map];
@@ -82,6 +116,9 @@ abstract class Generator{
         }
     }
 
+    /**
+     * Apply the generation algorithm on the regions array
+     */
     applyGeneration():void{
         Marahel.marahelEngine.replacingType = this.replacingType;
         Marahel.marahelEngine.borderType = this.borderType;

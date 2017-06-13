@@ -1,10 +1,28 @@
 /// <reference path="Generator.ts"/>
 
+/**
+ * Automata Generator class
+ */
 class AutomataGenerator extends Generator{
+    /**
+     * number of iterations to apply cellular automata
+     */
     private numIterations:number;
+    /**
+     * anchor point to start the generation
+     */
     private start:Point;
+    /**
+     * neighborhood defines which tiles to explore next
+     */
     private explore:Neighborhood;
 
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the automata generator
+     */
     constructor(currentRegion:any, rules:string[], parameters:any){
         super(currentRegion, rules);
 
@@ -22,6 +40,9 @@ class AutomataGenerator extends Generator{
         }
     }
 
+    /**
+     * Apply the automata algorithm on the regions array
+     */
     applyGeneration(): void {
         super.applyGeneration();
         for(let r of this.regions){
@@ -33,12 +54,7 @@ class AutomataGenerator extends Generator{
                     currentPoint = r.getRegionPosition(currentPoint.x, currentPoint.y);
                     if(!visited[currentPoint.toString()] && !r.outRegion(currentPoint.x, currentPoint.y)){
                         visited[currentPoint.toString()] = true;
-                        for(let rule of this.rules){
-                            let applied:boolean = rule.execute(i/this.numIterations, currentPoint, r);
-                            if(applied){
-                                break;
-                            }
-                        }
+                        this.rules.execute(i/this.numIterations, currentPoint, r);
                         let neighbors:Point[] = this.explore.getNeighbors(currentPoint.x, currentPoint.y, r);
                         for(let n of neighbors){
                                 exploreList.push(n);

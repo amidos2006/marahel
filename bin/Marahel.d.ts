@@ -1044,15 +1044,47 @@ declare class Rule {
      */
     execute(iteration: number, position: Point, region: Region): boolean;
 }
+/**
+ * Base Generator class
+ */
 declare abstract class Generator {
+    /**
+     * name of the region that the generator will be applied onto it
+     */
     protected regionsName: string;
+    /**
+     * list of all regions
+     */
     protected regions: Region[];
-    protected rules: Rule[];
+    /**
+     * generation rules to be applied
+     */
+    protected rules: Rule;
+    /**
+     * minimum size of the border
+     */
     protected minBorder: number;
+    /**
+     * maximum size of the border
+     */
     protected maxBorder: number;
+    /**
+     * borders are same in all 4 directions
+     */
     protected sameBorders: boolean;
+    /**
+     * replacing type (same location, back buffer)
+     */
     protected replacingType: number;
+    /**
+     * border type (entity, none, wrapping)
+     */
     protected borderType: number;
+    /**
+     *
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     */
     constructor(currentRegion: any, rules: string[]);
     selectRegions(map: Region, regions: Region[]): void;
     applyGeneration(): void;
@@ -1079,7 +1111,7 @@ declare class Agent {
     moveToLocation(region: Region): void;
     private checkAllowed(x, y, region, allow);
     private changeDirection(region, avoid);
-    update(region: Region, rules: Rule[], allow: Entity[]): boolean;
+    update(region: Region, rules: Rule, allow: Entity[]): boolean;
 }
 declare class AgentGenerator extends Generator {
     private allowedEntities;

@@ -1,18 +1,39 @@
 /// <reference path="Generator.ts"/>
 
+/**
+ * Group class is a helper class to the connector algorithm
+ */
 class Group{
+    /**
+     * group identifier
+     */
     index:number;
+    /**
+     * points in the group
+     */
     points:Point[];
 
+    /**
+     * constructor to initialize the values
+     */
     constructor(){
         this.index = -1;
         this.points = [];
     }
 
+    /**
+     * add new point to the group
+     * @param x x position
+     * @param y y position
+     */
     addPoint(x:number, y:number):void{
         this.points.push(new Point(x, y));
     }
 
+    /**
+     * get the center of the group
+     * @return the center of the group
+     */
     getCenter():Point{
         let result:Point = new Point(0, 0);
         for(let p of this.points){
@@ -25,6 +46,10 @@ class Group{
         return result;
     }
 
+    /**
+     * sort the points in an ascending order with respect to input point p
+     * @param p relative point for sorting
+     */
     sort(p:Point):void{
         this.points.sort((a:Point, b:Point):number=>{
             let d1:number = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
@@ -36,11 +61,18 @@ class Group{
         })
     }
 
+    /**
+     * remove all the points that inside the shape so the group only have border points
+     * @param region current region
+     * @param allowed connectivity checking entity
+     * @param neighbor neighborhood used in connection
+     */
     cleanPoints(region:Region, allowed:Entity[], neighbor:Neighborhood):void{
         for(let i:number=0; i<this.points.length; i++){
             let found:boolean = false;
             for(let e of allowed){
-                if(neighbor.getTotal(Marahel.marahelEngine.getEntityIndex(e.name),this.points[i], region) < neighbor.locations.length){
+                if(neighbor.getTotal(Marahel.marahelEngine.getEntityIndex(e.name),this.points[i], 
+                    region) < neighbor.locations.length){
                     found = true;
                     break;
                 }
@@ -52,12 +84,21 @@ class Group{
         }
     }
 
+    /**
+     * merge two groups together
+     * @param group the other group to be merged with
+     */
     combine(group:Group):void{
         for(let p of group.points){
             this.points.push(p);
         }
     }
 
+    /**
+     * Get the minimum manhattan distance between this group and the input group
+     * @param group the other to measure distance towards it
+     * @return the minimum manhattan distance between this group and the other group
+     */
     distance(group:Group):number{
         let dist:number = Number.MAX_VALUE;
         for(let p1 of this.points){
@@ -71,18 +112,47 @@ class Group{
     }
 }
 
+/**
+ * Connector Generator which changes the generated map in order to connect 
+ * different areas on it
+ */
 class ConnectorGenerator extends Generator{
-    static MAX_ITERATIONS:number = 100;
-
+    /**
+     * Type of connection for the shortest connections
+     */
     static SHORT_CONNECTION:number=0;
+    /**
+     * Type of connection for the random connections
+     */
     static RANDOM_CONNECTION:number=1;
+    /**
+     * Type of connection for the hub connections
+     */
     static HUB_CONNECTION:number=2;
+    /**
+     * Type of connection for the full connections
+     */
     static FULL_CONNECTION:number=3;
 
+    /**
+     * the connection neighborhood used to check connectivity
+     */
     private neighbor:Neighborhood;
+    /**
+     * entities that are used to check connectivity
+     */
     private entities:Entity[];
+    /**
+     * type of connection (short, random, hub, or full)
+     */
     private connectionType:number;
 
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the connector generator
+     */
     constructor(currentRegion:any, rules:string[], parameters:any){
         super(currentRegion, rules);
 
@@ -113,6 +183,14 @@ class ConnectorGenerator extends Generator{
         }
     }
 
+    /**
+     * flood fill algorithm to label the map and get unconnected groups and areas
+     * @param x x position
+     * @param y y position
+     * @param label current label
+     * @param labelBoard current labelling board to change
+     * @param region current region
+     */
     private floodFill(x:number, y:number, label:number, labelBoard:number[][], region:Region):void{
         if(labelBoard[y][x] != -1){
             return;
@@ -128,6 +206,11 @@ class ConnectorGenerator extends Generator{
         }
     }
 
+    /**
+     * Get all unconnected groups
+     * @param region current applied region
+     * @return an array of all unconnected groups 
+     */
     private getUnconnectedGroups(region:Region):Group[]{
         let label:number = 0;
         let labelBoard:number[][] = [];
@@ -165,6 +248,13 @@ class ConnectorGenerator extends Generator{
         return groups;
     }
 
+    /**
+     * connect the two points
+     * @param start start point for connection
+     * @param end end point for connection
+     * @param region current region
+     * @return true if the two groups are connected and false otherwise
+     */
     private connect(start:Point, end:Point, region:Region):boolean{
         let blocked:any={};
         let currentPosition:Point = start;
@@ -181,14 +271,7 @@ class ConnectorGenerator extends Generator{
             }
             let i:number = -1;
             for(i=1; i<path.length - 1; i++){
-                let applied:boolean = false;
-                for(let rule of this.rules){
-                    applied = rule.execute(i/path.length, path[i], region);
-                    if(applied){
-                        break;
-                    }
-                }
-                if(!applied){
+                if(!this.rules.execute(i/path.length, path[i], region)){
                     blocked[path[i].x + "," + path[i].y] = true;
                     currentPosition = path[i-1];
                 }
@@ -200,6 +283,11 @@ class ConnectorGenerator extends Generator{
         return true;
     }
 
+    /**
+     * connect the groups randomly
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectRandom(groups:Group[], region:Region):void{
         let index:number=0;
         while(groups.length > 1){
@@ -210,12 +298,18 @@ class ConnectorGenerator extends Generator{
             groups[i1].combine(groups[i2]);
             groups.splice(i2, 1);
             index+=1;
-            if(index > ConnectorGenerator.MAX_ITERATIONS){
+            if(index > Marahel.CONNECTOR_MAX_TRIALS){
                 throw new Error("Connector: " + this + " is taking too much time.")
             }
         }
     }
 
+    /**
+     * helper function to connect the groups using the shortest path
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the first point and last point and the indeces of both group to be connected
+     */
     private shortestGroup(groups:Group[], region:Region):Point[]{
         let c1:Point = groups[0].getCenter();
         let minDistance:number = Number.MAX_VALUE;
@@ -236,6 +330,12 @@ class ConnectorGenerator extends Generator{
         return [path[0], path[path.length-1], new Point(0, index)];
     }
 
+    /**
+     * helper function to connect the groups using one center group
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the index of the center group that leads to the shortest distance towards other groups
+     */
     private centerGroup(groups:Group[], region:Region):number{
         let minDistance:number = Number.MAX_VALUE;
         let index:number = -1;
@@ -255,6 +355,11 @@ class ConnectorGenerator extends Generator{
         return index;
     }
 
+    /**
+     * connect the groups using the shortest distance
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectShort(groups:Group[], region:Region):void{
         let index:number=0;
         while(groups.length > 1){
@@ -263,12 +368,17 @@ class ConnectorGenerator extends Generator{
             groups[p[2].x].combine(groups[p[2].y]);
             groups.splice(p[2].y, 1);
             index+=1;
-            if(index > ConnectorGenerator.MAX_ITERATIONS){
+            if(index > Marahel.CONNECTOR_MAX_TRIALS){
                 throw new Error("Connector: " + this + " is taking too much time.")
             }
         }
     }
 
+    /**
+     * connect the all groups together
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectFull(groups:Group[], region:Region):void{
         let index:number=0;
         let probability:number = 1/groups.length;
@@ -289,6 +399,11 @@ class ConnectorGenerator extends Generator{
         }
     }
 
+    /**
+     * connect the groups using hub architecture (one group is connected to the rest)
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectHub(groups:Group[], region:Region):void{
         let center:number = this.centerGroup(groups, region);
         for(let g of groups){
@@ -300,6 +415,9 @@ class ConnectorGenerator extends Generator{
         }
     }
 
+    /**
+     * Apply the connector algorithm on the regions array
+     */
     applyGeneration(): void {
         super.applyGeneration();
         for(let r of this.regions){

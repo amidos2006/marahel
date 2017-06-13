@@ -129,7 +129,7 @@ class AStar{
                 });
             }
             iterations += 1;
-            if(iterations >= Marahel.CONNECTOR_TRIALS){
+            if(iterations >= Marahel.A_STAR_TRIALS){
                 break;
             }
         }
@@ -166,13 +166,13 @@ class AStar{
                 }
                 else{
                     iterations += 1;
-                    if(iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS){
+                    if(iterations > Marahel.A_STAR_MULTI_TEST_TRIALS){
                         break;
                     }
                 }
             }
             if(shortest < 4 || (shortest < Number.MAX_VALUE && 
-                iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS)){
+                iterations > Marahel.A_STAR_MULTI_TEST_TRIALS)){
                 break;
             }
         }
@@ -233,7 +233,7 @@ class Random{
     }
 
     /**
-     * change thre noise and random seeds
+     * change noise and random seeds
      * @param seed new seed for the random and noise objects
      */
     public static changeSeed(seed:number):void{
