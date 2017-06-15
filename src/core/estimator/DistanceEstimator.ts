@@ -38,13 +38,19 @@ class DistanceEstimator implements EstimatorInterface{
         }
 
         let parts:string[] = line.split(/\((.+)\)/)[1].split(",");
-        this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
-        this.entities = EntityListParser.parseList(parts[1]);
-        let allowedName:string = "any";
-        if(parts.length > 2){
-            allowedName = parts[2].trim();
+        if(parts.length == 1){
+            this.neighbor = null;
+            this.entities = EntityListParser.parseList(parts[0]);
         }
-        this.allowed = EntityListParser.parseList(allowedName);
+        else{
+            this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
+            this.entities = EntityListParser.parseList(parts[1]);
+            let allowedName:string = "any";
+            if(parts.length > 2){
+                allowedName = parts[2].trim();
+            }
+            this.allowed = EntityListParser.parseList(allowedName);
+        }
     }
 
     /**
@@ -55,16 +61,22 @@ class DistanceEstimator implements EstimatorInterface{
      * @return maximum distance between current location and entity index
      */
     private getMax(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
-            (x:number, y:number)=>{
-                for(let a of this.allowed){
-                    if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                        return false;
+        let values:number[] = [];
+        if(this.neighbor != null){
+            values = region.getDistances(position, this.neighbor, entityIndex, 
+                (x:number, y:number)=>{
+                    for(let a of this.allowed){
+                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
+                            return false;
+                        }
                     }
-                }
-                return true;
-            });
-        if(values.length > 0){
+                    return true;
+                });
+        }
+        else{
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if(values.length <= 0){
             return -1;
         }
         let max:number = 0;
@@ -84,16 +96,22 @@ class DistanceEstimator implements EstimatorInterface{
      * @return minimum distance between current location and entity index
      */
     private getMin(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
-            (x:number, y:number)=>{
-                for(let a of this.allowed){
-                    if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                        return false;
+        let values:number[] = [];
+        if(this.neighbor != null){
+            values = region.getDistances(position, this.neighbor, entityIndex, 
+                (x:number, y:number)=>{
+                    for(let a of this.allowed){
+                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
+                            return false;
+                        }
                     }
-                }
-                return true;
-            });
-        if(values.length > 0){
+                    return true;
+                });
+        }
+        else{
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if(values.length <= 0){
             return -1;
         }
         let min:number = Number.MAX_VALUE;
@@ -114,16 +132,22 @@ class DistanceEstimator implements EstimatorInterface{
      * @return average distance between current location and entity index
      */
     private getAvg(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = region.getDistances(position, this.neighbor, entityIndex, 
-            (x:number, y:number)=>{
-                for(let a of this.allowed){
-                    if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                        return false;
+        let values:number[] = [];
+        if(this.neighbor != null){
+            values = region.getDistances(position, this.neighbor, entityIndex, 
+                (x:number, y:number)=>{
+                    for(let a of this.allowed){
+                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
+                            return false;
+                        }
                     }
-                }
-                return true;
-            });
-        if(values.length > 0){
+                    return true;
+                });
+        }
+        else{
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if(values.length <= 0){
             return -1;
         }
         let total:number = 0;

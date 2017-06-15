@@ -169,12 +169,16 @@ declare class Marahel {
      * maximum number of combinations that A* will use before
      * considering finding the optimum
      */
-    static CONNECTOR_TRIALS: number;
+    static A_STAR_TRIALS: number;
     /**
      * maximum number of trials for multiple A* restarts before
      * considering the current one is the best
      */
-    static CONNECTOR_MULTI_TEST_TRIALS: number;
+    static A_STAR_MULTI_TEST_TRIALS: number;
+    /**
+     * maximum number of trials used by the connector algorithm
+     */
+    static CONNECTOR_MAX_TRIALS: number;
     /**
      * maximum number of trails done by the sampling divider algorithm
      * to resolve collision between regions
@@ -351,6 +355,13 @@ declare class Region {
      * @return array of distances between current location and all entities with index "value"
      */
     getDistances(start: Point, neighbor: Neighborhood, value: number, checkSolid: Function): number[];
+    /**
+     * Get estimated manhattan distance between start point and certain entity index
+     * @param start starting location
+     * @param value entity index
+     * @return array of distances between current location and all entities with index "value"
+     */
+    getEstimateDistances(start: Point, value: number): number[];
     /**
      * check if the input point/region intersect with this region
      * @param pr either a point or region class to test against
@@ -588,7 +599,7 @@ declare class SamplingDivider implements DividerInterface {
      */
     constructor(numberOfRegions: number, parameters: any);
     /**
-     * Check if a region is interesecting with any other region
+     * Check if a region is intersecting with any other region
      * @param r region to be tested with other regions
      * @param regions current regions
      * @return true if r is not intersecting with any region in regions
@@ -597,7 +608,7 @@ declare class SamplingDivider implements DividerInterface {
     private checkIntersection(r, regions);
     /**
      * change the current region to a new one
-     * @param map generated map region to define the map boundries
+     * @param map generated map region to define the map boundaries
      * @param r region object to be changed
      */
     private changeRegion(map, r);
@@ -611,13 +622,13 @@ declare class SamplingDivider implements DividerInterface {
      */
     private getFitRegion(map, regions);
     /**
-     * get the number of interesections between the regions
+     * get the number of intersections between the regions
      * @param regions current generated regions
      * @return the number of intersection in the current array
      */
     private calculateIntersection(regions);
     /**
-     * a hill climber algorithm to decrease the numebr of interesections between regions
+     * a hill climber algorithm to decrease the number of intersections between regions
      * @param map generated map
      * @param regions current generated regions
      */
@@ -1053,7 +1064,7 @@ declare abstract class Generator {
      */
     protected regionsName: string;
     /**
-     * list of all regions
+     * list of the selected regions
      */
     protected regions: Region[];
     /**
@@ -1081,78 +1092,325 @@ declare abstract class Generator {
      */
     protected borderType: number;
     /**
-     *
+     * Constructor for the generator class
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
      */
     constructor(currentRegion: any, rules: string[]);
+    /**
+     * select the correct region based on the regionName
+     * @param map the whole map
+     * @param regions list of all the regions from the divider algorithm
+     */
     selectRegions(map: Region, regions: Region[]): void;
+    /**
+     * Apply the generation algorithm on the regions array
+     */
     applyGeneration(): void;
 }
+/**
+ * Automata Generator class
+ */
 declare class AutomataGenerator extends Generator {
+    /**
+     * number of iterations to apply cellular automata
+     */
     private numIterations;
+    /**
+     * anchor point to start the generation
+     */
     private start;
+    /**
+     * neighborhood defines which tiles to explore next
+     */
     private explore;
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the automata generator
+     */
     constructor(currentRegion: any, rules: string[], parameters: any);
+    /**
+     * Apply the automata algorithm on the regions array
+     */
     applyGeneration(): void;
 }
+/**
+ * Agent class used in the AgentGenerator Algorithm
+ */
 declare class Agent {
+    /**
+     * current position of the agent
+     */
     private position;
+    /**
+     * current lifespan of the agent
+     */
     private currentLifespan;
+    /**
+     * total lifespan of the agent
+     */
     private lifespan;
+    /**
+     * current agent speed
+     */
     private currentSpeed;
+    /**
+     * when does the agent apply rules
+     */
     private speed;
+    /**
+     * amount of time when the agent change direction
+     */
     private currentChange;
+    /**
+     * total amount of time the agent change direction
+     */
     private change;
+    /**
+     * current agent direction
+     */
     private currentDirection;
+    /**
+     * allowed directions by the agent
+     */
     private directions;
+    /**
+     * starting entity
+     */
     private entities;
-    constructor(lifespan: number, speed: number, change: Point, entities: Entity[], directions: Neighborhood);
+    /**
+     * Constructor for the agent class
+     * @param lifespan current lifespan after it reach zero the agent dies
+     * @param speed current agent speed to apply rules
+     * @param change amount of time the agent change direction at
+     * @param entities starting location of the agent
+     * @param directions current allowed directions
+     */
+    constructor(lifespan: number, speed: Point, change: Point, entities: Entity[], directions: Neighborhood);
+    /**
+     * move the agent to an allowed location used when the agent get stuck
+     * @param region the applied region
+     */
     moveToLocation(region: Region): void;
-    private checkAllowed(x, y, region, allow);
-    private changeDirection(region, avoid);
-    update(region: Region, rules: Rule, allow: Entity[]): boolean;
+    /**
+     * check if the current location is allowed
+     * @param x x position
+     * @param y y position
+     * @param region current region
+     * @return true if the location is allowed for the agent and false otherwise
+     */
+    private checkAllowed(x, y, region);
+    /**
+     * change the current direction of the agent or jump to
+     * new location if no location found
+     * @param region the applied region
+     */
+    private changeDirection(region);
+    /**
+     * update the current agent
+     * @param region current applied region
+     * @param rules rules to be applied when its time to react
+     * @return true if the agent is still alive and false otherwise
+     */
+    update(region: Region, rules: Rule): boolean;
 }
+/**
+ * Agent based generator
+ */
 declare class AgentGenerator extends Generator {
+    /**
+     * number of entities the agent can move on it
+     */
     private allowedEntities;
+    /**
+     * number of spawned agents
+     */
     private numAgents;
+    /**
+     * speed of the agent to apply the rules
+     */
     private speed;
+    /**
+     * time before the agent change its direction
+     */
     private changeTime;
+    /**
+     * lifespan for the agents
+     */
     private lifespan;
+    /**
+     * directions allowed for the agents
+     */
     private directions;
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the agent generator
+     */
     constructor(currentRegion: any, rules: string[], parameters: any);
+    /**
+     * Apply the agent based algorithm on the regions array
+     */
     applyGeneration(): void;
 }
+/**
+ * Group class is a helper class to the connector algorithm
+ */
 declare class Group {
+    /**
+     * group identifier
+     */
     index: number;
+    /**
+     * points in the group
+     */
     points: Point[];
+    /**
+     * constructor to initialize the values
+     */
     constructor();
+    /**
+     * add new point to the group
+     * @param x x position
+     * @param y y position
+     */
     addPoint(x: number, y: number): void;
+    /**
+     * get the center of the group
+     * @return the center of the group
+     */
     getCenter(): Point;
+    /**
+     * sort the points in an ascending order with respect to input point p
+     * @param p relative point for sorting
+     */
     sort(p: Point): void;
+    /**
+     * remove all the points that inside the shape so the group only have border points
+     * @param region current region
+     * @param allowed connectivity checking entity
+     * @param neighbor neighborhood used in connection
+     */
     cleanPoints(region: Region, allowed: Entity[], neighbor: Neighborhood): void;
+    /**
+     * merge two groups together
+     * @param group the other group to be merged with
+     */
     combine(group: Group): void;
+    /**
+     * Get the minimum manhattan distance between this group and the input group
+     * @param group the other to measure distance towards it
+     * @return the minimum manhattan distance between this group and the other group
+     */
     distance(group: Group): number;
 }
+/**
+ * Connector Generator which changes the generated map in order to connect
+ * different areas on it
+ */
 declare class ConnectorGenerator extends Generator {
-    static MAX_ITERATIONS: number;
+    /**
+     * Type of connection for the shortest connections
+     */
     static SHORT_CONNECTION: number;
+    /**
+     * Type of connection for the random connections
+     */
     static RANDOM_CONNECTION: number;
+    /**
+     * Type of connection for the hub connections
+     */
     static HUB_CONNECTION: number;
+    /**
+     * Type of connection for the full connections
+     */
     static FULL_CONNECTION: number;
+    /**
+     * the connection neighborhood used to check connectivity
+     */
     private neighbor;
+    /**
+     * entities that are used to check connectivity
+     */
     private entities;
+    /**
+     * type of connection (short, random, hub, or full)
+     */
     private connectionType;
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the connector generator
+     */
     constructor(currentRegion: any, rules: string[], parameters: any);
+    /**
+     * flood fill algorithm to label the map and get unconnected groups and areas
+     * @param x x position
+     * @param y y position
+     * @param label current label
+     * @param labelBoard current labelling board to change
+     * @param region current region
+     */
     private floodFill(x, y, label, labelBoard, region);
+    /**
+     * Get all unconnected groups
+     * @param region current applied region
+     * @return an array of all unconnected groups
+     */
     private getUnconnectedGroups(region);
+    /**
+     * connect the two points
+     * @param start start point for connection
+     * @param end end point for connection
+     * @param region current region
+     * @return true if the two groups are connected and false otherwise
+     */
     private connect(start, end, region);
+    /**
+     * connect the groups randomly
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectRandom(groups, region);
+    /**
+     * helper function to connect the groups using the shortest path
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the first point and last point and the indeces of both group to be connected
+     */
     private shortestGroup(groups, region);
+    /**
+     * helper function to connect the groups using one center group
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the index of the center group that leads to the shortest distance towards other groups
+     */
     private centerGroup(groups, region);
+    /**
+     * connect the groups using the shortest distance
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectShort(groups, region);
+    /**
+     * connect the all groups together
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectFull(groups, region);
+    /**
+     * connect the groups using hub architecture (one group is connected to the rest)
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     private connectHub(groups, region);
+    /**
+     * Apply the connector algorithm on the regions array
+     */
     applyGeneration(): void;
 }
 /**
@@ -1260,7 +1518,7 @@ declare class Random {
      */
     static initialize(): void;
     /**
-     * change thre noise and random seeds
+     * change noise and random seeds
      * @param seed new seed for the random and noise objects
      */
     static changeSeed(seed: number): void;
@@ -1377,7 +1635,7 @@ declare class Engine {
     constructor();
     /**
      * Initialize the current level generator using a JSON object
-     * @param data JSON object that definse the current level generator
+     * @param data JSON object that defines the current level generator
      */
     initialize(data: any): void;
     /**

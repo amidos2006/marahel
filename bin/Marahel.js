@@ -389,12 +389,16 @@ Marahel.GENERATION_MAX_TRIALS = 10;
  * maximum number of combinations that A* will use before
  * considering finding the optimum
  */
-Marahel.CONNECTOR_TRIALS = 1000;
+Marahel.A_STAR_TRIALS = 1000;
 /**
  * maximum number of trials for multiple A* restarts before
  * considering the current one is the best
  */
-Marahel.CONNECTOR_MULTI_TEST_TRIALS = 10;
+Marahel.A_STAR_MULTI_TEST_TRIALS = 10;
+/**
+ * maximum number of trials used by the connector algorithm
+ */
+Marahel.CONNECTOR_MAX_TRIALS = 100;
 /**
  * maximum number of trails done by the sampling divider algorithm
  * to resolve collision between regions
@@ -580,6 +584,24 @@ var Region = (function () {
                     if (path.length > 0) {
                         results.push(path.length);
                     }
+                }
+            }
+        }
+        return results;
+    };
+    /**
+     * Get estimated manhattan distance between start point and certain entity index
+     * @param start starting location
+     * @param value entity index
+     * @return array of distances between current location and all entities with index "value"
+     */
+    Region.prototype.getEstimateDistances = function (start, value) {
+        var results = [];
+        for (var x = 0; x < this.getWidth(); x++) {
+            for (var y = 0; y < this.getHeight(); y++) {
+                if (Marahel.marahelEngine.currentMap.getValue(x + this.getX(), y + this.getY()) == value) {
+                    var dist = Math.abs(x - start.x) + Math.abs(y - start.y);
+                    results.push(dist);
                 }
             }
         }
@@ -1249,7 +1271,7 @@ var SamplingDivider = (function () {
         }
     }
     /**
-     * Check if a region is interesecting with any other region
+     * Check if a region is intersecting with any other region
      * @param r region to be tested with other regions
      * @param regions current regions
      * @return true if r is not intersecting with any region in regions
@@ -1266,7 +1288,7 @@ var SamplingDivider = (function () {
     };
     /**
      * change the current region to a new one
-     * @param map generated map region to define the map boundries
+     * @param map generated map region to define the map boundaries
      * @param r region object to be changed
      */
     SamplingDivider.prototype.changeRegion = function (map, r) {
@@ -1294,7 +1316,7 @@ var SamplingDivider = (function () {
         return r;
     };
     /**
-     * get the number of interesections between the regions
+     * get the number of intersections between the regions
      * @param regions current generated regions
      * @return the number of intersection in the current array
      */
@@ -1309,7 +1331,7 @@ var SamplingDivider = (function () {
         return results - regions.length;
     };
     /**
-     * a hill climber algorithm to decrease the numebr of interesections between regions
+     * a hill climber algorithm to decrease the number of intersections between regions
      * @param map generated map
      * @param regions current generated regions
      */
@@ -1812,13 +1834,19 @@ var DistanceEstimator = (function () {
             this.type = "avg";
         }
         var parts = line.split(/\((.+)\)/)[1].split(",");
-        this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
-        this.entities = EntityListParser.parseList(parts[1]);
-        var allowedName = "any";
-        if (parts.length > 2) {
-            allowedName = parts[2].trim();
+        if (parts.length == 1) {
+            this.neighbor = null;
+            this.entities = EntityListParser.parseList(parts[0]);
         }
-        this.allowed = EntityListParser.parseList(allowedName);
+        else {
+            this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
+            this.entities = EntityListParser.parseList(parts[1]);
+            var allowedName = "any";
+            if (parts.length > 2) {
+                allowedName = parts[2].trim();
+            }
+            this.allowed = EntityListParser.parseList(allowedName);
+        }
     }
     /**
      * get maximum distance between current location and entity index
@@ -1829,16 +1857,22 @@ var DistanceEstimator = (function () {
      */
     DistanceEstimator.prototype.getMax = function (position, region, entityIndex) {
         var _this = this;
-        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
-            for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
-                var a = _a[_i];
-                if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
-                    return false;
+        var values = [];
+        if (this.neighbor != null) {
+            values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
+                for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
+                    var a = _a[_i];
+                    if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        });
-        if (values.length > 0) {
+                return true;
+            });
+        }
+        else {
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if (values.length <= 0) {
             return -1;
         }
         var max = 0;
@@ -1858,16 +1892,22 @@ var DistanceEstimator = (function () {
      */
     DistanceEstimator.prototype.getMin = function (position, region, entityIndex) {
         var _this = this;
-        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
-            for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
-                var a = _a[_i];
-                if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
-                    return false;
+        var values = [];
+        if (this.neighbor != null) {
+            values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
+                for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
+                    var a = _a[_i];
+                    if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        });
-        if (values.length > 0) {
+                return true;
+            });
+        }
+        else {
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if (values.length <= 0) {
             return -1;
         }
         var min = Number.MAX_VALUE;
@@ -1887,16 +1927,22 @@ var DistanceEstimator = (function () {
      */
     DistanceEstimator.prototype.getAvg = function (position, region, entityIndex) {
         var _this = this;
-        var values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
-            for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
-                var a = _a[_i];
-                if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
-                    return false;
+        var values = [];
+        if (this.neighbor != null) {
+            values = region.getDistances(position, this.neighbor, entityIndex, function (x, y) {
+                for (var _i = 0, _a = _this.allowed; _i < _a.length; _i++) {
+                    var a = _a[_i];
+                    if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        });
-        if (values.length > 0) {
+                return true;
+            });
+        }
+        else {
+            values = region.getEstimateDistances(position, entityIndex);
+        }
+        if (values.length <= 0) {
             return -1;
         }
         var total = 0;
@@ -2089,7 +2135,7 @@ var Rule = (function () {
  */
 var Generator = (function () {
     /**
-     *
+     * Constructor for the generator class
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
      */
@@ -2131,6 +2177,11 @@ var Generator = (function () {
         }
         this.rules = new Rule(rules);
     }
+    /**
+     * select the correct region based on the regionName
+     * @param map the whole map
+     * @param regions list of all the regions from the divider algorithm
+     */
     Generator.prototype.selectRegions = function (map, regions) {
         if (this.regionsName == "map") {
             this.regions = [map];
@@ -2156,6 +2207,9 @@ var Generator = (function () {
             }
         }
     };
+    /**
+     * Apply the generation algorithm on the regions array
+     */
     Generator.prototype.applyGeneration = function () {
         Marahel.marahelEngine.replacingType = this.replacingType;
         Marahel.marahelEngine.borderType = this.borderType;
@@ -2177,8 +2231,17 @@ var Generator = (function () {
     return Generator;
 }());
 /// <reference path="Generator.ts"/>
+/**
+ * Automata Generator class
+ */
 var AutomataGenerator = (function (_super) {
     __extends(AutomataGenerator, _super);
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the automata generator
+     */
     function AutomataGenerator(currentRegion, rules, parameters) {
         var _this = _super.call(this, currentRegion, rules) || this;
         _this.numIterations = 0;
@@ -2195,6 +2258,9 @@ var AutomataGenerator = (function (_super) {
         }
         return _this;
     }
+    /**
+     * Apply the automata algorithm on the regions array
+     */
     AutomataGenerator.prototype.applyGeneration = function () {
         _super.prototype.applyGeneration.call(this);
         for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
@@ -2222,12 +2288,23 @@ var AutomataGenerator = (function (_super) {
     return AutomataGenerator;
 }(Generator));
 /// <reference path="Generator.ts"/>
+/**
+ * Agent class used in the AgentGenerator Algorithm
+ */
 var Agent = (function () {
+    /**
+     * Constructor for the agent class
+     * @param lifespan current lifespan after it reach zero the agent dies
+     * @param speed current agent speed to apply rules
+     * @param change amount of time the agent change direction at
+     * @param entities starting location of the agent
+     * @param directions current allowed directions
+     */
     function Agent(lifespan, speed, change, entities, directions) {
         this.position = new Point(0, 0);
         this.currentLifespan = lifespan;
         this.lifespan = lifespan;
-        this.currentSpeed = speed;
+        this.currentSpeed = Random.getIntRandom(speed.x, speed.y);
         this.speed = speed;
         this.currentChange = Random.getIntRandom(change.x, change.y);
         this.change = change;
@@ -2238,6 +2315,10 @@ var Agent = (function () {
         }
         this.entities = entities;
     }
+    /**
+     * move the agent to an allowed location used when the agent get stuck
+     * @param region the applied region
+     */
     Agent.prototype.moveToLocation = function (region) {
         var locations = [];
         for (var x = 0; x < region.getWidth(); x++) {
@@ -2256,22 +2337,34 @@ var Agent = (function () {
         }
         this.position = locations[Random.getIntRandom(0, locations.length)];
     };
-    Agent.prototype.checkAllowed = function (x, y, region, allow) {
-        for (var _i = 0, allow_1 = allow; _i < allow_1.length; _i++) {
-            var e = allow_1[_i];
+    /**
+     * check if the current location is allowed
+     * @param x x position
+     * @param y y position
+     * @param region current region
+     * @return true if the location is allowed for the agent and false otherwise
+     */
+    Agent.prototype.checkAllowed = function (x, y, region) {
+        for (var _i = 0, _a = this.entities; _i < _a.length; _i++) {
+            var e = _a[_i];
             if (region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(e.name)) {
                 return true;
             }
         }
         return false;
     };
-    Agent.prototype.changeDirection = function (region, avoid) {
+    /**
+     * change the current direction of the agent or jump to
+     * new location if no location found
+     * @param region the applied region
+     */
+    Agent.prototype.changeDirection = function (region) {
         Random.shuffleArray(this.directions);
         for (var _i = 0, _a = this.directions; _i < _a.length; _i++) {
             var d = _a[_i];
             var newPosition = region.getRegionPosition(this.position.x + d.x, this.position.y + d.y);
             if (!region.outRegion(newPosition.x, newPosition.y) &&
-                this.checkAllowed(newPosition.x, newPosition.y, region, avoid)) {
+                this.checkAllowed(newPosition.x, newPosition.y, region)) {
                 this.currentDirection = d;
                 this.position = newPosition;
                 return;
@@ -2279,7 +2372,13 @@ var Agent = (function () {
         }
         this.moveToLocation(region);
     };
-    Agent.prototype.update = function (region, rules, allow) {
+    /**
+     * update the current agent
+     * @param region current applied region
+     * @param rules rules to be applied when its time to react
+     * @return true if the agent is still alive and false otherwise
+     */
+    Agent.prototype.update = function (region, rules) {
         if (this.currentLifespan <= 0) {
             return false;
         }
@@ -2287,18 +2386,18 @@ var Agent = (function () {
         if (this.currentSpeed > 0) {
             return true;
         }
-        this.currentSpeed = this.speed;
+        this.currentSpeed = Random.getIntRandom(this.speed.x, this.speed.y);
         this.currentLifespan -= 1;
         this.currentChange -= 1;
         if (this.currentChange <= 0) {
             this.currentChange = Random.getIntRandom(this.change.x, this.change.y);
-            this.changeDirection(region, allow);
+            this.changeDirection(region);
         }
         else {
             this.position = region.getRegionPosition(this.position.x + this.currentDirection.x, this.position.y + this.currentDirection.y);
             if (region.outRegion(this.position.x, this.position.y) ||
-                !this.checkAllowed(this.position.x, this.position.y, region, allow)) {
-                this.changeDirection(region, allow);
+                !this.checkAllowed(this.position.x, this.position.y, region)) {
+                this.changeDirection(region);
             }
         }
         if (this.lifespan <= -10) {
@@ -2309,8 +2408,17 @@ var Agent = (function () {
     };
     return Agent;
 }());
+/**
+ * Agent based generator
+ */
 var AgentGenerator = (function (_super) {
     __extends(AgentGenerator, _super);
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the agent generator
+     */
     function AgentGenerator(currentRegion, rules, parameters) {
         var _this = _super.call(this, currentRegion, rules) || this;
         _this.allowedEntities = EntityListParser.parseList("any");
@@ -2343,6 +2451,9 @@ var AgentGenerator = (function (_super) {
         }
         return _this;
     }
+    /**
+     * Apply the agent based algorithm on the regions array
+     */
     AgentGenerator.prototype.applyGeneration = function () {
         _super.prototype.applyGeneration.call(this);
         for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
@@ -2350,7 +2461,7 @@ var AgentGenerator = (function (_super) {
             var agents = [];
             var numberOfAgents = Random.getIntRandom(this.numAgents.x, this.numAgents.y);
             for (var i = 0; i < numberOfAgents; i++) {
-                agents.push(new Agent(Random.getIntRandom(this.lifespan.x, this.lifespan.y), Random.getIntRandom(this.speed.x, this.speed.y), this.changeTime, this.allowedEntities, this.directions));
+                agents.push(new Agent(Random.getIntRandom(this.lifespan.x, this.lifespan.y), this.speed, this.changeTime, this.allowedEntities, this.directions));
                 agents[agents.length - 1].moveToLocation(r);
             }
             var agentChanges = true;
@@ -2358,7 +2469,7 @@ var AgentGenerator = (function (_super) {
                 for (var _b = 0, agents_1 = agents; _b < agents_1.length; _b++) {
                     var a = agents_1[_b];
                     agentChanges = false;
-                    agentChanges = agentChanges || a.update(r, this.rules, this.allowedEntities);
+                    agentChanges = agentChanges || a.update(r, this.rules);
                     Marahel.marahelEngine.currentMap.switchBuffers();
                 }
             }
@@ -2367,14 +2478,29 @@ var AgentGenerator = (function (_super) {
     return AgentGenerator;
 }(Generator));
 /// <reference path="Generator.ts"/>
+/**
+ * Group class is a helper class to the connector algorithm
+ */
 var Group = (function () {
+    /**
+     * constructor to initialize the values
+     */
     function Group() {
         this.index = -1;
         this.points = [];
     }
+    /**
+     * add new point to the group
+     * @param x x position
+     * @param y y position
+     */
     Group.prototype.addPoint = function (x, y) {
         this.points.push(new Point(x, y));
     };
+    /**
+     * get the center of the group
+     * @return the center of the group
+     */
     Group.prototype.getCenter = function () {
         var result = new Point(0, 0);
         for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
@@ -2386,6 +2512,10 @@ var Group = (function () {
         result.y /= this.points.length;
         return result;
     };
+    /**
+     * sort the points in an ascending order with respect to input point p
+     * @param p relative point for sorting
+     */
     Group.prototype.sort = function (p) {
         this.points.sort(function (a, b) {
             var d1 = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
@@ -2396,6 +2526,12 @@ var Group = (function () {
             return d1 - d2;
         });
     };
+    /**
+     * remove all the points that inside the shape so the group only have border points
+     * @param region current region
+     * @param allowed connectivity checking entity
+     * @param neighbor neighborhood used in connection
+     */
     Group.prototype.cleanPoints = function (region, allowed, neighbor) {
         for (var i = 0; i < this.points.length; i++) {
             var found = false;
@@ -2412,12 +2548,21 @@ var Group = (function () {
             }
         }
     };
+    /**
+     * merge two groups together
+     * @param group the other group to be merged with
+     */
     Group.prototype.combine = function (group) {
         for (var _i = 0, _a = group.points; _i < _a.length; _i++) {
             var p = _a[_i];
             this.points.push(p);
         }
     };
+    /**
+     * Get the minimum manhattan distance between this group and the input group
+     * @param group the other to measure distance towards it
+     * @return the minimum manhattan distance between this group and the other group
+     */
     Group.prototype.distance = function (group) {
         var dist = Number.MAX_VALUE;
         for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
@@ -2433,8 +2578,18 @@ var Group = (function () {
     };
     return Group;
 }());
+/**
+ * Connector Generator which changes the generated map in order to connect
+ * different areas on it
+ */
 var ConnectorGenerator = (function (_super) {
     __extends(ConnectorGenerator, _super);
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the connector generator
+     */
     function ConnectorGenerator(currentRegion, rules, parameters) {
         var _this = _super.call(this, currentRegion, rules) || this;
         _this.neighbor = Marahel.marahelEngine.getNeighborhood("plus");
@@ -2464,6 +2619,14 @@ var ConnectorGenerator = (function (_super) {
         }
         return _this;
     }
+    /**
+     * flood fill algorithm to label the map and get unconnected groups and areas
+     * @param x x position
+     * @param y y position
+     * @param label current label
+     * @param labelBoard current labelling board to change
+     * @param region current region
+     */
     ConnectorGenerator.prototype.floodFill = function (x, y, label, labelBoard, region) {
         if (labelBoard[y][x] != -1) {
             return;
@@ -2480,6 +2643,11 @@ var ConnectorGenerator = (function (_super) {
             }
         }
     };
+    /**
+     * Get all unconnected groups
+     * @param region current applied region
+     * @return an array of all unconnected groups
+     */
     ConnectorGenerator.prototype.getUnconnectedGroups = function (region) {
         var label = 0;
         var labelBoard = [];
@@ -2517,6 +2685,13 @@ var ConnectorGenerator = (function (_super) {
         }
         return groups;
     };
+    /**
+     * connect the two points
+     * @param start start point for connection
+     * @param end end point for connection
+     * @param region current region
+     * @return true if the two groups are connected and false otherwise
+     */
     ConnectorGenerator.prototype.connect = function (start, end, region) {
         var blocked = {};
         var currentPosition = start;
@@ -2543,6 +2718,11 @@ var ConnectorGenerator = (function (_super) {
         }
         return true;
     };
+    /**
+     * connect the groups randomly
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     ConnectorGenerator.prototype.connectRandom = function (groups, region) {
         var index = 0;
         while (groups.length > 1) {
@@ -2552,11 +2732,17 @@ var ConnectorGenerator = (function (_super) {
             groups[i1].combine(groups[i2]);
             groups.splice(i2, 1);
             index += 1;
-            if (index > ConnectorGenerator.MAX_ITERATIONS) {
+            if (index > Marahel.CONNECTOR_MAX_TRIALS) {
                 throw new Error("Connector: " + this + " is taking too much time.");
             }
         }
     };
+    /**
+     * helper function to connect the groups using the shortest path
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the first point and last point and the indeces of both group to be connected
+     */
     ConnectorGenerator.prototype.shortestGroup = function (groups, region) {
         var c1 = groups[0].getCenter();
         var minDistance = Number.MAX_VALUE;
@@ -2573,6 +2759,12 @@ var ConnectorGenerator = (function (_super) {
         var path = AStar.getPathMultipleStartEnd(groups[0].points, groups[index].points, this.neighbor.locations, region, function (x, y) { return false; });
         return [path[0], path[path.length - 1], new Point(0, index)];
     };
+    /**
+     * helper function to connect the groups using one center group
+     * @param groups unconnected groups
+     * @param region applied region
+     * @return the index of the center group that leads to the shortest distance towards other groups
+     */
     ConnectorGenerator.prototype.centerGroup = function (groups, region) {
         var minDistance = Number.MAX_VALUE;
         var index = -1;
@@ -2590,6 +2782,11 @@ var ConnectorGenerator = (function (_super) {
         }
         return index;
     };
+    /**
+     * connect the groups using the shortest distance
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     ConnectorGenerator.prototype.connectShort = function (groups, region) {
         var index = 0;
         while (groups.length > 1) {
@@ -2598,11 +2795,16 @@ var ConnectorGenerator = (function (_super) {
             groups[p[2].x].combine(groups[p[2].y]);
             groups.splice(p[2].y, 1);
             index += 1;
-            if (index > ConnectorGenerator.MAX_ITERATIONS) {
+            if (index > Marahel.CONNECTOR_MAX_TRIALS) {
                 throw new Error("Connector: " + this + " is taking too much time.");
             }
         }
     };
+    /**
+     * connect the all groups together
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     ConnectorGenerator.prototype.connectFull = function (groups, region) {
         var index = 0;
         var probability = 1 / groups.length;
@@ -2624,6 +2826,11 @@ var ConnectorGenerator = (function (_super) {
             }
         }
     };
+    /**
+     * connect the groups using hub architecture (one group is connected to the rest)
+     * @param groups unconnected groups
+     * @param region applied region
+     */
     ConnectorGenerator.prototype.connectHub = function (groups, region) {
         var center = this.centerGroup(groups, region);
         for (var _i = 0, groups_3 = groups; _i < groups_3.length; _i++) {
@@ -2634,6 +2841,9 @@ var ConnectorGenerator = (function (_super) {
             }
         }
     };
+    /**
+     * Apply the connector algorithm on the regions array
+     */
     ConnectorGenerator.prototype.applyGeneration = function () {
         _super.prototype.applyGeneration.call(this);
         for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
@@ -2664,10 +2874,21 @@ var ConnectorGenerator = (function (_super) {
     };
     return ConnectorGenerator;
 }(Generator));
-ConnectorGenerator.MAX_ITERATIONS = 100;
+/**
+ * Type of connection for the shortest connections
+ */
 ConnectorGenerator.SHORT_CONNECTION = 0;
+/**
+ * Type of connection for the random connections
+ */
 ConnectorGenerator.RANDOM_CONNECTION = 1;
+/**
+ * Type of connection for the hub connections
+ */
 ConnectorGenerator.HUB_CONNECTION = 2;
+/**
+ * Type of connection for the full connections
+ */
 ConnectorGenerator.FULL_CONNECTION = 3;
 /// <reference path="../data/Point.ts"/>
 /// <reference path="Prando.ts"/>
@@ -2788,7 +3009,7 @@ var AStar = (function () {
                 });
             }
             iterations += 1;
-            if (iterations >= Marahel.CONNECTOR_TRIALS) {
+            if (iterations >= Marahel.A_STAR_TRIALS) {
                 break;
             }
         }
@@ -2825,13 +3046,13 @@ var AStar = (function () {
                 }
                 else {
                     iterations += 1;
-                    if (iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS) {
+                    if (iterations > Marahel.A_STAR_MULTI_TEST_TRIALS) {
                         break;
                     }
                 }
             }
             if (shortest < 4 || (shortest < Number.MAX_VALUE &&
-                iterations > Marahel.CONNECTOR_MULTI_TEST_TRIALS)) {
+                iterations > Marahel.A_STAR_MULTI_TEST_TRIALS)) {
                 break;
             }
         }
@@ -2887,7 +3108,7 @@ var Random = (function () {
         this.noise = new Noise();
     };
     /**
-     * change thre noise and random seeds
+     * change noise and random seeds
      * @param seed new seed for the random and noise objects
      */
     Random.changeSeed = function (seed) {
@@ -3039,7 +3260,7 @@ var Engine = (function () {
     }
     /**
      * Initialize the current level generator using a JSON object
-     * @param data JSON object that definse the current level generator
+     * @param data JSON object that defines the current level generator
      */
     Engine.prototype.initialize = function (data) {
         // define the maximum and minimum sizes of the generated maps

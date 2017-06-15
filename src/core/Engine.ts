@@ -66,7 +66,7 @@ class Engine{
 
     /**
      * Initialize the current level generator using a JSON object
-     * @param data JSON object that definse the current level generator
+     * @param data JSON object that defines the current level generator
      */
     public initialize(data:any):void{
         // define the maximum and minimum sizes of the generated maps

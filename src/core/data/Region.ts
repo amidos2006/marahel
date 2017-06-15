@@ -244,6 +244,25 @@ class Region{
     }
 
     /**
+     * Get estimated manhattan distance between start point and certain entity index
+     * @param start starting location
+     * @param value entity index
+     * @return array of distances between current location and all entities with index "value"
+     */
+    getEstimateDistances(start:Point, value:number):number[]{
+        let results:number[]=[];
+        for(let x:number=0; x<this.getWidth(); x++){
+            for(let y:number=0; y<this.getHeight(); y++){
+                if(Marahel.marahelEngine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
+                    let dist:number = Math.abs(x-start.x) + Math.abs(y-start.y);
+                    results.push(dist);
+                }
+            }
+        }
+        return results;
+    }
+
+    /**
      * check if the input point/region intersect with this region
      * @param pr either a point or region class to test against
      * @return true if the current region intersect with the input region/point 
