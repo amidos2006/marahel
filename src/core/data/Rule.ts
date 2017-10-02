@@ -25,8 +25,12 @@ class Rule{
      * @param lines user input rules
      */
     constructor(lines:string[]){
-        this.condition = new Condition(lines[0].split("->")[0]);
-        this.executer = new Executer(lines[0].split("->")[1]);
+        let parts:string[] = lines[0].split("->");
+        if(parts.length < 0){
+            throw new Error("Rules should have -> in it.");
+        }
+        this.condition = new Condition(parts[0]);
+        this.executer = new Executer(parts[1]);
         this.nextRule = null;
         if(lines.length > 1){
             lines.splice(0, 1);

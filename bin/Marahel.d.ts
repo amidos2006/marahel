@@ -176,10 +176,6 @@ declare class Marahel {
      */
     static A_STAR_MULTI_TEST_TRIALS: number;
     /**
-     * maximum number of trials used by the connector algorithm
-     */
-    static CONNECTOR_MAX_TRIALS: number;
-    /**
      * maximum number of trails done by the sampling divider algorithm
      * to resolve collision between regions
      */
@@ -561,9 +557,9 @@ declare class Noise {
  */
 interface DividerInterface {
     /**
-     * get non-interesection regions in the map
+     * get non-intersection regions in the map
      * @param map generated map
-     * @return an array of regions that doens't intersect and in the map
+     * @return an array of regions that doesn't intersect and in the map
      */
     getRegions(map: Region): Region[];
 }
@@ -645,7 +641,7 @@ declare class SamplingDivider implements DividerInterface {
  */
 declare class BinaryDivider implements DividerInterface {
     /**
-     * number of reuired regions
+     * number of required regions
      */
     private numberOfRegions;
     /**
@@ -698,14 +694,14 @@ declare class BinaryDivider implements DividerInterface {
     private divide(region);
     /**
      * check if any of the regions have a width or height more than
-     * maxWidht or maxHeight
+     * maxWidth or maxHeight
      * @param regions all the regions
      * @return true if any of the regions have the width or the height
      *         bigger than maxWidth or maxHeight
      */
     private checkMaxSize(regions);
     /**
-     * divided the on the maximum size diminsion
+     * divided the on the maximum size dimension
      * @param region the region that will be divided
      * @return two regions after the division
      */
@@ -825,7 +821,7 @@ declare class EqualOperator implements OperatorInterface {
     /**
      * check the leftValue is equal to the rightValue
      * @param leftValue the value on the left hand side
-     * @param rightValue the value on the righ hand side
+     * @param rightValue the value on the right hand side
      * @return true if the left equal to the right and false otherwise
      */
     check(leftValue: number, rightValue: number): boolean;
@@ -1111,7 +1107,7 @@ declare abstract class Generator {
 /**
  * Automata Generator class
  */
-declare class AutomataGenerator extends Generator {
+declare class SequentialGenerator extends Generator {
     /**
      * number of iterations to apply cellular automata
      */
@@ -1665,4 +1661,24 @@ declare class Engine {
      * @return neighborhood object with the input name or self neighborhood otherwise
      */
     getNeighborhood(name: string): Neighborhood;
+}
+/**
+ * Automata Generator class
+ */
+declare class RandomGenerator extends Generator {
+    /**
+     * number of iterations to apply cellular automata
+     */
+    private numOfTiles;
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the automata generator
+     */
+    constructor(currentRegion: any, rules: string[], parameters: any);
+    /**
+     * Apply the automata algorithm on the regions array
+     */
+    applyGeneration(): void;
 }

@@ -6,9 +6,9 @@
  */
 interface DividerInterface{
     /**
-     * get non-interesection regions in the map
+     * get non-intersection regions in the map
      * @param map generated map
-     * @return an array of regions that doens't intersect and in the map
+     * @return an array of regions that doesn't intersect and in the map
      */
     getRegions(map:Region):Region[];
 }

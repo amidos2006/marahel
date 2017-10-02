@@ -279,7 +279,7 @@ var Entity = (function () {
      */
     function Entity(name, parameters) {
         this.name = name;
-        this.color = -1;
+        this.color = 0;
         if ("color" in parameters) {
             this.color = parameters["color"];
         }
@@ -395,10 +395,6 @@ Marahel.A_STAR_TRIALS = 1000;
  * considering the current one is the best
  */
 Marahel.A_STAR_MULTI_TEST_TRIALS = 10;
-/**
- * maximum number of trials used by the connector algorithm
- */
-Marahel.CONNECTOR_MAX_TRIALS = 100;
 /**
  * maximum number of trails done by the sampling divider algorithm
  * to resolve collision between regions
@@ -652,6 +648,15 @@ var Neighborhood = (function () {
      * @param line input definition of the neighborhood
      */
     function Neighborhood(name, line) {
+        if (line.trim().length == 0) {
+            throw new Error("Neighborhood " + name + " should have a definition matrix.");
+        }
+        line = line.replace("\n", "");
+        line = line.replace("\t", "");
+        line = line.replace(" ", "");
+        if (line.match(/[^0-3\,]+/)) {
+            throw new Error("Neighborhoods must only contain numbers from 0 to 3 and commas.");
+        }
         this.printing = line;
         this.name = name.replace(",", "\n");
         var center = new Point();
@@ -1251,12 +1256,18 @@ var SamplingDivider = (function () {
             if (parameters["min"]) {
                 parts = parameters["min"].split("x");
                 this.minWidth = parseInt(parts[0]);
-                this.minHeight = parseInt(parts[1]);
+                this.minHeight = this.minWidth;
+                if (parts.length > 1) {
+                    this.minHeight = parseInt(parts[1]);
+                }
             }
             if (parameters["max"]) {
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
-                this.maxHeight = parseInt(parts[1]);
+                this.maxHeight = this.maxWidth;
+                if (parts.length > 1) {
+                    this.maxHeight = parseInt(parts[1]);
+                }
             }
         }
         if (this.maxWidth < this.minWidth) {
@@ -1397,12 +1408,18 @@ var BinaryDivider = (function () {
             if (parameters["min"]) {
                 parts = parameters["min"].split("x");
                 this.minWidth = parseInt(parts[0]);
-                this.minHeight = parseInt(parts[1]);
+                this.minHeight = this.minWidth;
+                if (parts.length > 1) {
+                    this.minHeight = parseInt(parts[1]);
+                }
             }
             if (parameters["max"]) {
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
-                this.maxHeight = parseInt(parts[1]);
+                this.maxHeight = this.maxWidth;
+                if (parts.length > 1) {
+                    this.maxHeight = parseInt(parts[1]);
+                }
             }
         }
         if (this.maxWidth < this.minWidth) {
@@ -1479,7 +1496,7 @@ var BinaryDivider = (function () {
     };
     /**
      * check if any of the regions have a width or height more than
-     * maxWidht or maxHeight
+     * maxWidth or maxHeight
      * @param regions all the regions
      * @return true if any of the regions have the width or the height
      *         bigger than maxWidth or maxHeight
@@ -1494,7 +1511,7 @@ var BinaryDivider = (function () {
         return false;
     };
     /**
-     * divided the on the maximum size diminsion
+     * divided the on the maximum size dimension
      * @param region the region that will be divided
      * @return two regions after the division
      */
@@ -1578,12 +1595,18 @@ var EqualDivider = (function () {
             if (parameters["min"]) {
                 parts = parameters["min"].split("x");
                 this.minWidth = parseInt(parts[0]);
-                this.minHeight = parseInt(parts[1]);
+                this.minHeight = this.minWidth;
+                if (parts.length > 1) {
+                    this.minHeight = parseInt(parts[1]);
+                }
             }
             if (parameters["max"]) {
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
-                this.maxHeight = parseInt(parts[1]);
+                this.maxHeight = this.maxWidth;
+                if (parts.length > 1) {
+                    this.maxHeight = parseInt(parts[1]);
+                }
             }
         }
         if (this.maxWidth < this.minWidth) {
@@ -1715,7 +1738,7 @@ var EqualOperator = (function () {
     /**
      * check the leftValue is equal to the rightValue
      * @param leftValue the value on the left hand side
-     * @param rightValue the value on the righ hand side
+     * @param rightValue the value on the right hand side
      * @return true if the left equal to the right and false otherwise
      */
     EqualOperator.prototype.check = function (leftValue, rightValue) {
@@ -1756,6 +1779,9 @@ var NeighborhoodEstimator = (function () {
      */
     function NeighborhoodEstimator(line) {
         var parts = line.split(/\((.+)\)/);
+        if (parts.length <= 1) {
+            throw new Error("Neighborhood estimator is not in the correct format: NeighborhoodName(entity).");
+        }
         this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
         this.entities = EntityListParser.parseList(parts[1]);
     }
@@ -1788,6 +1814,10 @@ var NumberEstimator = (function () {
      */
     function NumberEstimator(line) {
         this.name = line;
+        if (this.name != "complete" && this.name != "random" && this.name != "noise" &&
+            isNaN(parseFloat(this.name)) && Marahel.marahelEngine.getEntityIndex(this.name) == -1) {
+            throw new Error("Undefined name estimator.");
+        }
     }
     /**
      * Calculates the value for the specified name
@@ -1833,7 +1863,14 @@ var DistanceEstimator = (function () {
         else {
             this.type = "avg";
         }
-        var parts = line.split(/\((.+)\)/)[1].split(",");
+        var parts = line.split(/\((.+)\)/);
+        if (parts.length <= 1) {
+            throw new Error("Distance estimator is not in the correct format: DistanceEstimatorName(entity)");
+        }
+        parts = parts[1].split(",");
+        if (parts.length <= 0) {
+            throw new Error("Distance Estimator needs at least one entity for measuring.");
+        }
         if (parts.length == 1) {
             this.neighbor = null;
             this.entities = EntityListParser.parseList(parts[0]);
@@ -2015,6 +2052,9 @@ var Condition = (function () {
      * @param line user input line
      */
     function Condition(line) {
+        if (line.trim().length == 0) {
+            line = "self(any)";
+        }
         var parts = line.split(",");
         var cParts = parts[0].split(/>=|<=|==|!=|>|</);
         this.leftSide = Factory.getEstimator(cParts[0].trim());
@@ -2065,6 +2105,9 @@ var Executer = (function () {
      * @param line user input data
      */
     function Executer(line) {
+        if (line.trim().length == 0) {
+            line = "self(any)";
+        }
         var parts = line.split(",");
         var eParts = parts[0].split(/\((.+)\)/);
         this.neighbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());
@@ -2101,8 +2144,12 @@ var Rule = (function () {
      * @param lines user input rules
      */
     function Rule(lines) {
-        this.condition = new Condition(lines[0].split("->")[0]);
-        this.executer = new Executer(lines[0].split("->")[1]);
+        var parts = lines[0].split("->");
+        if (parts.length < 0) {
+            throw new Error("Rules should have -> in it.");
+        }
+        this.condition = new Condition(parts[0]);
+        this.executer = new Executer(parts[1]);
         this.nextRule = null;
         if (lines.length > 1) {
             lines.splice(0, 1);
@@ -2234,15 +2281,15 @@ var Generator = (function () {
 /**
  * Automata Generator class
  */
-var AutomataGenerator = (function (_super) {
-    __extends(AutomataGenerator, _super);
+var SequentialGenerator = (function (_super) {
+    __extends(SequentialGenerator, _super);
     /**
      * Constructor for the agent generator
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
      * @param parameters for the automata generator
      */
-    function AutomataGenerator(currentRegion, rules, parameters) {
+    function SequentialGenerator(currentRegion, rules, parameters) {
         var _this = _super.call(this, currentRegion, rules) || this;
         _this.numIterations = 0;
         if (parameters["iterations"]) {
@@ -2250,7 +2297,12 @@ var AutomataGenerator = (function (_super) {
         }
         _this.start = new Point();
         if (parameters["start"]) {
-            _this.start = new Point(parseInt(parameters["start"].split(",")[0]), parseInt(parameters["start"].split(",")[1]));
+            var parts = parameters["start"].split(",");
+            _this.start.x = Math.max(0, Math.min(1, parseFloat(parts[0])));
+            _this.start.y = _this.start.x;
+            if (parts.length > 1) {
+                _this.start.y = Math.max(0, Math.min(1, parseFloat(parts[1])));
+            }
         }
         _this.explore = Marahel.marahelEngine.getNeighborhood("sequential");
         if (parameters["exploration"]) {
@@ -2261,7 +2313,7 @@ var AutomataGenerator = (function (_super) {
     /**
      * Apply the automata algorithm on the regions array
      */
-    AutomataGenerator.prototype.applyGeneration = function () {
+    SequentialGenerator.prototype.applyGeneration = function () {
         _super.prototype.applyGeneration.call(this);
         for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
             var r = _a[_i];
@@ -2285,7 +2337,7 @@ var AutomataGenerator = (function (_super) {
             }
         }
     };
-    return AutomataGenerator;
+    return SequentialGenerator;
 }(Generator));
 /// <reference path="Generator.ts"/>
 /**
@@ -2427,23 +2479,39 @@ var AgentGenerator = (function (_super) {
         }
         _this.numAgents = new Point(1, 1);
         if (parameters["number"]) {
-            _this.numAgents.x = parseInt(parameters["number"].split(",")[0]);
-            _this.numAgents.y = parseInt(parameters["number"].split(",")[1]);
+            var parts = parameters["number"].split(",");
+            _this.numAgents.x = Math.max(0, parseInt(parts[0]));
+            _this.numAgents.y = _this.numAgents.x;
+            if (parts.length > 1) {
+                _this.numAgents.y = Math.max(0, parseInt(parts[1]));
+            }
         }
         _this.speed = new Point(1, 1);
         if (parameters["speed"]) {
-            _this.speed.x = parseInt(parameters["speed"].split(",")[0]);
-            _this.speed.y = parseInt(parameters["speed"].split(",")[1]);
+            var parts = parameters["speed"].split(",");
+            _this.speed.x = parseInt(parts[0]);
+            _this.speed.y = _this.speed.x;
+            if (parts.length > 1) {
+                _this.speed.y = parseInt(parts[1]);
+            }
         }
         _this.changeTime = new Point(1, 1);
         if (parameters["change"]) {
-            _this.changeTime.x = parseInt(parameters["change"].split(",")[0]);
-            _this.changeTime.y = parseInt(parameters["change"].split(",")[1]);
+            var parts = parameters["change"].split(",");
+            _this.changeTime.x = parseInt(parts[0]);
+            _this.changeTime.y = _this.changeTime.x;
+            if (parts.length > 1) {
+                _this.changeTime.y = parseInt(parts[1]);
+            }
         }
         _this.lifespan = new Point(50, 50);
         if (parameters["lifespan"]) {
-            _this.lifespan.x = parseInt(parameters["lifespan"].split(",")[0]);
-            _this.lifespan.y = parseInt(parameters["lifespan"].split(",")[1]);
+            var parts = parameters["lifespan"].split(",");
+            _this.lifespan.x = parseInt(parts[0]);
+            _this.lifespan.y = _this.lifespan.x;
+            if (parts.length > 1) {
+                _this.lifespan.y = parseInt(parts[1]);
+            }
         }
         _this.directions = Marahel.marahelEngine.getNeighborhood("plus");
         if (parameters["directions"]) {
@@ -2600,7 +2668,7 @@ var ConnectorGenerator = (function (_super) {
         if (parameters["entities"]) {
             _this.entities = EntityListParser.parseList(parameters["entities"]);
         }
-        _this.connectionType = ConnectorGenerator.SHORT_CONNECTION;
+        _this.connectionType = ConnectorGenerator.RANDOM_CONNECTION;
         if (parameters["type"]) {
             switch (parameters["type"].trim()) {
                 case "short":
@@ -2728,12 +2796,13 @@ var ConnectorGenerator = (function (_super) {
         while (groups.length > 1) {
             var i1 = Random.getIntRandom(0, groups.length);
             var i2 = (i1 + Random.getIntRandom(0, groups.length - 1) + 1) % groups.length;
-            this.connect(groups[i1].points[Random.getIntRandom(0, groups[i1].points.length)], groups[i2].points[Random.getIntRandom(0, groups[i2].points.length)], region);
-            groups[i1].combine(groups[i2]);
-            groups.splice(i2, 1);
+            if (this.connect(groups[i1].points[Random.getIntRandom(0, groups[i1].points.length)], groups[i2].points[Random.getIntRandom(0, groups[i2].points.length)], region)) {
+                groups[i1].combine(groups[i2]);
+                groups.splice(i2, 1);
+            }
             index += 1;
-            if (index > Marahel.CONNECTOR_MAX_TRIALS) {
-                throw new Error("Connector: " + this + " is taking too much time.");
+            if (index > 10 * groups.length) {
+                throw new Error("Connector Generator is taking long time.");
             }
         }
     };
@@ -2791,12 +2860,13 @@ var ConnectorGenerator = (function (_super) {
         var index = 0;
         while (groups.length > 1) {
             var p = this.shortestGroup(groups, region);
-            this.connect(p[0], p[1], region);
-            groups[p[2].x].combine(groups[p[2].y]);
-            groups.splice(p[2].y, 1);
+            if (this.connect(p[0], p[1], region)) {
+                groups[p[2].x].combine(groups[p[2].y]);
+                groups.splice(p[2].y, 1);
+            }
             index += 1;
-            if (index > Marahel.CONNECTOR_MAX_TRIALS) {
-                throw new Error("Connector: " + this + " is taking too much time.");
+            if (index >= 10 * groups.length) {
+                throw new Error("Connector generator is taking long time.");
             }
         }
     };
@@ -2907,9 +2977,9 @@ ConnectorGenerator.FULL_CONNECTION = 3;
 /// <reference path="../estimator/NumberEstimator.ts"/>
 /// <reference path="../estimator/DistanceEstimator.ts"/>
 /// <reference path="../estimator/EstimatorInterface.ts"/>
-/// <reference path="../generator/AutomataGenerator.ts"/>
-/// <reference path="../generator/AgentGenerator.ts"/>
-/// <reference path="../generator/ConnectorGenerator.ts"/>
+/// <reference path="../explorer/SequentialGenerator.ts"/>
+/// <reference path="../explorer/AgentGenerator.ts"/>
+/// <reference path="../explorer/ConnectorGenerator.ts"/>
 /**
  * basic node used in the A* algorithm
  */
@@ -3229,8 +3299,10 @@ var Factory = (function () {
      */
     Factory.getGenerator = function (type, currentRegion, parameters, rules) {
         switch (type.trim()) {
-            case "automata":
-                return new AutomataGenerator(currentRegion, rules, parameters);
+            case "random":
+                return new RandomGenerator(currentRegion, rules, parameters);
+            case "sequential":
+                return new SequentialGenerator(currentRegion, rules, parameters);
             case "agent":
                 return new AgentGenerator(currentRegion, rules, parameters);
             case "connector":
@@ -3264,19 +3336,19 @@ var Engine = (function () {
      */
     Engine.prototype.initialize = function (data) {
         // define the maximum and minimum sizes of the generated maps
-        this.minDim = new Point(parseInt(data["metadata"]["min"].split("x")[0]), parseInt(data["metadata"]["min"].split("x")[1]));
-        this.maxDim = new Point(parseInt(data["metadata"]["max"].split("x")[0]), parseInt(data["metadata"]["max"].split("x")[1]));
+        this.minDim = new Point(parseInt(data["metadata"]["minDimension"].split("x")[0]), parseInt(data["metadata"]["minDimension"].split("x")[1]));
+        this.maxDim = new Point(parseInt(data["metadata"]["maxDimension"].split("x")[0]), parseInt(data["metadata"]["maxDimension"].split("x")[1]));
         // define the generator's entities 
         this.entities = [];
         this.entityIndex = {};
-        for (var e in data["entity"]) {
-            this.entities.push(new Entity(e, data["entity"][e]));
+        for (var e in data["entities"]) {
+            this.entities.push(new Entity(e, data["entities"][e]));
             this.entityIndex[e] = this.entities.length - 1;
         }
         // define the generator's neighborhoods
         this.neighbors = {};
-        for (var n in data["neighborhood"]) {
-            this.neighbors[n] = new Neighborhood(n, data["neighborhood"][n]);
+        for (var n in data["neighborhoods"]) {
+            this.neighbors[n] = new Neighborhood(n, data["neighborhoods"][n]);
         }
         if (!("plus" in this.neighbors)) {
             this.neighbors["plus"] = new Neighborhood("plus", "010,121,010");
@@ -3291,10 +3363,10 @@ var Engine = (function () {
             this.neighbors["self"] = new Neighborhood("self", "3");
         }
         // define the generator region divider
-        this.regionDivider = Factory.getDivider(data["region"]["type"], parseInt(data["region"]["number"]), data["region"]["parameters"]);
+        this.regionDivider = Factory.getDivider(data["regions"]["type"], parseInt(data["regions"]["numberOfRegions"]), data["regions"]["parameters"]);
         // define the modules of the current level generator
         this.generators = [];
-        for (var _i = 0, _a = data["rule"]; _i < _a.length; _i++) {
+        for (var _i = 0, _a = data["explorers"]; _i < _a.length; _i++) {
             var g = _a[_i];
             var gen = Factory.getGenerator(g["type"], g["region"], g["parameters"], g["rules"]);
             if (gen != null) {
@@ -3370,4 +3442,41 @@ var Engine = (function () {
     };
     return Engine;
 }());
+/// <reference path="Generator.ts"/>
+/**
+ * Automata Generator class
+ */
+var RandomGenerator = (function (_super) {
+    __extends(RandomGenerator, _super);
+    /**
+     * Constructor for the agent generator
+     * @param currentRegion java object contain information about the applied region(s)
+     * @param rules list of rules entered by the user
+     * @param parameters for the automata generator
+     */
+    function RandomGenerator(currentRegion, rules, parameters) {
+        var _this = _super.call(this, currentRegion, rules) || this;
+        _this.numOfTiles = 0;
+        if (parameters["numberOfTiles"]) {
+            _this.numOfTiles = parseInt(parameters["numberOfTiles"]);
+        }
+        return _this;
+    }
+    /**
+     * Apply the automata algorithm on the regions array
+     */
+    RandomGenerator.prototype.applyGeneration = function () {
+        _super.prototype.applyGeneration.call(this);
+        for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
+            var r = _a[_i];
+            for (var i = 0; i < this.numOfTiles; i++) {
+                var currentPoint = new Point(r.getX() + Random.getIntRandom(0, r.getWidth()), r.getY() + Random.getIntRandom(0, r.getHeight()));
+                currentPoint = r.getRegionPosition(currentPoint.x, currentPoint.y);
+                this.rules.execute(i / this.numOfTiles, currentPoint, r);
+                Marahel.marahelEngine.currentMap.switchBuffers();
+            }
+        }
+    };
+    return RandomGenerator;
+}(Generator));
 //# sourceMappingURL=Marahel.js.map

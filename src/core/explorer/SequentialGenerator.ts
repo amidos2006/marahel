@@ -3,7 +3,7 @@
 /**
  * Automata Generator class
  */
-class AutomataGenerator extends Generator{
+class SequentialGenerator extends Generator{
     /**
      * number of iterations to apply cellular automata
      */
@@ -32,7 +32,12 @@ class AutomataGenerator extends Generator{
         }
         this.start = new Point();
         if(parameters["start"]){
-            this.start = new Point(parseInt(parameters["start"].split(",")[0]), parseInt(parameters["start"].split(",")[1]));
+            let parts = parameters["start"].split(",");
+            this.start.x = Math.max(0, Math.min(1, parseFloat(parts[0])));
+            this.start.y = this.start.x;
+            if(parts.length > 1){
+                this.start.y = Math.max(0, Math.min(1, parseFloat(parts[1])));
+            }
         }
         this.explore = Marahel.marahelEngine.getNeighborhood("sequential");
         if(parameters["exploration"]){

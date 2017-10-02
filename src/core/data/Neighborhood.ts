@@ -35,6 +35,16 @@ class Neighborhood {
      * @param line input definition of the neighborhood
      */
     constructor(name:string, line:string) {
+        if(line.trim().length == 0){
+            throw new Error("Neighborhood " + name + " should have a definition matrix.");
+        }
+        line = line.replace("\n", "");
+        line = line.replace("\t", "");
+        line = line.replace(" ", "");
+        if(line.match(/[^0-3\,]+/)){
+            throw new Error("Neighborhoods must only contain numbers from 0 to 3 and commas.");
+        }
+
         this.printing = line;
         this.name = name.replace(",", "\n");
 

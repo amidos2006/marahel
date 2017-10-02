@@ -15,9 +15,9 @@
 /// <reference path="../estimator/NumberEstimator.ts"/>
 /// <reference path="../estimator/DistanceEstimator.ts"/>
 /// <reference path="../estimator/EstimatorInterface.ts"/>
-/// <reference path="../generator/AutomataGenerator.ts"/>
-/// <reference path="../generator/AgentGenerator.ts"/>
-/// <reference path="../generator/ConnectorGenerator.ts"/>
+/// <reference path="../explorer/SequentialGenerator.ts"/>
+/// <reference path="../explorer/AgentGenerator.ts"/>
+/// <reference path="../explorer/ConnectorGenerator.ts"/>
 
 /**
  * basic node used in the A* algorithm
@@ -359,8 +359,10 @@ class Factory{
      */
     public static getGenerator(type:string, currentRegion:any, parameters:any, rules:string[]):Generator{
         switch(type.trim()){
-            case "automata":
-                return new AutomataGenerator(currentRegion, rules, parameters);
+            case "random":
+                return new RandomGenerator(currentRegion, rules, parameters);
+            case "sequential":
+                return new SequentialGenerator(currentRegion, rules, parameters);
             case "agent":
                 return new AgentGenerator(currentRegion, rules, parameters);
             case "connector":

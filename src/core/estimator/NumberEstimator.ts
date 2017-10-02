@@ -16,6 +16,10 @@ class NumberEstimator implements EstimatorInterface{
      */
     constructor(line:string){
         this.name = line;
+        if(this.name != "complete" && this.name != "random" && this.name != "noise" && 
+            isNaN(parseFloat(this.name)) && Marahel.marahelEngine.getEntityIndex(this.name) == -1){
+            throw new Error("Undefined name estimator.");
+        }
     }
 
     /**

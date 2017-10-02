@@ -28,6 +28,9 @@ class Condition{
      * @param line user input line
      */
     constructor(line:string){
+        if(line.trim().length == 0){
+            line = "self(any)";
+        }
         let parts:string[] = line.split(",");
         let cParts:string[] = parts[0].split(/>=|<=|==|!=|>|</);
         this.leftSide = Factory.getEstimator(cParts[0].trim());

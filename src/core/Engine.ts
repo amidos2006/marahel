@@ -70,23 +70,23 @@ class Engine{
      */
     public initialize(data:any):void{
         // define the maximum and minimum sizes of the generated maps
-        this.minDim = new Point(parseInt(data["metadata"]["min"].split("x")[0]), 
-            parseInt(data["metadata"]["min"].split("x")[1]));
-        this.maxDim = new Point(parseInt(data["metadata"]["max"].split("x")[0]), 
-            parseInt(data["metadata"]["max"].split("x")[1]));
+        this.minDim = new Point(parseInt(data["metadata"]["minDimension"].split("x")[0]), 
+            parseInt(data["metadata"]["minDimension"].split("x")[1]));
+        this.maxDim = new Point(parseInt(data["metadata"]["maxDimension"].split("x")[0]), 
+            parseInt(data["metadata"]["maxDimension"].split("x")[1]));
         
         // define the generator's entities 
         this.entities = [];
         this.entityIndex = {};
-        for(let e in data["entity"]){
-            this.entities.push(new Entity(e, data["entity"][e]));
+        for(let e in data["entities"]){
+            this.entities.push(new Entity(e, data["entities"][e]));
             this.entityIndex[e] = this.entities.length - 1;
         }
 
         // define the generator's neighborhoods
         this.neighbors = {};
-        for(let n in data["neighborhood"]){
-            this.neighbors[n] = new Neighborhood(n, data["neighborhood"][n]);
+        for(let n in data["neighborhoods"]){
+            this.neighbors[n] = new Neighborhood(n, data["neighborhoods"][n]);
         }
         if(!("plus" in this.neighbors)){
             this.neighbors["plus"] = new Neighborhood("plus", "010,121,010");
@@ -102,12 +102,12 @@ class Engine{
         }
 
         // define the generator region divider
-        this.regionDivider = Factory.getDivider(data["region"]["type"], 
-            parseInt(data["region"]["number"]), data["region"]["parameters"]);
+        this.regionDivider = Factory.getDivider(data["regions"]["type"], 
+            parseInt(data["regions"]["numberOfRegions"]), data["regions"]["parameters"]);
 
         // define the modules of the current level generator
         this.generators = [];
-        for(let g of data["rule"]){
+        for(let g of data["explorers"]){
             let gen:Generator = Factory.getGenerator(g["type"], g["region"], g["parameters"], g["rules"]);
             if(gen != null){
                 this.generators.push(gen);

@@ -20,6 +20,9 @@ class NeighborhoodEstimator implements EstimatorInterface{
      */
     constructor(line:string){
         let parts:string[] = line.split(/\((.+)\)/);
+        if(parts.length <= 1){
+            throw new Error("Neighborhood estimator is not in the correct format: NeighborhoodName(entity).")
+        }
         this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
         
         this.entities = EntityListParser.parseList(parts[1]);

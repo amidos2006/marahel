@@ -46,12 +46,18 @@ class SamplingDivider implements DividerInterface{
             if(parameters["min"]){
                 parts = parameters["min"].split("x");
                 this.minWidth = parseInt(parts[0]);
-                this.minHeight = parseInt(parts[1]);
+                this.minHeight = this.minWidth;
+                if(parts.length > 1){
+                    this.minHeight = parseInt(parts[1]);
+                }
             }
             if(parameters["max"]){
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
-                this.maxHeight = parseInt(parts[1]);
+                this.maxHeight = this.maxWidth;
+                if(parts.length > 1){
+                    this.maxHeight = parseInt(parts[1]);
+                }
             }
         }
         if(this.maxWidth < this.minWidth){

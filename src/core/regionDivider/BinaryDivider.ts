@@ -5,7 +5,7 @@
  */
 class BinaryDivider implements DividerInterface{
     /**
-     * number of reuired regions
+     * number of required regions
      */
     private numberOfRegions:number;
     /**
@@ -45,12 +45,18 @@ class BinaryDivider implements DividerInterface{
             if(parameters["min"]){
                 parts = parameters["min"].split("x");
                 this.minWidth = parseInt(parts[0]);
-                this.minHeight = parseInt(parts[1]);
+                this.minHeight = this.minWidth;
+                if(parts.length > 1){
+                    this.minHeight = parseInt(parts[1]);
+                }
             }
             if(parameters["max"]){
                 parts = parameters["max"].split("x");
                 this.maxWidth = parseInt(parts[0]);
-                this.maxHeight = parseInt(parts[1]);
+                this.maxHeight = this.maxWidth;
+                if(parts.length > 1){
+                    this.maxHeight = parseInt(parts[1]);
+                }
             }
         }
         if(this.maxWidth < this.minWidth){
@@ -135,7 +141,7 @@ class BinaryDivider implements DividerInterface{
 
     /**
      * check if any of the regions have a width or height more than 
-     * maxWidht or maxHeight
+     * maxWidth or maxHeight
      * @param regions all the regions
      * @return true if any of the regions have the width or the height 
      *         bigger than maxWidth or maxHeight
@@ -150,7 +156,7 @@ class BinaryDivider implements DividerInterface{
     }
 
     /**
-     * divided the on the maximum size diminsion
+     * divided the on the maximum size dimension
      * @param region the region that will be divided
      * @return two regions after the division
      */

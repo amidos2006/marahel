@@ -24,6 +24,9 @@ class Executer{
      * @param line user input data
      */
     constructor(line:string){
+        if(line.trim().length == 0){
+            line = "self(any)";
+        }
         let parts:string[] = line.split(",");
         let eParts:string[] = parts[0].split(/\((.+)\)/);
         this.neighbor = Marahel.marahelEngine.getNeighborhood(eParts[0].trim());

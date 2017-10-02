@@ -207,23 +207,40 @@ class AgentGenerator extends Generator{
         }
         this.numAgents = new Point(1, 1);
         if(parameters["number"]){
-            this.numAgents.x = parseInt(parameters["number"].split(",")[0]);
-            this.numAgents.y = parseInt(parameters["number"].split(",")[1]);
+            let parts:string[] = parameters["number"].split(",");
+            this.numAgents.x = Math.max(0, parseInt(parts[0]));
+            this.numAgents.y = this.numAgents.x;
+            if(parts.length > 1){
+                this.numAgents.y = Math.max(0, parseInt(parts[1]));
+            }
+            
         }
         this.speed = new Point(1, 1);
         if(parameters["speed"]){
-            this.speed.x = parseInt(parameters["speed"].split(",")[0]);
-            this.speed.y = parseInt(parameters["speed"].split(",")[1]);
+            let parts:string[] = parameters["speed"].split(",");
+            this.speed.x = parseInt(parts[0]);
+            this.speed.y = this.speed.x;
+            if(parts.length > 1){   
+                this.speed.y = parseInt(parts[1]);
+            }
         }
         this.changeTime = new Point(1, 1);
         if(parameters["change"]){
-            this.changeTime.x = parseInt(parameters["change"].split(",")[0]);
-            this.changeTime.y = parseInt(parameters["change"].split(",")[1]);
+            let parts:string[] = parameters["change"].split(",");
+            this.changeTime.x = parseInt(parts[0]);
+            this.changeTime.y = this.changeTime.x;
+            if(parts.length > 1){
+                this.changeTime.y = parseInt(parts[1]);
+            }
         }
         this.lifespan = new Point(50,50);
         if(parameters["lifespan"]){
-            this.lifespan.x = parseInt(parameters["lifespan"].split(",")[0]);
-            this.lifespan.y = parseInt(parameters["lifespan"].split(",")[1]);
+            let parts:string[] = parameters["lifespan"].split(",");
+            this.lifespan.x = parseInt(parts[0]);
+            this.lifespan.y = this.lifespan.x;
+            if(parts.length > 1){
+                this.lifespan.y = parseInt(parts[1]);
+            }
         }
         this.directions = Marahel.marahelEngine.getNeighborhood("plus");
         if(parameters["directions"]){

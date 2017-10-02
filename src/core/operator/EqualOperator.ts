@@ -7,7 +7,7 @@ class EqualOperator implements OperatorInterface{
     /**
      * check the leftValue is equal to the rightValue
      * @param leftValue the value on the left hand side
-     * @param rightValue the value on the righ hand side
+     * @param rightValue the value on the right hand side
      * @return true if the left equal to the right and false otherwise
      */
     check(leftValue: number, rightValue: number): boolean {

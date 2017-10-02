@@ -34,10 +34,6 @@ class Marahel{
      */
     public static A_STAR_MULTI_TEST_TRIALS:number = 10;
     /**
-     * maximum number of trials used by the connector algorithm
-     */
-    public static CONNECTOR_MAX_TRIALS:number = 100;
-    /**
      * maximum number of trails done by the sampling divider algorithm 
      * to resolve collision between regions
      */

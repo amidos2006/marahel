@@ -164,7 +164,7 @@ class ConnectorGenerator extends Generator{
         if(parameters["entities"]){
             this.entities = EntityListParser.parseList(parameters["entities"]);
         }
-        this.connectionType = ConnectorGenerator.SHORT_CONNECTION;
+        this.connectionType = ConnectorGenerator.RANDOM_CONNECTION;
         if(parameters["type"]){
             switch(parameters["type"].trim()){
                 case "short":
@@ -293,13 +293,14 @@ class ConnectorGenerator extends Generator{
         while(groups.length > 1){
             let i1:number=Random.getIntRandom(0,groups.length);
             let i2:number=(i1+Random.getIntRandom(0, groups.length-1) + 1)%groups.length;
-            this.connect(groups[i1].points[Random.getIntRandom(0, groups[i1].points.length)], 
-                groups[i2].points[Random.getIntRandom(0, groups[i2].points.length)], region);
-            groups[i1].combine(groups[i2]);
-            groups.splice(i2, 1);
+            if(this.connect(groups[i1].points[Random.getIntRandom(0, groups[i1].points.length)], 
+                groups[i2].points[Random.getIntRandom(0, groups[i2].points.length)], region)){
+                groups[i1].combine(groups[i2]);
+                groups.splice(i2, 1);
+            }
             index+=1;
-            if(index > Marahel.CONNECTOR_MAX_TRIALS){
-                throw new Error("Connector: " + this + " is taking too much time.")
+            if(index > 10 * groups.length){
+                throw new Error("Connector Generator is taking long time.")
             }
         }
     }
@@ -364,12 +365,13 @@ class ConnectorGenerator extends Generator{
         let index:number=0;
         while(groups.length > 1){
             let p:Point[] = this.shortestGroup(groups, region);
-            this.connect(p[0], p[1], region);
-            groups[p[2].x].combine(groups[p[2].y]);
-            groups.splice(p[2].y, 1);
+            if(this.connect(p[0], p[1], region)){
+                groups[p[2].x].combine(groups[p[2].y]);
+                groups.splice(p[2].y, 1);
+            }
             index+=1;
-            if(index > Marahel.CONNECTOR_MAX_TRIALS){
-                throw new Error("Connector: " + this + " is taking too much time.")
+            if(index >= 10 * groups.length){
+                throw new Error("Connector generator is taking long time.")
             }
         }
     }

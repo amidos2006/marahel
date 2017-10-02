@@ -37,7 +37,14 @@ class DistanceEstimator implements EstimatorInterface{
             this.type = "avg";
         }
 
-        let parts:string[] = line.split(/\((.+)\)/)[1].split(",");
+        let parts:string[] = line.split(/\((.+)\)/);
+        if(parts.length <= 1){
+            throw new Error("Distance estimator is not in the correct format: DistanceEstimatorName(entity)");
+        }
+        parts = parts[1].split(",");
+        if(parts.length <= 0){
+            throw new Error("Distance Estimator needs at least one entity for measuring.");
+        }
         if(parts.length == 1){
             this.neighbor = null;
             this.entities = EntityListParser.parseList(parts[0]);

@@ -27,7 +27,7 @@ class Entity{
      */
     constructor(name:string, parameters:any){
         this.name = name;
-        this.color = -1;
+        this.color = 0;
         if("color" in parameters){
             this.color = parameters["color"];
         }
