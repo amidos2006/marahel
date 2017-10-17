@@ -1682,3 +1682,10 @@ declare class RandomGenerator extends Generator {
      */
     applyGeneration(): void;
 }
+declare let fs: any;
+declare let savePixels: any;
+declare let zeros: any;
+declare let data: any;
+declare let colorMap: number[][];
+declare let indexMap: number[][];
+declare let picture: any;
