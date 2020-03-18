@@ -9,7 +9,7 @@ class DrunkTurtleExplorer extends TurtleExplorer {
         
         this.change_prob = 0.1;
         if(parameters["change"]){
-            this.change_prob = parameters["change"];
+            this.change_prob = parseFloat(parameters["change"]);
         }
     }
 
