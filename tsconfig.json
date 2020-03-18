@@ -7,6 +7,6 @@
     "exclude": [
         "bin/*",
         "analysis/*"
-        ,"tests/*"
+        ,"src/tests/*"
     ]
 }
