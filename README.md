@@ -72,6 +72,11 @@ The entities is an array of names of all the possible entities that can appear i
 - `any`: it means it doesn't matter what value is their (can be any of the entities or unknwon)
 - `entity`: it means it has to be one of the defined entities
 
+Here is a full example for entities:
+```
+"entities": ["solid", "empty", "player", "treasure", "enemy", "key", "exit"]
+```
+
 ### Neighborhoods
 The neighborhoods are a 2D matrix that can be used to check local surrounding or define certain location with respect to others. For example a 3x3 matrix of 1s with the center is 1,1 refer that this neighborhood is pointing to all the surrounding location. The following example show some neighborhood examples:
 ```
@@ -142,10 +147,53 @@ Here is the main features and parameters for each main type:
 
 Here is a list of all different explorers types that are derivative of the 3 basic types:
 - `narrow_horz`|`narrow`|`horz`|`horizontal`: visit every single tile in sequential order line by line
-- `narrow_vert`: visit every single tile in sequential order column by column
-- `narrow_rand`: visit tiles randomly in the map (the same tile can be revisited more than once)
-- `turtle_drunk`: the agent visit tiles in a straight line and have a chance to change direction. Similar to the digger agent. To change the chance percentage modify the `change` parameter to any value (default is `0.1` which is 10% percentage to change direction)
-- `turtle_heur`: the agent control its next relative location using a comma separated estimators. You can change them by modifying `heuristics` in the parameters. The system will use the first estimator to sort the locations followed by the second estimator if they are equal and so on.
-- `turtle_connect`: the agent controls its next relative location based on the next unconnected area. To change what type of entities to check connectivity, modify the `entities` paramters.
-- `wide_heur`: the agent order all the tiles based on the input estimators that can be modified by modifying `heuristics` in the parameters.
-- `wide_rand`: the agent order all the tiles based on picked random values (similar to `narrow_rand` but there is no chance it will revisit the same tile again).
+- `narrow_vert`|`vert`|`vertical`: visit every single tile in sequential order column by column
+- `narrow_rand`|`random`|`rand`: visit tiles randomly in the map (the same tile can be revisited more than once)
+- `turtle_drunk`|`turtle`|`drunk`|`digger`: the agent visit tiles in a straight line and have a chance to change direction. Similar to the digger agent. To change the chance percentage modify the `change` parameter to any value (default is `0.1` which is 10% percentage to change direction)
+- `turtle_heur`|`agent`|`greedy`: the agent control its next relative location using a comma separated estimators. You can change them by modifying `heuristics` in the parameters. The system will use the first estimator to sort the locations followed by the second estimator if they are equal and so on.
+- `turtle_connect`|`connect`: the agent controls its next relative location based on the next unconnected area. To change what type of entities to check connectivity, modify the `entities` paramters.
+- `wide_heur`|`wide`|`heuristic`|`order`: the agent order all the tiles based on the input estimators that can be modified by modifying `heuristics` in the parameters.
+- `wide_rand`|`rorder`|`rand_order`: the agent order all the tiles based on picked random values (similar to `narrow_rand` but there is no chance it will revisit the same tile again).
+
+Here is a full example for the explorers:
+```
+"explorers": [
+  	    {
+            "type":"narrow_horz",
+            "region": "map",
+            "rules":[
+                "self(any) -> self(solid)"
+            ]
+        },
+        {
+            "type":"narrow_horz",
+            "region":"all",
+            "rules":[
+                "self(any),left(out)==0,right(out)==0,up(out)==0,down(out)==0 -> self(solid:1|empty:2)"
+            ]
+        },
+        {
+            "type": "narrow_horz",
+            "region": "all",
+            "parameters": { 
+                "repeats": "2" 
+            },
+            "rules": [
+                "self(empty),all(solid)>6 -> self(solid)",
+                "self(solid),all(empty)>5 -> self(empty)"
+            ]
+        },
+        {
+            "type": "turtle_connect",
+            "region": "map",
+            "parameters": { 
+                "neighborhood": "plus", 
+                "entities": "empty" 
+            },
+            "rules": [
+                "self(solid)->self(empty)"
+            ]
+        }
+    ]
+```
+This example generate a group of rooms that have cave aestetic and fully connected. The first explorer makes sure all the map is covered by solid. The second explorer makes sure that each region (except the borders of the region) have random tiles between empty and solid where empty have twice the chance to appear. The third explorer runs cellular automata update rule twice to smooth the noise from before. Finally, the last explorer make sure the whole empty tiles in the map are fully conencted.

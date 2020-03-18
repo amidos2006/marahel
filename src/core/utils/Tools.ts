@@ -241,10 +241,11 @@ class Factory{
             case "turtle":
             case "turtle_drunk":
             case "drunk":
-            case "agent":
+            case "digger":
                 return new DrunkTurtleExplorer(regionNames, parameters, rules);
             case "turtle_heur":
             case "greedy":
+            case "agent":
                 return new HeuristicTurtleExplorer(regionNames, parameters, rules);
             case "turlte_connect":
             case "connect":
