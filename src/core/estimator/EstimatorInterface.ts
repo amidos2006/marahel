@@ -8,10 +8,11 @@
 interface EstimatorInterface{
     /**
      * calculate the estimator value
-     * @param iteration percentage of the generator
+     * @param singleperc the percentage of completion
+     * @param repeatperc the percentage of repeatition
      * @param position position of the generator
      * @param region current selected region
      * @return estimated number
      */
-    calculate(iteration:number, position:Point, region:Region):number;
+    calculate(singleperc:number, changeperc:number, repeatperc:number, position:Point, region:Region):number;
 }

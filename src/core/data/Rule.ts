@@ -10,31 +10,30 @@ class Rule{
     /**
      * Left hand side of the rule
      */
-    private condition:Condition;
+    private conditions:Condition[];
     /**
      * Right hand side of the rule
      */
-    private executer:Executer;
-    /**
-     * next rule to test if the current one failed
-     */
-    private nextRule:Rule;
+    private executers:Executer[];
     
     /**
      * Constructor for the Rule class
      * @param lines user input rules
      */
-    constructor(lines:string[]){
-        let parts:string[] = lines[0].split("->");
+    constructor(line:string){
+        let parts:string[] = line.split("->");
         if(parts.length < 0){
             throw new Error("Rules should have -> in it.");
         }
-        this.condition = new Condition(parts[0]);
-        this.executer = new Executer(parts[1]);
-        this.nextRule = null;
-        if(lines.length > 1){
-            lines.splice(0, 1);
-            this.nextRule = new Rule(lines);
+        this.conditions = [];
+        let conditions:string[] = parts[0].split(",");
+        for(let c of conditions){
+            this.conditions.push(new Condition(c));
+        }
+        this.executers = [];
+        let executers:string[] = parts[1].split(",");
+        for(let e of executers){
+            this.executers.push(new Executer(e));
         }
     }
 
@@ -45,13 +44,16 @@ class Rule{
      * @param region current selected region
      * @return true if any of the rules has been applied and false otherwise
      */
-    execute(iteration:number, position:Point, region:Region):boolean{
-        if(this.condition.check(iteration, position, region)){
-            this.executer.apply(position, region);
-            return true;
+    execute(singleperc:number, changePerc:number, repeatperc:number, position:Point, region:Region):boolean{
+        let result:boolean = true;
+        for(let c of this.conditions){
+            result = result && c.check(singleperc, changePerc, repeatperc, position, region);
         }
-        else if(this.nextRule != null){
-            return this.nextRule.execute(iteration, position, region);
+        if(result){
+            for(let e of this.executers){
+                e.apply(position, region);
+            }
+            return true;
         }
         return false;
     }

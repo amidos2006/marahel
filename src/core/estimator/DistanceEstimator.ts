@@ -6,163 +6,28 @@
  */
 class DistanceEstimator implements EstimatorInterface{
     /**
-     * type of the distance estimator (minimum, maximum, average)
-     */
-    private type:string;
-    /**
-     * neighborhood used in measuring distance
-     */
-    private neighbor:Neighborhood;
-    /**
      * entities used in measuring the distance to
      */
     private entities:Entity[];
     /**
-     * allowed movement tiles
+     * is it a distance to the edge
      */
-    private allowed:Entity[];
+    private hasOut:boolean;
 
     /**
      * Constructor for the distance estimator
      * @param line input line by user
      */
     constructor(line:string){
-        if(line.match("max")){
-            this.type = "max";
-        }
-        else if(line.match("min")){
-            this.type = "min"
-        }
-        else{
-            this.type = "avg";
-        }
-
         let parts:string[] = line.split(/\((.+)\)/);
         if(parts.length <= 1){
             throw new Error("Distance estimator is not in the correct format: DistanceEstimatorName(entity)");
         }
-        parts = parts[1].split(",");
-        if(parts.length <= 0){
-            throw new Error("Distance Estimator needs at least one entity for measuring.");
+        this.entities = EntityListParser.parseList(parts[0]);
+        this.hasOut = false;
+        if(this.entities.length == 1 && this.entities[0].name == "out"){
+            this.hasOut = true;
         }
-        if(parts.length == 1){
-            this.neighbor = null;
-            this.entities = EntityListParser.parseList(parts[0]);
-        }
-        else{
-            this.neighbor = Marahel.marahelEngine.getNeighborhood(parts[0].trim());
-            this.entities = EntityListParser.parseList(parts[1]);
-            let allowedName:string = "any";
-            if(parts.length > 2){
-                allowedName = parts[2].trim();
-            }
-            this.allowed = EntityListParser.parseList(allowedName);
-        }
-    }
-
-    /**
-     * get maximum distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return maximum distance between current location and entity index
-     */
-    private getMax(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = [];
-        if(this.neighbor != null){
-            values = region.getDistances(position, this.neighbor, entityIndex, 
-                (x:number, y:number)=>{
-                    for(let a of this.allowed){
-                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-        }
-        else{
-            values = region.getEstimateDistances(position, entityIndex);
-        }
-        if(values.length <= 0){
-            return -1;
-        }
-        let max:number = 0;
-        for(let i:number=0; i<values.length; i++){
-            if(max < values[i]){
-                max = values[i];
-            }
-        }
-        return max;
-    }
-
-    /**
-     * get minimum distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return minimum distance between current location and entity index
-     */
-    private getMin(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = [];
-        if(this.neighbor != null){
-            values = region.getDistances(position, this.neighbor, entityIndex, 
-                (x:number, y:number)=>{
-                    for(let a of this.allowed){
-                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-        }
-        else{
-            values = region.getEstimateDistances(position, entityIndex);
-        }
-        if(values.length <= 0){
-            return -1;
-        }
-        let min:number = Number.MAX_VALUE;
-        for(let i:number=0; i<values.length; i++){
-            if(min > values[i]){
-                min = values[i];
-            }
-        }
-
-        return min;
-    }
-
-    /**
-     * get average distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return average distance between current location and entity index
-     */
-    private getAvg(position:Point, region:Region, entityIndex:number):number{
-        let values:number[] = [];
-        if(this.neighbor != null){
-            values = region.getDistances(position, this.neighbor, entityIndex, 
-                (x:number, y:number)=>{
-                    for(let a of this.allowed){
-                        if(region.getValue(x, y) == Marahel.marahelEngine.getEntityIndex(a.name)){
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-        }
-        else{
-            values = region.getEstimateDistances(position, entityIndex);
-        }
-        if(values.length <= 0){
-            return -1;
-        }
-        let total:number = 0;
-        for(let i:number=0; i<values.length; i++){
-            total += values[i];
-        }
-
-        return total / values.length;
     }
 
     /**
@@ -172,48 +37,30 @@ class DistanceEstimator implements EstimatorInterface{
      * @param region current region
      * @return distance from the current position to the specified entity
      */
-    calculate(iteration:number, position:Point, region:Region):number{
-        let max:number = 0;
-        let min:number = Number.MAX_VALUE;
-        let totalAvg:number = 0;
-        let maxChange:boolean = false;
-        let minChange:boolean = false;
-        let avgChange:boolean = false;
-        for(let e of this.entities){
-            let maxValue:number = this.getMax(position, region, Marahel.marahelEngine.getEntityIndex(e.name));
-            if(maxValue != -1 && maxValue > max){
-                max = max;
-                maxChange = true;
+    calculate(singleperc: number, changeperc:number, repeatperc: number, position:Point, region:Region):number{
+        if(this.hasOut){
+            let min:number = position.x - region.getX();
+            if(position.y - region.getY() < min){
+                min = position.y - region.getY();
             }
-            let minValue:number = this.getMin(position, region, Marahel.marahelEngine.getEntityIndex(e.name));
-            if(minValue != -1 && minValue < min){
-                min = minValue;
-                minChange = true;
+            if(region.getWidth() - (position.x - region.getX()) < min){
+                min = region.getWidth() - (position.x - region.getX());
             }
-            let avgValue:number = this.getAvg(position, region, Marahel.marahelEngine.getEntityIndex(e.name));
-            if(avgValue != -1){
-                totalAvg += avgValue;
-                avgChange = true;
+            if (region.getHeight() - (position.y - region.getY()) < min){
+                min = region.getHeight() - (position.y - region.getY());
             }
-            
+            return min;
         }
 
-        switch(this.type){
-            case "max":
-                if(!maxChange){
-                    return -1;
+        let min:number = -1;
+        for(let e of this.entities){
+            let dists:number[] = region.getDistances(position, e.index);
+            for(let d of dists){
+                if(min == -1 || d < min){
+                    min = d;
                 }
-                return max;
-            case "min":
-                if(!minChange){
-                    return -1;
-                }
-                return min;
-            case "avg":
-                if(!avgChange){
-                    return -1;
-                }
-                return totalAvg/this.entities.length;
+            }
         }
+        return min;
     }
 }

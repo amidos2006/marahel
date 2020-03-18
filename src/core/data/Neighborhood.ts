@@ -1,6 +1,7 @@
 /// <reference path="../Marahel.ts"/>
 /// <reference path="Region.ts"/>
 /// <reference path="Point.ts"/>
+/// <reference path="Group.ts"/>
 
 /**
  * Neighborhood class carries information about the user defined neighborhoods
@@ -84,14 +85,19 @@ class Neighborhood {
      * @return number of times the entity index in the neighborhood
      */
     getTotal(value:number, center:Point, region:Region):number{
+        let temp = Marahel.marahelEngine.outValue;
+        if(value == -2){
+            Marahel.marahelEngine.outValue = -2;
+        }
         let result:number = 0;
-
         for(let i:number=0; i<this.locations.length; i++){
             if(region.getValue(this.locations[i].x + center.x, this.locations[i].y + center.y) == value){
                 result += 1;
             }
         }
-
+        if (value == -2) {
+            Marahel.marahelEngine.outValue = temp;
+        }
         return result;
     }
 
@@ -106,18 +112,6 @@ class Neighborhood {
             region.setValue(center.x + this.locations[i].x, center.y + this.locations[i].y, value);
         }
     }
-    
-    /**
-     * Get path between start and end location in a certain region using this neighborhood
-     * @param start start location
-     * @param end end location
-     * @param region the allowed region
-     * @param checkSolid function to define which locations are solid
-     * @return list of points that specify the path between start and end points
-     */
-    getPath(start:Point, end:Point, region:Region, checkSolid:Function):Point[]{
-        return AStar.getPath(start, end, this.locations, region, checkSolid);
-    }
 
     /**
      * get neighboring locations using this neighborhood
@@ -129,12 +123,73 @@ class Neighborhood {
     getNeighbors(x:number, y:number, region:Region):Point[]{
         let result:Point[] = [];
         for(let l of this.locations){
-            let p:Point = region.getRegionPosition(x + l.x, y + l.y);
-            if(!region.outRegion(p.x, p.y)){
+            let p:Point = new Point(x + l.x, y + l.y);
+            if(region.inRegion(p.x, p.y)){
                 result.push(p);
             }
         }
         return result;
+    }
+
+    /**
+     * flood fill algorithm to label the map and get unconnected groups and areas
+     * @param x x position
+     * @param y y position
+     * @param label current label
+     * @param labelBoard current labelling board to change
+     * @param region current region
+     */
+    private floodFill(x: number, y: number, entities:number[], label: number, labelBoard: number[][], region: Region): void {
+        if (labelBoard[y][x] != -1) {
+            return;
+        }
+        labelBoard[y][x] = label;
+        let neighborLocations: Point[] = this.getNeighbors(x, y, region);
+        for (let p of neighborLocations) {
+            if (entities.indexOf(region.getValue(p.x, p.y)) >= 0) {
+                this.floodFill(p.x, p.y, entities, label, labelBoard, region);
+            }
+        }
+    }
+
+    /**
+     * Get all unconnected groups
+     * @param region current applied region
+     * @return an array of all unconnected groups 
+     */
+    getGroups(entities:number[], region: Region): Group[] {
+        let label: number = 0;
+        let labelBoard: number[][] = [];
+        for (let y: number = 0; y < region.getHeight(); y++) {
+            labelBoard.push([]);
+            for (let x: number = 0; x < region.getWidth(); x++) {
+                labelBoard[y].push(-1);
+            }
+        }
+        for (let y: number = 0; y < region.getHeight(); y++) {
+            for (let x: number = 0; x < region.getWidth(); x++) {
+                if (labelBoard[y][x] == -1) {
+                    if (entities.indexOf(region.getValue(x, y)) >= 0){
+                        this.floodFill(x, y, entities, label, labelBoard, region);
+                        label += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        let groups: Group[] = [];
+        for (let i: number = 0; i < label; i++) {
+            groups.push(new Group());
+            groups[i].index = i;
+        }
+        for (let y: number = 0; y < region.getHeight(); y++) {
+            for (let x: number = 0; x < region.getWidth(); x++) {
+                if (labelBoard[y][x] != -1) {
+                    groups[labelBoard[y][x]].addPoint(x, y);
+                }
+            }
+        }
+        return groups;
     }
 
     /**

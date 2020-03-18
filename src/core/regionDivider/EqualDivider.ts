@@ -49,6 +49,8 @@ class EqualDivider implements DividerInterface{
                 if(parts.length > 1){
                     this.minHeight = parseInt(parts[1]);
                 }
+                this.maxWidth = this.minWidth;
+                this.maxHeight = this.minHeight;
             }
             if(parameters["max"]){
                 parts = parameters["max"].split("x");
@@ -84,8 +86,8 @@ class EqualDivider implements DividerInterface{
 
         let roomWidth:number = Math.floor(map.getWidth() / currentWidth);
         let roomHeight:number = Math.floor(map.getHeight() / currentHeight);
-        for(let x:number=0; x<this.minWidth; x++){
-            for(let y:number=0; y<this.minHeight; y++){
+        for(let x:number=0; x<currentWidth; x++){
+            for(let y:number=0; y<currentHeight; y++){
                 let rX:number = x*roomWidth;
                 let rY:number = y*roomHeight;
                 let rW:number = roomWidth;

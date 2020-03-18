@@ -6,67 +6,73 @@ let zeros = require("zeros");
 
 let data:any = {
     "metadata": {
-        "minDimension":"50x50",
-        "maxDimension":"50x50"
+        "min":"50x50",
+        "max":"50x50"
     },
     "regions": {
-        "type":"bsp",
+        "type":"sampling",
         "number":"4",
         "parameters":{
             "min":"20x20",
             "max":"30x30"
         }
     },
-    "entities": {
-        "empty":{"color": "0xffffff"}, 
-        "solid":{"color": "0x000000"},
-        "player":{"color": "0xff0000", "min":"0", "max":"1"}
-    },
+    "entities": ["empty", "solid"],
     "neighborhoods": {
   	    "all":"111,131,111"
     },
     "explorers": [
   	    {
-            "type":"sequential",
-            "region":{"name":"map"},
-            "parameters": {"iterations":"1"},
-            "rules":["self(any) -> self(solid)"]
+            "type":"horizontal",
+            "region": "map",
+            "rules":[
+                "self(any) -> self(solid)"
+            ]
         },
         {
-            "type":"sequential",
-            "region":{"name":"all", "border":"1,1"},
-            "parameters": {"iterations":"1"},
-            "rules":["self(any) -> self(solid:1|empty:2)"]
+            "type":"horizontal",
+            "region":"all",
+            "rules":[
+                "self(any),left(out)==0,right(out)==0,up(out)==0,down(out)==0 -> self(solid:1|empty:2)"
+            ]
         },
         {
-            "type":"sequential",
-            "region":{"name":"all"},
-            "parameters": {"iterations":"2"},
-            "rules":["self(empty),all(solid)>6 -> self(solid)", "self(solid),all(empty)>5 -> self(empty)"]
+            "type": "horizontal",
+            "region": "all",
+            "parameters": { 
+                "repeats": "2" 
+            },
+            "rules": [
+                "self(empty),all(solid)>6 -> self(solid)",
+                "self(solid),all(empty)>5 -> self(empty)"
+            ]
         },
         {
-            "type":"connector",
-            "region":{"name":"map"},
-            "parameters":{"type":"short", "neighborhood":"plus", "entities":"empty"},
-            "rules":["self(solid)->self(empty)"]
+            "type": "connect",
+            "region": "map",
+            "parameters": { 
+                "neighborhood": "plus", 
+                "entities": "empty" 
+            },
+            "rules": [
+                "self(solid)->self(empty)"
+            ]
         }
     ]
 };
 
 Marahel.initialize(data);
-Marahel.generate();
-
-let colorMap: number[][] = Marahel.marahelEngine.currentMap.getColorMap();
-let indexMap: number[][] = Marahel.marahelEngine.currentMap.getIndexMap();
+let indexMap: number[][] = Marahel.generate(true);
 Marahel.printIndexMap(indexMap);
 
-let picture = zeros([colorMap[0].length, colorMap.length, 3]);
-for (let y: number = 0; y < colorMap.length; y++) {
-    for (let x: number = 0; x < colorMap[y].length; x++) {
-        picture.set(x, y, 0, colorMap[y][x]>>16);
-        picture.set(x, y, 1, colorMap[y][x]>>8 & 0xff);
-        picture.set(x, y, 2, colorMap[y][x] & 0xff);
+let colorMap = [0xFFFFFF, 0x000000];
+let picture = zeros([indexMap[0].length, indexMap.length, 3]);
+for (let y: number = 0; y < indexMap.length; y++) {
+    for (let x: number = 0; x < indexMap[y].length; x++) {
+        let color = colorMap[indexMap[y][x]];
+        picture.set(x, y, 0, color>>16);
+        picture.set(x, y, 1, color>>8 & 0xff);
+        picture.set(x, y, 2, color & 0xff);
     }
 }
-
 savePixels(picture, "png").pipe(fs.createWriteStream("bin/out.png"));

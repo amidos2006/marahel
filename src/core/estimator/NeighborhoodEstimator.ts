@@ -35,10 +35,10 @@ class NeighborhoodEstimator implements EstimatorInterface{
      * @param region current region
      * @return number of entities using a certain neighborhood
      */
-    calculate(iteration:number, position:Point, region:Region):number{
+    calculate(singleperc: number, changeperc: number, repeatperc: number, position:Point, region:Region):number{
         let result:number = 0;
         for(let entity of this.entities){
-            result += this.neighbor.getTotal(Marahel.marahelEngine.getEntityIndex(entity.name), position, region);
+            result += this.neighbor.getTotal(entity.index, position, region);
         }
         return result;
     }

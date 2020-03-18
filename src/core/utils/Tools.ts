@@ -1,184 +1,32 @@
 /// <reference path="../data/Point.ts"/>
 /// <reference path="Prando.ts"/>
 /// <reference path="Noise.ts"/>
+
 /// <reference path="../regionDivider/SamplingDivider.ts"/>
 /// <reference path="../regionDivider/BinaryDivider.ts"/>
 /// <reference path="../regionDivider/EqualDivider.ts"/>
-/// <reference path="../operator/OperatorInterface.ts"/>
+
 /// <reference path="../operator/LargerEqualOperator.ts"/>
 /// <reference path="../operator/LessEqualOperator.ts"/>
 /// <reference path="../operator/LargerOperator.ts"/>
 /// <reference path="../operator/LessOperator.ts"/>
 /// <reference path="../operator/EqualOperator.ts"/>
 /// <reference path="../operator/NotEqualOperator.ts"/>
+
 /// <reference path="../estimator/NeighborhoodEstimator.ts"/>
 /// <reference path="../estimator/NumberEstimator.ts"/>
 /// <reference path="../estimator/DistanceEstimator.ts"/>
-/// <reference path="../estimator/EstimatorInterface.ts"/>
-/// <reference path="../explorer/SequentialGenerator.ts"/>
-/// <reference path="../explorer/AgentGenerator.ts"/>
-/// <reference path="../explorer/ConnectorGenerator.ts"/>
 
-/**
- * basic node used in the A* algorithm
- */
-class LocationNode{
-    /**
-     * x position on the map
-     */
-    x:number;
-    /**
-     * y position on the map
-     */
-    y:number;
-    /**
-     * parent of the node, null if root
-     */
-    parent:LocationNode;
+/// <reference path="../explorer/HorizontalNarrowExplorer.ts"/>
+/// <reference path="../explorer/VerticalNarrowExplorer.ts"/>
+/// <reference path="../explorer/RandomNarrowExplorer.ts"/>
 
-    /**
-     * constructor
-     * @param parent current parent of the node
-     * @param x map x position
-     * @param y map y position
-     */
-    constructor(parent:LocationNode=null, x:number=0, y:number=0){
-        this.x = x;
-        this.y = y;
-        this.parent = parent;
-    }
+/// <reference path="../explorer/DrunkTurtleExplorer.ts"/>
+/// <reference path="../explorer/HeuristicTurtleExplorer.ts"/>
+/// <reference path="../explorer/ConnectTurtleExplorer.ts"/>
 
-    /**
-     * check if the current node is the end node
-     * @param x end location x position
-     * @param y end location y position
-     * @return true if its the end location, false otherwise
-     */
-    checkEnd(x:number, y:number):boolean{
-        return this.x == x && this.y == y;
-    }
-
-    /**
-     * get an estimate between the current node and 
-     * end location using manhattan distance
-     * @param x end location x position
-     * @param y end location y position
-     * @return the manhattan distance towards the exit
-     */
-    estimate(x:number, y:number):number{
-        return Math.abs(x - this.x) + Math.abs(y - this.y);
-    }
-    
-    /**
-     * return printable version of the location node
-     * @return 
-     */
-    toString():string{
-        return this.x + "," + this.y;
-    }
-}
-
-/**
- * A* algorithm used by the connector generator
- */
-class AStar{
-    /**
-     * get the path from the root node to the input node
-     * @param node destination node where u need path between the root and itself
-     * @return a list of points that specify the path between the root and node
-     */
-    private static convertNodeToPath(node:LocationNode):Point[]{
-        let points:Point[] = [];
-        while(node != null){
-            points.push(new Point(node.x, node.y));
-            node = node.parent;
-        }
-        return points.reverse();
-    }
-
-    /**
-     * Get path between start point and end point in a certain region
-     * @param start start location
-     * @param end destination
-     * @param directions allowed directions for the A*
-     * @param region the allowed region the algorithm should work in
-     * @param checkSolid function that return true in locations not allowed
-     * @return a list of points that represent the path between start and end points
-     */
-    static getPath(start:Point, end:Point, directions:Point[], region:Region, checkSolid:Function):Point[]{
-        let iterations:number = 0;
-        let openNodes:LocationNode[] = [new LocationNode(null, start.x, start.y)];
-        let visited:any = {};
-        let currentNode:LocationNode = openNodes[0];
-        while(openNodes.length > 0 && !currentNode.checkEnd(end.x, end.y)){
-            currentNode = openNodes.splice(0, 1)[0];
-            if(!visited[currentNode.toString()]){
-                visited[currentNode.toString()] = true;
-                for(let d of directions){
-                    let p:Point = region.getRegionPosition(currentNode.x + d.x, currentNode.y + d.y);
-                    let newLocation:LocationNode = new LocationNode(currentNode, p.x, p.y);
-                    if(newLocation.checkEnd(end.x, end.y)){
-                        return AStar.convertNodeToPath(newLocation);
-                    }
-                    if(!checkSolid(newLocation.x, newLocation.y) && !region.outRegion(p.x, p.y)){
-                        openNodes.push(newLocation);
-                    }
-                }
-                openNodes.sort((a:LocationNode, b:LocationNode)=>{
-                    return a.estimate(end.x, end.y) - b.estimate(end.x, end.y);
-                });
-            }
-            iterations += 1;
-            if(iterations >= Marahel.A_STAR_TRIALS){
-                break;
-            }
-        }
-        if(currentNode.checkEnd(end.x, end.y)){
-            return AStar.convertNodeToPath(currentNode);
-        }
-        return [];
-    }
-
-    /**
-     * get path between multiple start locations and ending location
-     * @param start start location
-     * @param end destination
-     * @param directions allowed directions for the A*
-     * @param region the allowed region the algorithm should work in
-     * @param checkSolid function that return true in locations not allowed
-     * @return a list of points that represent the path between start and end points
-     */
-    static getPathMultipleStartEnd(start:Point[], end:Point[], directions:Point[], region:Region, checkSolid:Function):Point[]{
-        let shortest:number = Number.MAX_VALUE;
-        let path:Point[] = [];
-
-        for(let s of start){
-            let iterations:number = 0;
-            for(let e of end){
-                let temp:Point[] = AStar.getPath(s, e, directions, region, checkSolid);
-                if(temp.length < shortest){
-                    shortest = temp.length;
-                    path = temp;
-                    iterations = 0;
-                    if(shortest < 4){
-                        break;
-                    }
-                }
-                else{
-                    iterations += 1;
-                    if(iterations > Marahel.A_STAR_MULTI_TEST_TRIALS){
-                        break;
-                    }
-                }
-            }
-            if(shortest < 4 || (shortest < Number.MAX_VALUE && 
-                iterations > Marahel.A_STAR_MULTI_TEST_TRIALS)){
-                break;
-            }
-        }
-        return path;
-    }
-}
+/// <reference path="../explorer/HeuristicWideExplorer.ts"/>
+/// <reference path="../explorer/RandomWideExplorer.ts"/>
 
 /**
  * parses list of entities to an actual entity array
@@ -194,6 +42,12 @@ class EntityListParser{
     static parseList(line:string):Entity[]{
         if(line.trim() == "any"){
             return Marahel.marahelEngine.getAllEntities().concat([Marahel.marahelEngine.getEntity(-1)]);
+        }
+        if (line.trim() == "entity") {
+            return Marahel.marahelEngine.getAllEntities();
+        }
+        if(line.trim() == "out"){
+            return [new Entity("out", -2)];
         }
         let result:Entity[] = [];
         let eeParts:string[] = line.split("|");
@@ -256,6 +110,7 @@ class Random{
      * @return a random integer between min (inclusive) and max (exclusive)
      */
     public static getIntRandom(min:number, max:number):number{
+        if(max <= min) return min;
         return this.rnd.nextInt(min, max - 1);
     }
 
@@ -282,6 +137,16 @@ class Random{
             array[i2] = temp;
         }
     }
+
+    /**
+     * get a random value from the array
+     * @param array the input array
+     * @return a random value from the array
+     */
+    public static choiceArray(array:any[]):any{
+        return array[Random.getIntRandom(0, array.length)];
+    }
+
 }
 
 /**
@@ -294,7 +159,6 @@ class Factory{
      * @return Number Estimator, Distance Estimator, or NeighborhoodEstimator
      */
     public static getEstimator(line:string):EstimatorInterface{
-        let parts:string[] = line.split(/\((.+)\)/);
         if(line.match(/\((.+)\)/) == null){
             return new NumberEstimator(line);
         }
@@ -313,19 +177,19 @@ class Factory{
         line = line.trim()
         switch(line){
             case ">=":
-            return new LargerEqualOperator();
+                return new LargerEqualOperator();
             case "<=":
-            return new LessEqualOperator();
+                return new LessEqualOperator();
             case "=":
             case "==":
-            return new EqualOperator();
+                return new EqualOperator();
             case "<>":
             case "!=":
-            return new NotEqualOperator();
+                return new NotEqualOperator();
             case ">":
-            return new LargerOperator();
+                return new LargerOperator();
             case "<":
-            return new LessOperator();
+                return new LessOperator();
         }
         return null;
     }
@@ -340,11 +204,12 @@ class Factory{
     public static getDivider(type:string, numRegions:number, parameters:any):DividerInterface{
         switch(type.trim()){
             case "equal":
-            return new EqualDivider(numRegions, parameters);
+                return new EqualDivider(numRegions, parameters);
             case "bsp":
-            return new BinaryDivider(numRegions, parameters);
+                return new BinaryDivider(numRegions, parameters);
+            case "sample":
             case "sampling":
-            return new SamplingDivider(numRegions, parameters);
+                return new SamplingDivider(numRegions, parameters);
         }
         return null;
     }
@@ -357,16 +222,42 @@ class Factory{
      * @param rules generator rules
      * @return AutomataGenerator, AgentGenerator, or ConnectorGenerator
      */
-    public static getGenerator(type:string, currentRegion:any, parameters:any, rules:string[]):Generator{
+    public static getGenerator(type:string, regions:any, parameters:any, rules:string[]):Explorer{
+        let regionNames:string[] = regions.split(",");
         switch(type.trim()){
+            case "narrow":
+            case "narrow_horz":
+            case "horz":
+            case "horizontal":
+                return new HorizontalNarrowExplorer(regionNames, parameters, rules);
+            case "narrow_vert":
+            case "vert":
+            case "vertical":
+                return new VerticalNarrowExplorer(regionNames, parameters, rules);
+            case "narrow_rand":
+            case "rand":
             case "random":
-                return new RandomGenerator(currentRegion, rules, parameters);
-            case "sequential":
-                return new SequentialGenerator(currentRegion, rules, parameters);
+                return new RandomNarrowExplorer(regionNames, parameters, rules);
+            case "turtle":
+            case "turtle_drunk":
+            case "drunk":
             case "agent":
-                return new AgentGenerator(currentRegion, rules, parameters);
-            case "connector":
-                return new ConnectorGenerator(currentRegion, rules, parameters);
+                return new DrunkTurtleExplorer(regionNames, parameters, rules);
+            case "turtle_heur":
+            case "greedy":
+                return new HeuristicTurtleExplorer(regionNames, parameters, rules);
+            case "turlte_connect":
+            case "connect":
+                return new ConnectTurtleExplorer(regionNames, parameters, rules);
+            case "wide":
+            case "wide_heur":
+            case "heuristic":
+            case "order":
+                return new HeuristicWideExplorer(regionNames, parameters, rules);
+            case "wide_rand":
+            case "rorder":
+            case "rand_order":
+                return new RandomWideExplorer(regionNames, parameters, rules);
         }
         return null;
     }

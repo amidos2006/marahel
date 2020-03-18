@@ -7,32 +7,6 @@
  */
 class Region{
     /**
-     * static variable for the wrapping borders
-     */
-    static BORDER_WRAP:number = -10;
-    /**
-     * static variable for the none borders
-     */
-    static BORDER_NONE:number = -20;
-
-    /**
-     * the border size from the left
-     */
-    public borderLeft:number;
-    /**
-     * the border size from the right
-     */
-    public borderRight:number;
-    /**
-     * the border size from the top
-     */
-    public borderUp:number;
-    /**
-     * the border size from the bottom
-     */
-    public borderDown:number;
-
-    /**
      * the x position of the region
      */
     private x:number;
@@ -50,6 +24,11 @@ class Region{
     private height:number;
 
     /**
+     * all possible Locations;
+     */
+    private regionLocations:Point[];
+
+    /**
      * Constructor for the region class
      * @param x x position for the region
      * @param y y position for the region
@@ -62,10 +41,12 @@ class Region{
         this.width = width;
         this.height = height;
 
-        this.borderLeft = 0;
-        this.borderRight = 0;
-        this.borderUp = 0;
-        this.borderDown = 0;
+        this.regionLocations = [];
+        for(let x=0; x<this.width; x++){
+            for(let y=0; y<this.height; y++){
+                this.regionLocations.push(new Point(x+this.x, y+this.y));
+            }
+        }
     }
 
     /**
@@ -101,35 +82,50 @@ class Region{
     }
 
     /**
-     * get x position of the region after adding the left border
-     * @return x position after adding the left border
+     * get x position of the region
+     * @return x position
      */
     getX():number{
-        return this.x + this.borderLeft;
+        return this.x;
     }
 
     /**
-     * get y position of the region after adding the upper border
-     * @return y position after adding the top border
+     * get y position of the region
+     * @return y position
      */
     getY():number{
-        return this.y + this.borderUp;
+        return this.y;
     }
 
     /**
-     * get width of the region after removing the left and right borders
-     * @return width of the region after removing the left and right borders
+     * get width of the region
+     * @return width of the region
      */
     getWidth():number{
-        return this.width - this.borderLeft - this.borderRight;
+        return this.width;
     }
 
     /**
-     * get height of the region after removing the upper and lower borders
-     * @return height of the region after removing the upper and lower borders
+     * get height of the region
+     * @return height of the region
      */
     getHeight():number{
-        return this.height - this.borderUp - this.borderDown;
+        return this.height;
+    }
+
+    getRegionLocations():Point[]{
+        return this.regionLocations;
+    }
+
+    /**
+     * check if the input point is in region or not
+     * @param x input x position
+     * @param y input y position
+     * @return true if the input location in the region or false otherwise
+     */
+    inRegion(x: number, y: number): boolean {
+        return (x >= this.getX() && y >= this.getY() && 
+                x < this.getX() + this.getWidth() && y < this.getY() + this.getHeight());
     }
 
     /**
@@ -139,11 +135,10 @@ class Region{
      * @param value 
      */
     setValue(x:number, y:number, value:number):void{
-        let p:Point = this.getRegionPosition(x, y);
-        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
+        if(!this.inRegion(x, y)){
             return;
         }
-        Marahel.marahelEngine.currentMap.setValue(this.getX() + p.x, this.getY() + p.y, value);
+        Marahel.marahelEngine.currentMap.setValue(x, y, value);
     }
 
     /**
@@ -153,14 +148,10 @@ class Region{
      * @return entity index of the specified location
      */
     getValue(x:number, y:number):number{
-        let p:Point = this.getRegionPosition(x, y);
-        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
-            if(Marahel.marahelEngine.borderType == Region.BORDER_NONE){
-                return -1;
-            }
-            return Marahel.marahelEngine.borderType;
+        if(!this.inRegion(x, y)){
+            return Marahel.marahelEngine.outValue;
         }
-        return Marahel.marahelEngine.currentMap.getValue(this.getX() + p.x, this.getY() + p.y);
+        return Marahel.marahelEngine.currentMap.getValue(x, y);
     }
 
     /**
@@ -181,75 +172,12 @@ class Region{
     }
 
     /**
-     * fix the current input location to adapt correct location 
-     * (if the borders are wrapped)
-     * @param x input x position
-     * @param y input y position
-     * @return the fixed location in the region
-     */
-    getRegionPosition(x:number, y:number):Point{
-        let p:Point = new Point(x, y);
-        if(Marahel.marahelEngine.borderType == Region.BORDER_WRAP){
-            if(p.x >= this.getWidth()){
-                p.x -= this.getWidth();
-            }
-            if(p.y >= this.getHeight()){
-                p.y -= this.getHeight();
-            }
-            if(p.x < 0){
-                p.x += this.getWidth();
-            }
-            if(p.y < 0){
-                p.y += this.getHeight();
-            }
-        }
-        return p;
-    }
-
-    /**
-     * check if the input point is in region or not
-     * @param x input x position
-     * @param y input y position
-     * @return true if the input location in the region or false otherwise
-     */
-    outRegion(x:number, y:number):boolean{
-        let p:Point = this.getRegionPosition(x, y);
-        if(p.x<0 || p.y<0 || p.x>=this.getWidth() || p.y>=this.getHeight()){
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * get distances between start point and all entities with index "value" 
-     * @param start start location
-     * @param neighbor neighborhood for checking
-     * @param value entity index
-     * @param checkSolid solid tiles
-     * @return array of distances between current location and all entities with index "value"
-     */
-    getDistances(start:Point, neighbor:Neighborhood, value:number, checkSolid:Function):number[]{
-        let results:number[]=[];
-        for(let x:number=0; x<this.getWidth(); x++){
-            for(let y:number=0; y<this.getHeight(); y++){
-                if(Marahel.marahelEngine.currentMap.getValue(x + this.getX(), y + this.getY())==value){
-                    let path:Point[] = neighbor.getPath(start, new Point(x, y), this, checkSolid);
-                    if(path.length > 0){
-                        results.push(path.length);
-                    }
-                }
-            }
-        }
-        return results;
-    }
-
-    /**
      * Get estimated manhattan distance between start point and certain entity index
      * @param start starting location
      * @param value entity index
      * @return array of distances between current location and all entities with index "value"
      */
-    getEstimateDistances(start:Point, value:number):number[]{
+    getDistances(start:Point, value:number):number[]{
         let results:number[]=[];
         for(let x:number=0; x<this.getWidth(); x++){
             for(let y:number=0; y<this.getHeight(); y++){
@@ -271,13 +199,13 @@ class Region{
     intersect(pr:Region|Point):boolean{
         if(pr instanceof Region){
             return this.intersect(new Point(pr.x, pr.y)) || 
-                this.intersect(new Point(pr.x + pr.width, pr.y)) ||
-                this.intersect(new Point(pr.x, pr.y + this.height)) || 
-                this.intersect(new Point(pr.x + this.width, pr.y + this.height)) ||
+                this.intersect(new Point(pr.x + pr.width - 1, pr.y)) ||
+                this.intersect(new Point(pr.x, pr.y + this.height - 1)) || 
+                this.intersect(new Point(pr.x + this.width - 1, pr.y + this.height - 1)) ||
                 pr.intersect(new Point(this.x, this.y)) || 
-                pr.intersect(new Point(this.x + this.width, this.y)) ||
-                pr.intersect(new Point(this.x, this.y + this.height)) || 
-                pr.intersect(new Point(this.x + this.width, this.y + this.height));
+                pr.intersect(new Point(this.x + this.width - 1, this.y)) ||
+                pr.intersect(new Point(this.x, this.y + this.height - 1)) || 
+                pr.intersect(new Point(this.x + this.width - 1, this.y + this.height - 1));
         }
         else{
             return pr.x >= this.x && pr.y >= this.y && 

@@ -7,17 +7,9 @@ class Entity{
      */
     name:string;
     /**
-     * entity color
+     * the index value for that tile
      */
-    color:number;
-    /**
-     * minimum number of entity in the map
-     */
-    minValue:number;
-    /**
-     * maximum number of entity in the map
-     */
-    maxValue:number;
+    index:number;
 
     /**
      * Constructor for the entity class
@@ -25,19 +17,8 @@ class Entity{
      * @param parameters entity parameters such as color, 
      *                   minimum number, and/or maximum number
      */
-    constructor(name:string, parameters:any){
+    constructor(name:string, index:number){
         this.name = name;
-        this.color = 0;
-        if("color" in parameters){
-            this.color = parameters["color"];
-        }
-        this.minValue = -1;
-        if("min" in parameters){
-            this.minValue = parameters["min"];
-        }
-        this.maxValue = -1;
-        if("max" in parameters){
-            this.maxValue = parameters["max"];
-        }
+        this.index = index;
     }
 }

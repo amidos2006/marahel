@@ -9,6 +9,15 @@
  */
 class Engine{
     /**
+     * The value for out tiles
+     */
+    public static OUT_VALUE:number = -2;
+    /**
+     * The value for unknown tiles
+     */
+    public static UNKNOWN_VALUE:number = -1;
+
+    /**
      * type of replacing entities on the map (Map.REPLACE_SAME, Map.REPLACE_BACK)
      * either replace on the same board or in using a buffer and swap the buffer
      * after each iteration
@@ -19,11 +28,13 @@ class Engine{
      */
     public currentMap:MarahelMap;
     /**
-     * type of the game borders (Region.BORDER_WRAP, Region.BORDER_NONE, integer >= 0)
-     * either an index for entity, the borders are wrapped around, 
-     * or the borders are not calculated.
+     * The current used value for out of border
      */
-    public borderType:number;
+    public outValue:number;
+    /**
+     * The current used value for unknown types
+     */
+    public unknownValue:number;
 
     /**
      * minimum map size
@@ -52,7 +63,7 @@ class Engine{
     /**
      * list of generators that defines the level generator behavior
      */
-    private generators:Generator[];
+    private explorers:Explorer[];
 
     /**
      * constructor where it initialize different parts of Marahel
@@ -60,8 +71,8 @@ class Engine{
     public constructor(){
         // initialize different parts of the system
         Random.initialize();
-        this.replacingType = MarahelMap.REPLACE_BACK;
-        this.borderType = Region.BORDER_NONE;
+        this.replacingType = MarahelMap.REPLACE_SAME;
+        this.outValue = Engine.OUT_VALUE;
     }
 
     /**
@@ -70,17 +81,17 @@ class Engine{
      */
     public initialize(data:any):void{
         // define the maximum and minimum sizes of the generated maps
-        this.minDim = new Point(parseInt(data["metadata"]["minDimension"].split("x")[0]), 
-            parseInt(data["metadata"]["minDimension"].split("x")[1]));
-        this.maxDim = new Point(parseInt(data["metadata"]["maxDimension"].split("x")[0]), 
-            parseInt(data["metadata"]["maxDimension"].split("x")[1]));
+        this.minDim = new Point(parseInt(data["metadata"]["min"].split("x")[0]), 
+            parseInt(data["metadata"]["min"].split("x")[1]));
+        this.maxDim = new Point(parseInt(data["metadata"]["max"].split("x")[0]), 
+            parseInt(data["metadata"]["max"].split("x")[1]));
         
         // define the generator's entities 
         this.entities = [];
         this.entityIndex = {};
-        for(let e in data["entities"]){
-            this.entities.push(new Entity(e, data["entities"][e]));
-            this.entityIndex[e] = this.entities.length - 1;
+        for(let i=0; i<data["entities"].length; i++){
+            this.entities.push(new Entity(data["entities"][i], i));
+            this.entityIndex[data["entities"][i]] = i;
         }
 
         // define the generator's neighborhoods
@@ -89,31 +100,50 @@ class Engine{
             this.neighbors[n] = new Neighborhood(n, data["neighborhoods"][n]);
         }
         if(!("plus" in this.neighbors)){
-            this.neighbors["plus"] = new Neighborhood("plus", "010,121,010");
+            this.neighbors["plus"] = new Neighborhood("plus", "010,131,010");
         }
         if(!("all" in this.neighbors)){
-            this.neighbors["all"] = new Neighborhood("all", "111,121,111");
+            this.neighbors["all"] = new Neighborhood("all", "111,131,111");
         }
-        if(!("sequential" in this.neighbors)){
-            this.neighbors["sequential"] = new Neighborhood("sequential", "31,10");
-        } 
+        if (!("left" in this.neighbors)) {
+            this.neighbors["left"] = new Neighborhood("left", "000,120,000");
+        }
+        if (!("right" in this.neighbors)) {
+            this.neighbors["right"] = new Neighborhood("right", "000,021,000");
+        }
+        if (!("up" in this.neighbors)) {
+            this.neighbors["up"] = new Neighborhood("up", "010,020,000");
+        }
+        if (!("down" in this.neighbors)) {
+            this.neighbors["down"] = new Neighborhood("down", "000,020,010");
+        }
+        if (!("horz" in this.neighbors)) {
+            this.neighbors["horz"] = new Neighborhood("horz", "000,121,000");
+        }
+        if (!("vert" in this.neighbors)) {
+            this.neighbors["horz"] = new Neighborhood("horz", "010,020,010");
+        }
         if(!("self" in this.neighbors)){
             this.neighbors["self"] = new Neighborhood("self", "3");
         }
 
         // define the generator region divider
         this.regionDivider = Factory.getDivider(data["regions"]["type"], 
-            parseInt(data["regions"]["numberOfRegions"]), data["regions"]["parameters"]);
+            parseInt(data["regions"]["number"]), data["regions"]["parameters"]);
 
         // define the modules of the current level generator
-        this.generators = [];
-        for(let g of data["explorers"]){
-            let gen:Generator = Factory.getGenerator(g["type"], g["region"], g["parameters"], g["rules"]);
-            if(gen != null){
-                this.generators.push(gen);
+        this.explorers = [];
+        for(let e of data["explorers"]){
+            let exp:Explorer = Factory.getGenerator(
+                e["type"]?e["type"]:"horizontal", 
+                e["region"]?e["region"]:"map", 
+                e["parameters"]?e["parameters"]:{}, 
+                e["rules"]);
+            if (exp != null){
+                this.explorers.push(exp);
             }
             else{
-                throw new Error("Undefined generator - " + g.toString());
+                throw new Error("Undefined generator - " + e.toString());
             }
         }
     }
@@ -128,14 +158,14 @@ class Engine{
         // define a region that covers the whole map
         let mapRegion:Region = new Region(0, 0, this.currentMap.width, this.currentMap.height);
         // get regions from the region divider, if no divider defined the regions are the whole map
-        let regions:Region[] = [mapRegion];
+        let regions:Region[] = [];
         if(this.regionDivider != null){
             regions = this.regionDivider.getRegions(mapRegion);
         }
         // update the map using the defined generators
-        for(let g of this.generators){
-            g.selectRegions(mapRegion, regions);
-            g.applyGeneration();
+        for(let e of this.explorers){
+            e.applyRegion(mapRegion, regions);
+            e.runExplorer();
         }
     }
 
@@ -148,8 +178,11 @@ class Engine{
         if(typeof value == "string"){
             value = this.getEntityIndex(value);
         }
-        if(value < 0 || value >= this.entities.length){
-            return new Entity("undefined", {"color":"0x000000"});
+        if(value == -1){
+            return new Entity("undefined", -1);
+        }
+        if(value == -2){
+            return new Entity("out", -2);
         }
         return this.entities[value];
     }
@@ -170,6 +203,9 @@ class Engine{
     public getEntityIndex(name:string):number{
         if(name in this.entityIndex){
             return this.entityIndex[name];
+        }
+        if(name.trim() == "out"){
+            return -2;
         }
         return -1;
     }

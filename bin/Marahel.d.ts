@@ -27,10 +27,6 @@ declare class MarahelMap {
      */
     private backValues;
     /**
-     * dictionary of number of entities
-     */
-    private numEntities;
-    /**
      * constructor for the map class
      * @param width width of the map
      * @param height height of the map
@@ -46,7 +42,7 @@ declare class MarahelMap {
     /**
      * switch the two buffers
      */
-    switchBuffers(): void;
+    reflectBackBuffer(): void;
     /**
      * get a certain location
      * @param x x position
@@ -54,17 +50,6 @@ declare class MarahelMap {
      * @return entity index in the defined location
      */
     getValue(x: number, y: number): number;
-    /**
-     * check entity number constraints
-     * @return true if all entity number constraints are satisfied and false otherwise
-     */
-    checkNumConstraints(): boolean;
-    /**
-     * get number of a certain entity in the map
-     * @param e entity name to check
-     * @return number of a certain entity in the map
-     */
-    getNumEntity(e: string): number;
     /**
      * get the generated map inform of 2D matrix of entity names
      * @return 2D matrix of entity names
@@ -75,11 +60,6 @@ declare class MarahelMap {
      * @return 2D matrix of entity indexes
      */
     getIndexMap(): number[][];
-    /**
-     * get the generated map in form of 2D matrix of colors
-     * @return 2D matrix of entity colors
-     */
-    getColorMap(): number[][];
     /**
      * string representation for the current map
      * @return string corresponding to the 2D matrix of indexes
@@ -125,61 +105,21 @@ declare class Entity {
      */
     name: string;
     /**
-     * entity color
+     * the index value for that tile
      */
-    color: number;
-    /**
-     * minimum number of entity in the map
-     */
-    minValue: number;
-    /**
-     * maximum number of entity in the map
-     */
-    maxValue: number;
+    index: number;
     /**
      * Constructor for the entity class
      * @param name entity name
      * @param parameters entity parameters such as color,
      *                   minimum number, and/or maximum number
      */
-    constructor(name: string, parameters: any);
+    constructor(name: string, index: number);
 }
 /**
  * the main interface for Marahel with the users
  */
 declare class Marahel {
-    /**
-     * defines the output maps as 2D matrix of strings
-     */
-    static STRING_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of colors
-     */
-    static COLOR_OUTPUT: number;
-    /**
-     * defines the output maps as 2D matrix of integers
-     */
-    static INDEX_OUTPUT: number;
-    /**
-     * maximum number of generation trials before considering a
-     * failure generation
-     */
-    static GENERATION_MAX_TRIALS: number;
-    /**
-     * maximum number of combinations that A* will use before
-     * considering finding the optimum
-     */
-    static A_STAR_TRIALS: number;
-    /**
-     * maximum number of trials for multiple A* restarts before
-     * considering the current one is the best
-     */
-    static A_STAR_MULTI_TEST_TRIALS: number;
-    /**
-     * maximum number of trails done by the sampling divider algorithm
-     * to resolve collision between regions
-     */
-    static SAMPLING_TRAILS: number;
     /**
      * don't change values by hand. it is an instance of the core system.
      * it could be used for advanced level generation.
@@ -208,7 +148,7 @@ declare class Marahel {
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    static generate(outputType?: number, seed?: number): any[][];
+    static generate(indeces?: boolean, seed?: number): any[][];
     /**
      * print the index generate map in the console in a 2D array format
      * @param generatedMap the map required to be printed
@@ -219,30 +159,6 @@ declare class Marahel {
  *
  */
 declare class Region {
-    /**
-     * static variable for the wrapping borders
-     */
-    static BORDER_WRAP: number;
-    /**
-     * static variable for the none borders
-     */
-    static BORDER_NONE: number;
-    /**
-     * the border size from the left
-     */
-    borderLeft: number;
-    /**
-     * the border size from the right
-     */
-    borderRight: number;
-    /**
-     * the border size from the top
-     */
-    borderUp: number;
-    /**
-     * the border size from the bottom
-     */
-    borderDown: number;
     /**
      * the x position of the region
      */
@@ -259,6 +175,10 @@ declare class Region {
      * the height of the region
      */
     private height;
+    /**
+     * all possible Locations;
+     */
+    private regionLocations;
     /**
      * Constructor for the region class
      * @param x x position for the region
@@ -288,25 +208,33 @@ declare class Region {
      */
     setHeight(value: number): void;
     /**
-     * get x position of the region after adding the left border
-     * @return x position after adding the left border
+     * get x position of the region
+     * @return x position
      */
     getX(): number;
     /**
-     * get y position of the region after adding the upper border
-     * @return y position after adding the top border
+     * get y position of the region
+     * @return y position
      */
     getY(): number;
     /**
-     * get width of the region after removing the left and right borders
-     * @return width of the region after removing the left and right borders
+     * get width of the region
+     * @return width of the region
      */
     getWidth(): number;
     /**
-     * get height of the region after removing the upper and lower borders
-     * @return height of the region after removing the upper and lower borders
+     * get height of the region
+     * @return height of the region
      */
     getHeight(): number;
+    getRegionLocations(): Point[];
+    /**
+     * check if the input point is in region or not
+     * @param x input x position
+     * @param y input y position
+     * @return true if the input location in the region or false otherwise
+     */
+    inRegion(x: number, y: number): boolean;
     /**
      * set the value of a certain location in this region
      * @param x input x position
@@ -328,36 +256,12 @@ declare class Region {
      */
     getEntityNumber(value: number): number;
     /**
-     * fix the current input location to adapt correct location
-     * (if the borders are wrapped)
-     * @param x input x position
-     * @param y input y position
-     * @return the fixed location in the region
-     */
-    getRegionPosition(x: number, y: number): Point;
-    /**
-     * check if the input point is in region or not
-     * @param x input x position
-     * @param y input y position
-     * @return true if the input location in the region or false otherwise
-     */
-    outRegion(x: number, y: number): boolean;
-    /**
-     * get distances between start point and all entities with index "value"
-     * @param start start location
-     * @param neighbor neighborhood for checking
-     * @param value entity index
-     * @param checkSolid solid tiles
-     * @return array of distances between current location and all entities with index "value"
-     */
-    getDistances(start: Point, neighbor: Neighborhood, value: number, checkSolid: Function): number[];
-    /**
      * Get estimated manhattan distance between start point and certain entity index
      * @param start starting location
      * @param value entity index
      * @return array of distances between current location and all entities with index "value"
      */
-    getEstimateDistances(start: Point, value: number): number[];
+    getDistances(start: Point, value: number): number[];
     /**
      * check if the input point/region intersect with this region
      * @param pr either a point or region class to test against
@@ -365,6 +269,58 @@ declare class Region {
      *         and false otherwise
      */
     intersect(pr: Region | Point): boolean;
+}
+/**
+ * Group class is a helper class to the connector algorithm
+ */
+declare class Group {
+    /**
+     * group identifier
+     */
+    index: number;
+    /**
+     * points in the group
+     */
+    points: Point[];
+    /**
+     * constructor to initialize the values
+     */
+    constructor();
+    /**
+     * add new point to the group
+     * @param x x position
+     * @param y y position
+     */
+    addPoint(x: number, y: number): void;
+    /**
+     * get the center of the group
+     * @return the center of the group
+     */
+    getCenter(): Point;
+    /**
+     * sort the points in an ascending order with respect to input point p
+     * @param p relative point for sorting
+     */
+    sort(p: Point): void;
+    rankSelection(): Point;
+    /**
+     * remove all the points that inside the shape so the group only have border points
+     * @param region current region
+     * @param allowed connectivity checking entity
+     * @param neighbor neighborhood used in connection
+     */
+    cleanPoints(region: Region, allowed: Entity[], neighbor: Neighborhood): void;
+    /**
+     * merge two groups together
+     * @param group the other group to be merged with
+     */
+    combine(group: Group): void;
+    /**
+     * Get the minimum manhattan distance between this group and the input group
+     * @param group the other to measure distance towards it
+     * @return the minimum manhattan distance between this group and the other group
+     */
+    distance(group: Group): number;
 }
 /**
  * Neighborhood class carries information about the user defined neighborhoods
@@ -412,15 +368,6 @@ declare class Neighborhood {
      */
     setTotal(value: number, center: Point, region: Region): void;
     /**
-     * Get path between start and end location in a certain region using this neighborhood
-     * @param start start location
-     * @param end end location
-     * @param region the allowed region
-     * @param checkSolid function to define which locations are solid
-     * @return list of points that specify the path between start and end points
-     */
-    getPath(start: Point, end: Point, region: Region, checkSolid: Function): Point[];
-    /**
      * get neighboring locations using this neighborhood
      * @param x x center position
      * @param y y center position
@@ -428,6 +375,21 @@ declare class Neighborhood {
      * @return a list of surrounding locations using this neighborhood
      */
     getNeighbors(x: number, y: number, region: Region): Point[];
+    /**
+     * flood fill algorithm to label the map and get unconnected groups and areas
+     * @param x x position
+     * @param y y position
+     * @param label current label
+     * @param labelBoard current labelling board to change
+     * @param region current region
+     */
+    private floodFill;
+    /**
+     * Get all unconnected groups
+     * @param region current applied region
+     * @return an array of all unconnected groups
+     */
+    getGroups(entities: number[], region: Region): Group[];
     /**
      * get a string representation for this neighborhood
      * @return a string represent this neighborhood
@@ -522,9 +484,9 @@ declare class Prando {
      * console.log(rng.next()); // 0.5784605181725837 again
      */
     reset(): void;
-    private recalculate();
-    private map(val, minFrom, maxFrom, minTo, maxTo);
-    private hashCode(str);
+    private recalculate;
+    private map;
+    private hashCode;
 }
 declare class Grad {
     private x;
@@ -547,8 +509,8 @@ declare class Noise {
     seed(seed: number): void;
     simplex2(xin: number, yin: number): number;
     simplex3(xin: any, yin: any, zin: any): number;
-    private fade(t);
-    private lerp(a, b, t);
+    private fade;
+    private lerp;
     perlin2(x: number, y: number): number;
     perlin3(x: number, y: number, z: number): number;
 }
@@ -589,6 +551,10 @@ declare class SamplingDivider implements DividerInterface {
      */
     private maxHeight;
     /**
+     * max sampling tries
+     */
+    private samplingTrials;
+    /**
      * create a new sampling divider
      * @param numberOfRegions number of required regions
      * @param parameters sampling parameters
@@ -601,13 +567,13 @@ declare class SamplingDivider implements DividerInterface {
      * @return true if r is not intersecting with any region in regions
      *              and false otherwise
      */
-    private checkIntersection(r, regions);
+    private checkIntersection;
     /**
      * change the current region to a new one
      * @param map generated map region to define the map boundaries
      * @param r region object to be changed
      */
-    private changeRegion(map, r);
+    private randomChange;
     /**
      * get a fit region that is in the map and doesn't intersect with
      * any of the others
@@ -616,19 +582,9 @@ declare class SamplingDivider implements DividerInterface {
      * @return a suitable new region that doesn't intersect
      *         with any of the previous ones
      */
-    private getFitRegion(map, regions);
-    /**
-     * get the number of intersections between the regions
-     * @param regions current generated regions
-     * @return the number of intersection in the current array
-     */
-    private calculateIntersection(regions);
-    /**
-     * a hill climber algorithm to decrease the number of intersections between regions
-     * @param map generated map
-     * @param regions current generated regions
-     */
-    private adjustRegions(map, regions);
+    private getFitRegion;
+    private moveRegions;
+    private adjustRegions;
     /**
      * divide the map into different regions using sampling
      * @param map generated map
@@ -672,26 +628,26 @@ declare class BinaryDivider implements DividerInterface {
      * @param allowedWidth the amount of width the system is allowed during division
      * @return two regions after division
      */
-    private divideWidth(region, allowedWidth);
+    private divideWidth;
     /**
      * divide on the region height
      * @param region the regions that will be divided over its height
      * @param allowedHeight the amount of height the system is allowed during the division
      * @return two regions after division
      */
-    private divideHeight(region, allowedHeight);
+    private divideHeight;
     /**
      * test if the region should be further divided
      * @param region the tested region
      * @return true if the region is bigger than twice minWidth or twice minHeight
      */
-    private testDivide(region);
+    private testDivide;
     /**
      * divide a region randomly either on width or height
      * @param region the region required to be divided
      * @return two regions after the division
      */
-    private divide(region);
+    private divide;
     /**
      * check if any of the regions have a width or height more than
      * maxWidth or maxHeight
@@ -699,13 +655,13 @@ declare class BinaryDivider implements DividerInterface {
      * @return true if any of the regions have the width or the height
      *         bigger than maxWidth or maxHeight
      */
-    private checkMaxSize(regions);
+    private checkMaxSize;
     /**
      * divided the on the maximum size dimension
      * @param region the region that will be divided
      * @return two regions after the division
      */
-    private divideMaxSize(region);
+    private divideMaxSize;
     /**
      * divide the generated map using BSP till satisfy all the constraints
      * @param map the generated map
@@ -844,12 +800,13 @@ declare class NotEqualOperator implements OperatorInterface {
 interface EstimatorInterface {
     /**
      * calculate the estimator value
-     * @param iteration percentage of the generator
+     * @param singleperc the percentage of completion
+     * @param repeatperc the percentage of repeatition
      * @param position position of the generator
      * @param region current selected region
      * @return estimated number
      */
-    calculate(iteration: number, position: Point, region: Region): number;
+    calculate(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): number;
 }
 /**
  * Neighborhood estimator calculates the number of entities using a certain neighborhood
@@ -875,7 +832,7 @@ declare class NeighborhoodEstimator implements EstimatorInterface {
      * @param region current region
      * @return number of entities using a certain neighborhood
      */
-    calculate(iteration: number, position: Point, region: Region): number;
+    calculate(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): number;
 }
 /**
  * Number estimator is most common used estimator. It can return completion percentage,
@@ -898,7 +855,7 @@ declare class NumberEstimator implements EstimatorInterface {
      * @param region current region
      * @return estimated value for the name
      */
-    calculate(iteration: number, position: Point, region: Region): number;
+    calculate(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): number;
 }
 /**
  * Distance estimator is used as part of condition to get min, max, or avg
@@ -906,50 +863,18 @@ declare class NumberEstimator implements EstimatorInterface {
  */
 declare class DistanceEstimator implements EstimatorInterface {
     /**
-     * type of the distance estimator (minimum, maximum, average)
-     */
-    private type;
-    /**
-     * neighborhood used in measuring distance
-     */
-    private neighbor;
-    /**
      * entities used in measuring the distance to
      */
     private entities;
     /**
-     * allowed movement tiles
+     * is it a distance to the edge
      */
-    private allowed;
+    private hasOut;
     /**
      * Constructor for the distance estimator
      * @param line input line by user
      */
     constructor(line: string);
-    /**
-     * get maximum distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return maximum distance between current location and entity index
-     */
-    private getMax(position, region, entityIndex);
-    /**
-     * get minimum distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return minimum distance between current location and entity index
-     */
-    private getMin(position, region, entityIndex);
-    /**
-     * get average distance between current location and entity index
-     * @param position current location
-     * @param region current region
-     * @param entityIndex checked entity index
-     * @return average distance between current location and entity index
-     */
-    private getAvg(position, region, entityIndex);
     /**
      * get the distance from the current location to a specified sprite
      * @param iteration percentage of the current generator
@@ -957,7 +882,7 @@ declare class DistanceEstimator implements EstimatorInterface {
      * @param region current region
      * @return distance from the current position to the specified entity
      */
-    calculate(iteration: number, position: Point, region: Region): number;
+    calculate(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): number;
 }
 /**
  * Condition class is used as a part of the Rule class (Left hand side of any rule)
@@ -976,10 +901,6 @@ declare class Condition {
      */
     private rightSide;
     /**
-     * next anded conditions
-     */
-    private nextCondition;
-    /**
      * Constructor for the condition class
      * @param line user input line
      */
@@ -991,7 +912,7 @@ declare class Condition {
      * @param region allowed region to check on
      * @return true if all conditions are true and false otherwise
      */
-    check(iteration: number, position: Point, region: Region): boolean;
+    check(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): boolean;
 }
 /**
  * Executer class (Right hand side of the rule)
@@ -1005,10 +926,6 @@ declare class Executer {
      * entities that will be applied in the region using neighbor
      */
     private entities;
-    /**
-     * next anded executer
-     */
-    private nextExecuter;
     /**
      * Constructor for the executer class
      * @param line user input data
@@ -1028,20 +945,16 @@ declare class Rule {
     /**
      * Left hand side of the rule
      */
-    private condition;
+    private conditions;
     /**
      * Right hand side of the rule
      */
-    private executer;
-    /**
-     * next rule to test if the current one failed
-     */
-    private nextRule;
+    private executers;
     /**
      * Constructor for the Rule class
      * @param lines user input rules
      */
-    constructor(lines: string[]);
+    constructor(line: string);
     /**
      * Execute the rule chain on the current region
      * @param iteration the percentage of the finished generator
@@ -1049,440 +962,161 @@ declare class Rule {
      * @param region current selected region
      * @return true if any of the rules has been applied and false otherwise
      */
-    execute(iteration: number, position: Point, region: Region): boolean;
+    execute(singleperc: number, changePerc: number, repeatperc: number, position: Point, region: Region): boolean;
 }
 /**
  * Base Generator class
  */
-declare abstract class Generator {
+declare abstract class Explorer {
     /**
-     * name of the region that the generator will be applied onto it
+     * region names
      */
-    protected regionsName: string;
+    protected regionNames: string[];
     /**
-     * list of the selected regions
+     * the current selected regions
      */
     protected regions: Region[];
     /**
      * generation rules to be applied
      */
-    protected rules: Rule;
-    /**
-     * minimum size of the border
-     */
-    protected minBorder: number;
-    /**
-     * maximum size of the border
-     */
-    protected maxBorder: number;
-    /**
-     * borders are same in all 4 directions
-     */
-    protected sameBorders: boolean;
+    protected rules: Rule[];
     /**
      * replacing type (same location, back buffer)
      */
     protected replacingType: number;
     /**
-     * border type (entity, none, wrapping)
+     * the border values
      */
-    protected borderType: number;
+    protected outValue: number;
+    /**
+     * the number of repeats
+     */
+    protected repeats: number;
+    /**
+     * the maximum number of repeats allowed
+     */
+    protected max_repeats: number;
+    /**
+     * the number of visited tiles
+     */
+    protected visited_tiles: number;
+    /**
+     * the maximum number of tiles
+     */
+    protected max_tiles: number;
+    /**
+     * the number of changed tiles
+     */
+    protected changed_tiles: number;
+    /**
+     * the maximum number of changed tiles
+     */
+    protected max_changed_tiles: number;
     /**
      * Constructor for the generator class
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
      */
-    constructor(currentRegion: any, rules: string[]);
-    /**
-     * select the correct region based on the regionName
-     * @param map the whole map
-     * @param regions list of all the regions from the divider algorithm
-     */
-    selectRegions(map: Region, regions: Region[]): void;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected getTilesPercentage(region: Region): number;
+    protected getChangePercentage(region: Region): number;
+    protected getRepeatPercentage(): number;
+    protected checkRepeatTermination(region: Region): boolean;
+    protected abstract restartRepeat(region: Region): Point;
+    protected abstract getNextLocation(currentLocation: Point, region: Region): Point;
     /**
      * Apply the generation algorithm on the regions array
      */
-    applyGeneration(): void;
+    protected applyRepeat(region: Region): void;
+    applyRegion(mapRegion: Region, regions: Region[]): void;
+    /**
+     * Run the explorer
+     */
+    runExplorer(): void;
 }
 /**
  * Automata Generator class
  */
-declare class SequentialGenerator extends Generator {
-    /**
-     * number of iterations to apply cellular automata
-     */
-    private numIterations;
-    /**
-     * anchor point to start the generation
-     */
-    private start;
-    /**
-     * neighborhood defines which tiles to explore next
-     */
-    private explore;
-    /**
-     * Constructor for the agent generator
-     * @param currentRegion java object contain information about the applied region(s)
-     * @param rules list of rules entered by the user
-     * @param parameters for the automata generator
-     */
-    constructor(currentRegion: any, rules: string[], parameters: any);
-    /**
-     * Apply the automata algorithm on the regions array
-     */
-    applyGeneration(): void;
+declare abstract class NarrowExplorer extends Explorer {
+    protected restartRepeat(region: Region): Point;
 }
-/**
- * Agent class used in the AgentGenerator Algorithm
- */
-declare class Agent {
-    /**
-     * current position of the agent
-     */
-    private position;
-    /**
-     * current lifespan of the agent
-     */
-    private currentLifespan;
-    /**
-     * total lifespan of the agent
-     */
-    private lifespan;
-    /**
-     * current agent speed
-     */
-    private currentSpeed;
-    /**
-     * when does the agent apply rules
-     */
-    private speed;
-    /**
-     * amount of time when the agent change direction
-     */
-    private currentChange;
-    /**
-     * total amount of time the agent change direction
-     */
-    private change;
-    /**
-     * current agent direction
-     */
-    private currentDirection;
-    /**
-     * allowed directions by the agent
-     */
-    private directions;
-    /**
-     * starting entity
-     */
-    private entities;
-    /**
-     * Constructor for the agent class
-     * @param lifespan current lifespan after it reach zero the agent dies
-     * @param speed current agent speed to apply rules
-     * @param change amount of time the agent change direction at
-     * @param entities starting location of the agent
-     * @param directions current allowed directions
-     */
-    constructor(lifespan: number, speed: Point, change: Point, entities: Entity[], directions: Neighborhood);
-    /**
-     * move the agent to an allowed location used when the agent get stuck
-     * @param region the applied region
-     */
-    moveToLocation(region: Region): void;
-    /**
-     * check if the current location is allowed
-     * @param x x position
-     * @param y y position
-     * @param region current region
-     * @return true if the location is allowed for the agent and false otherwise
-     */
-    private checkAllowed(x, y, region);
-    /**
-     * change the current direction of the agent or jump to
-     * new location if no location found
-     * @param region the applied region
-     */
-    private changeDirection(region);
-    /**
-     * update the current agent
-     * @param region current applied region
-     * @param rules rules to be applied when its time to react
-     * @return true if the agent is still alive and false otherwise
-     */
-    update(region: Region, rules: Rule): boolean;
+declare class HorizontalNarrowExplorer extends NarrowExplorer {
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
+}
+declare class VerticalNarrowExplorer extends NarrowExplorer {
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
+}
+declare class RandomNarrowExplorer extends NarrowExplorer {
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
 }
 /**
  * Agent based generator
  */
-declare class AgentGenerator extends Generator {
-    /**
-     * number of entities the agent can move on it
-     */
-    private allowedEntities;
-    /**
-     * number of spawned agents
-     */
-    private numAgents;
-    /**
-     * speed of the agent to apply the rules
-     */
-    private speed;
-    /**
-     * time before the agent change its direction
-     */
-    private changeTime;
-    /**
-     * lifespan for the agents
-     */
-    private lifespan;
+declare abstract class TurtleExplorer extends Explorer {
     /**
      * directions allowed for the agents
      */
-    private directions;
+    protected directions: Neighborhood;
     /**
      * Constructor for the agent generator
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
      * @param parameters for the agent generator
      */
-    constructor(currentRegion: any, rules: string[], parameters: any);
-    /**
-     * Apply the agent based algorithm on the regions array
-     */
-    applyGeneration(): void;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected restartRepeat(region: Region): Point;
 }
-/**
- * Group class is a helper class to the connector algorithm
- */
-declare class Group {
-    /**
-     * group identifier
-     */
-    index: number;
-    /**
-     * points in the group
-     */
-    points: Point[];
-    /**
-     * constructor to initialize the values
-     */
-    constructor();
-    /**
-     * add new point to the group
-     * @param x x position
-     * @param y y position
-     */
-    addPoint(x: number, y: number): void;
-    /**
-     * get the center of the group
-     * @return the center of the group
-     */
-    getCenter(): Point;
-    /**
-     * sort the points in an ascending order with respect to input point p
-     * @param p relative point for sorting
-     */
-    sort(p: Point): void;
-    /**
-     * remove all the points that inside the shape so the group only have border points
-     * @param region current region
-     * @param allowed connectivity checking entity
-     * @param neighbor neighborhood used in connection
-     */
-    cleanPoints(region: Region, allowed: Entity[], neighbor: Neighborhood): void;
-    /**
-     * merge two groups together
-     * @param group the other group to be merged with
-     */
-    combine(group: Group): void;
-    /**
-     * Get the minimum manhattan distance between this group and the input group
-     * @param group the other to measure distance towards it
-     * @return the minimum manhattan distance between this group and the other group
-     */
-    distance(group: Group): number;
+declare class DrunkTurtleExplorer extends TurtleExplorer {
+    private change_prob;
+    private dir;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
 }
-/**
- * Connector Generator which changes the generated map in order to connect
- * different areas on it
- */
-declare class ConnectorGenerator extends Generator {
-    /**
-     * Type of connection for the shortest connections
-     */
-    static SHORT_CONNECTION: number;
-    /**
-     * Type of connection for the random connections
-     */
-    static RANDOM_CONNECTION: number;
-    /**
-     * Type of connection for the hub connections
-     */
-    static HUB_CONNECTION: number;
-    /**
-     * Type of connection for the full connections
-     */
-    static FULL_CONNECTION: number;
-    /**
-     * the connection neighborhood used to check connectivity
-     */
-    private neighbor;
-    /**
-     * entities that are used to check connectivity
-     */
+declare class HeuristicTurtleExplorer extends TurtleExplorer {
+    private estimators;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
+}
+declare class ConnectTurtleExplorer extends TurtleExplorer {
     private entities;
-    /**
-     * type of connection (short, random, hub, or full)
-     */
-    private connectionType;
+    private waypoints;
+    private total_waypoints;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected restartRepeat(region: Region): Point;
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
+    protected checkRepeatTermination(region: Region): boolean;
+    protected getTilesPercentage(): number;
+}
+/**
+ * Agent based generator
+ */
+declare abstract class WideExplorer extends Explorer {
+    protected locations: Point[];
+    protected abstract sortTiles(): void;
+    protected restartRepeat(region: Region): Point;
+    protected getNextLocation(currentLocation: Point, region: Region): Point;
+    protected checkRepeatTermination(region: Region): boolean;
+    protected getSinglePercentage(region: Region): number;
+}
+/**
+ * Agent based generator
+ */
+declare class HeuristicWideExplorer extends WideExplorer {
+    private estimators;
     /**
      * Constructor for the agent generator
      * @param currentRegion java object contain information about the applied region(s)
      * @param rules list of rules entered by the user
-     * @param parameters for the connector generator
+     * @param parameters for the agent generator
      */
-    constructor(currentRegion: any, rules: string[], parameters: any);
-    /**
-     * flood fill algorithm to label the map and get unconnected groups and areas
-     * @param x x position
-     * @param y y position
-     * @param label current label
-     * @param labelBoard current labelling board to change
-     * @param region current region
-     */
-    private floodFill(x, y, label, labelBoard, region);
-    /**
-     * Get all unconnected groups
-     * @param region current applied region
-     * @return an array of all unconnected groups
-     */
-    private getUnconnectedGroups(region);
-    /**
-     * connect the two points
-     * @param start start point for connection
-     * @param end end point for connection
-     * @param region current region
-     * @return true if the two groups are connected and false otherwise
-     */
-    private connect(start, end, region);
-    /**
-     * connect the groups randomly
-     * @param groups unconnected groups
-     * @param region applied region
-     */
-    private connectRandom(groups, region);
-    /**
-     * helper function to connect the groups using the shortest path
-     * @param groups unconnected groups
-     * @param region applied region
-     * @return the first point and last point and the indeces of both group to be connected
-     */
-    private shortestGroup(groups, region);
-    /**
-     * helper function to connect the groups using one center group
-     * @param groups unconnected groups
-     * @param region applied region
-     * @return the index of the center group that leads to the shortest distance towards other groups
-     */
-    private centerGroup(groups, region);
-    /**
-     * connect the groups using the shortest distance
-     * @param groups unconnected groups
-     * @param region applied region
-     */
-    private connectShort(groups, region);
-    /**
-     * connect the all groups together
-     * @param groups unconnected groups
-     * @param region applied region
-     */
-    private connectFull(groups, region);
-    /**
-     * connect the groups using hub architecture (one group is connected to the rest)
-     * @param groups unconnected groups
-     * @param region applied region
-     */
-    private connectHub(groups, region);
-    /**
-     * Apply the connector algorithm on the regions array
-     */
-    applyGeneration(): void;
+    constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected sortTiles(): void;
 }
 /**
- * basic node used in the A* algorithm
+ * Agent based generator
  */
-declare class LocationNode {
-    /**
-     * x position on the map
-     */
-    x: number;
-    /**
-     * y position on the map
-     */
-    y: number;
-    /**
-     * parent of the node, null if root
-     */
-    parent: LocationNode;
-    /**
-     * constructor
-     * @param parent current parent of the node
-     * @param x map x position
-     * @param y map y position
-     */
-    constructor(parent?: LocationNode, x?: number, y?: number);
-    /**
-     * check if the current node is the end node
-     * @param x end location x position
-     * @param y end location y position
-     * @return true if its the end location, false otherwise
-     */
-    checkEnd(x: number, y: number): boolean;
-    /**
-     * get an estimate between the current node and
-     * end location using manhattan distance
-     * @param x end location x position
-     * @param y end location y position
-     * @return the manhattan distance towards the exit
-     */
-    estimate(x: number, y: number): number;
-    /**
-     * return printable version of the location node
-     * @return
-     */
-    toString(): string;
-}
-/**
- * A* algorithm used by the connector generator
- */
-declare class AStar {
-    /**
-     * get the path from the root node to the input node
-     * @param node destination node where u need path between the root and itself
-     * @return a list of points that specify the path between the root and node
-     */
-    private static convertNodeToPath(node);
-    /**
-     * Get path between start point and end point in a certain region
-     * @param start start location
-     * @param end destination
-     * @param directions allowed directions for the A*
-     * @param region the allowed region the algorithm should work in
-     * @param checkSolid function that return true in locations not allowed
-     * @return a list of points that represent the path between start and end points
-     */
-    static getPath(start: Point, end: Point, directions: Point[], region: Region, checkSolid: Function): Point[];
-    /**
-     * get path between multiple start locations and ending location
-     * @param start start location
-     * @param end destination
-     * @param directions allowed directions for the A*
-     * @param region the allowed region the algorithm should work in
-     * @param checkSolid function that return true in locations not allowed
-     * @return a list of points that represent the path between start and end points
-     */
-    static getPathMultipleStartEnd(start: Point[], end: Point[], directions: Point[], region: Region, checkSolid: Function): Point[];
+declare class RandomWideExplorer extends WideExplorer {
+    protected sortTiles(): void;
 }
 /**
  * parses list of entities to an actual entity array
@@ -1542,6 +1176,12 @@ declare class Random {
      * @param array input array to be shuffled
      */
     static shuffleArray(array: any[]): void;
+    /**
+     * get a random value from the array
+     * @param array the input array
+     * @return a random value from the array
+     */
+    static choiceArray(array: any[]): any;
 }
 /**
  * transform a string to its corresponding class
@@ -1575,12 +1215,20 @@ declare class Factory {
      * @param rules generator rules
      * @return AutomataGenerator, AgentGenerator, or ConnectorGenerator
      */
-    static getGenerator(type: string, currentRegion: any, parameters: any, rules: string[]): Generator;
+    static getGenerator(type: string, regions: any, parameters: any, rules: string[]): Explorer;
 }
 /**
  * core class of Marahel framework
  */
 declare class Engine {
+    /**
+     * The value for out tiles
+     */
+    static OUT_VALUE: number;
+    /**
+     * The value for unknown tiles
+     */
+    static UNKNOWN_VALUE: number;
     /**
      * type of replacing entities on the map (Map.REPLACE_SAME, Map.REPLACE_BACK)
      * either replace on the same board or in using a buffer and swap the buffer
@@ -1592,11 +1240,13 @@ declare class Engine {
      */
     currentMap: MarahelMap;
     /**
-     * type of the game borders (Region.BORDER_WRAP, Region.BORDER_NONE, integer >= 0)
-     * either an index for entity, the borders are wrapped around,
-     * or the borders are not calculated.
+     * The current used value for out of border
      */
-    borderType: number;
+    outValue: number;
+    /**
+     * The current used value for unknown types
+     */
+    unknownValue: number;
     /**
      * minimum map size
      */
@@ -1624,7 +1274,7 @@ declare class Engine {
     /**
      * list of generators that defines the level generator behavior
      */
-    private generators;
+    private explorers;
     /**
      * constructor where it initialize different parts of Marahel
      */
@@ -1662,30 +1312,3 @@ declare class Engine {
      */
     getNeighborhood(name: string): Neighborhood;
 }
-/**
- * Automata Generator class
- */
-declare class RandomGenerator extends Generator {
-    /**
-     * number of iterations to apply cellular automata
-     */
-    private numOfTiles;
-    /**
-     * Constructor for the agent generator
-     * @param currentRegion java object contain information about the applied region(s)
-     * @param rules list of rules entered by the user
-     * @param parameters for the automata generator
-     */
-    constructor(currentRegion: any, rules: string[], parameters: any);
-    /**
-     * Apply the automata algorithm on the regions array
-     */
-    applyGeneration(): void;
-}
-declare let fs: any;
-declare let savePixels: any;
-declare let zeros: any;
-declare let data: any;
-declare let colorMap: number[][];
-declare let indexMap: number[][];
-declare let picture: any;

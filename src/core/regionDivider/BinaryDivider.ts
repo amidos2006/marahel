@@ -78,7 +78,7 @@ class BinaryDivider implements DividerInterface{
      * @return two regions after division
      */
     private divideWidth(region:Region, allowedWidth:number):Region[]{
-        let rWidth:number = this.minWidth + Random.getIntRandom(0, allowedWidth);
+        let rWidth:number = this.minWidth + Random.getIntRandom(0, allowedWidth + 1);
         return [new Region(region.getX(), region.getY(), rWidth, region.getHeight()), 
                 new Region(region.getX() + rWidth, region.getY(), 
                 region.getWidth() - rWidth, region.getHeight())];
@@ -91,7 +91,7 @@ class BinaryDivider implements DividerInterface{
      * @return two regions after division
      */
     private divideHeight(region:Region, allowedHeight:number):Region[]{
-        let rHeight:number = this.minHeight + Random.getIntRandom(0, allowedHeight);
+        let rHeight:number = this.minHeight + Random.getIntRandom(0, allowedHeight + 1);
         return [new Region(region.getX(), region.getY(), region.getWidth(), rHeight), 
                 new Region(region.getX(), region.getY() + rHeight, region.getWidth(), region.getHeight() - rHeight)];
     }
@@ -211,6 +211,21 @@ class BinaryDivider implements DividerInterface{
                         break;
                     }
                 }
+            }
+            if(prevLength == results.length){
+                let max_index:number = 0;
+                let max_value:number = 0;
+                for(let i:number=0; i<results.length; i++){
+                    if(results[i].getWidth() > max_value){
+                        max_index = i;
+                        max_value = results[i].getWidth();
+                    }
+                    if(results[i].getHeight() > max_value){
+                        max_index = i;
+                        max_value = results[i].getHeight();
+                    }
+                }
+                results.concat(this.divideMaxSize(results.splice(max_index, 1)[0]));
             }
         }
 

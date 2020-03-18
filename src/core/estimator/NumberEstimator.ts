@@ -16,8 +16,10 @@ class NumberEstimator implements EstimatorInterface{
      */
     constructor(line:string){
         this.name = line;
-        if(this.name != "complete" && this.name != "random" && this.name != "noise" && 
-            isNaN(parseFloat(this.name)) && Marahel.marahelEngine.getEntityIndex(this.name) == -1){
+        if(this.name != "percent" && this.name != "rpercent" && this.name != "cperct" &&
+            this.name != "random" && this.name != "noise" && 
+            isNaN(parseFloat(this.name)) && 
+            Marahel.marahelEngine.getEntityIndex(this.name) == -1){
             throw new Error("Undefined name estimator.");
         }
     }
@@ -29,17 +31,27 @@ class NumberEstimator implements EstimatorInterface{
      * @param region current region
      * @return estimated value for the name
      */
-    calculate(iteration:number, position:Point, region:Region):number{
-        if(this.name == "complete"){
-            return iteration;
+    calculate(singleperc: number, changeperc:number, repeatperc: number,position:Point, region:Region):number{
+        if(this.name == "percent"){
+            return singleperc;
+        }
+        if(this.name == "cpercent"){
+            return changeperc;
+        }
+        if(this.name == "rpercent"){
+            return repeatperc;
         }
         if(this.name == "random"){
             return Random.getRandom();
         }
         if(this.name == "noise"){
-            return Random.getNoise(position.x/region.getWidth(), position.y/region.getHeight());
+            return Random.getNoise((position.x - region.getX())/region.getWidth(), 
+                (position.y - region.getY())/region.getHeight());
         }
         if(isNaN(parseFloat(this.name))){
+            if(this.name == "out"){
+                return 0;
+            }
             return region.getEntityNumber(Marahel.marahelEngine.getEntityIndex(this.name));
         }
         return parseFloat(this.name);
