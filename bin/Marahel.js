@@ -2886,7 +2886,7 @@ var Engine = /** @class */ (function () {
             this.neighbors["horz"] = new Neighborhood("horz", "000,121,000");
         }
         if (!("vert" in this.neighbors)) {
-            this.neighbors["horz"] = new Neighborhood("horz", "010,020,010");
+            this.neighbors["vert"] = new Neighborhood("vert", "010,020,010");
         }
         if (!("self" in this.neighbors)) {
             this.neighbors["self"] = new Neighborhood("self", "3");

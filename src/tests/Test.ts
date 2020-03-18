@@ -18,9 +18,6 @@ let data:any = {
         }
     },
     "entities": ["empty", "solid"],
-    "neighborhoods": {
-  	    "all":"111,131,111"
-    },
     "explorers": [
   	    {
             "type":"horizontal",
