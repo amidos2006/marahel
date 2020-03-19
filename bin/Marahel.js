@@ -2400,14 +2400,14 @@ var HeuristicTurtleExplorer = /** @class */ (function (_super) {
         newlocs.sort(function (l1, l2) {
             for (var _i = 0, _a = this.estimators; _i < _a.length; _i++) {
                 var e = _a[_i];
-                var v1 = e.calculate(this.getSinglePercentage(), 0, l1, this.region);
-                var v2 = e.calculate(this.getSinglePercentage(), 0, l2, this.region);
+                var v1 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
+                var v2 = e.calculate(this.getSinglePercentage(), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
                     return v1 - v2;
                 }
             }
             return Random.getRandom() - 0.5;
-        });
+        }.bind(this));
         return newlocs[0];
     };
     return HeuristicTurtleExplorer;
@@ -2508,11 +2508,11 @@ var WideExplorer = /** @class */ (function (_super) {
     }
     WideExplorer.prototype.restartRepeat = function (region) {
         this.locations = region.getRegionLocations();
-        this.sortTiles();
+        this.sortTiles(region);
         return this.locations.splice(0, 1)[0];
     };
     WideExplorer.prototype.getNextLocation = function (currentLocation, region) {
-        this.sortTiles();
+        this.sortTiles(region);
         return this.locations.splice(0, 1)[0];
     };
     WideExplorer.prototype.checkRepeatTermination = function (region) {
@@ -2548,18 +2548,18 @@ var HeuristicWideExplorer = /** @class */ (function (_super) {
         }
         return _this;
     }
-    HeuristicWideExplorer.prototype.sortTiles = function () {
+    HeuristicWideExplorer.prototype.sortTiles = function (region) {
         this.locations.sort(function (l1, l2) {
             for (var _i = 0, _a = this.estimators; _i < _a.length; _i++) {
                 var e = _a[_i];
-                var v1 = e.calculate(this.getSinglePercentage(), 0, l1, this.region);
-                var v2 = e.calculate(this.getSinglePercentage(), 0, l2, this.region);
+                var v1 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
+                var v2 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
                     return v1 - v2;
                 }
             }
             return Random.getRandom() - 0.5;
-        });
+        }.bind(this));
     };
     return HeuristicWideExplorer;
 }(WideExplorer));
@@ -2572,7 +2572,7 @@ var RandomWideExplorer = /** @class */ (function (_super) {
     function RandomWideExplorer() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    RandomWideExplorer.prototype.sortTiles = function () {
+    RandomWideExplorer.prototype.sortTiles = function (region) {
         this.locations.sort(function (l1, l2) {
             return Random.getRandom() - 0.5;
         });

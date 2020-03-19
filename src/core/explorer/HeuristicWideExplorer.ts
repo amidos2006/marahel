@@ -22,16 +22,20 @@ class HeuristicWideExplorer extends WideExplorer {
         }
     }
 
-    protected sortTiles(): void{
+    protected sortTiles(region:Region): void{
         this.locations.sort(function (l1, l2) {
             for (let e of this.estimators) {
-                let v1 = e.calculate(this.getSinglePercentage(), 0, l1, this.region);
-                let v2 = e.calculate(this.getSinglePercentage(), 0, l2, this.region);
+                let v1 = e.calculate(this.getSinglePercentage(region),
+                    this.getChangePercentage(region),
+                    this.getRepeatPercentage(), l1, this.region);
+                let v2 = e.calculate(this.getSinglePercentage(region),
+                    this.getChangePercentage(region),
+                    this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
                     return v1 - v2;
                 }
             }
             return Random.getRandom() - 0.5;
-        });
+        }.bind(this));
     }
 }

@@ -1092,7 +1092,7 @@ declare class ConnectTurtleExplorer extends TurtleExplorer {
  */
 declare abstract class WideExplorer extends Explorer {
     protected locations: Point[];
-    protected abstract sortTiles(): void;
+    protected abstract sortTiles(region: Region): void;
     protected restartRepeat(region: Region): Point;
     protected getNextLocation(currentLocation: Point, region: Region): Point;
     protected checkRepeatTermination(region: Region): boolean;
@@ -1110,13 +1110,13 @@ declare class HeuristicWideExplorer extends WideExplorer {
      * @param parameters for the agent generator
      */
     constructor(regionNames: string[], parameters: any, rules: string[]);
-    protected sortTiles(): void;
+    protected sortTiles(region: Region): void;
 }
 /**
  * Agent based generator
  */
 declare class RandomWideExplorer extends WideExplorer {
-    protected sortTiles(): void;
+    protected sortTiles(region: Region): void;
 }
 /**
  * parses list of entities to an actual entity array

@@ -6,16 +6,16 @@
     abstract class WideExplorer extends Explorer {
         protected locations:Point[];
 
-        protected abstract sortTiles():void;
+        protected abstract sortTiles(region:Region):void;
 
         protected restartRepeat(region:Region): Point {
             this.locations = region.getRegionLocations();
-            this.sortTiles();
+            this.sortTiles(region);
             return this.locations.splice(0, 1)[0];
         }
 
         protected getNextLocation(currentLocation: Point, region: Region): Point {
-            this.sortTiles();
+            this.sortTiles(region);
             return this.locations.splice(0, 1)[0];
         }
 
