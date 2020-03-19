@@ -21,10 +21,10 @@ class HeuristicTurtleExplorer extends TurtleExplorer {
             for (let e of this.estimators){
                 let v1 = e.calculate(this.getTilesPercentage(region), 
                     this.getChangePercentage(region), 
-                    this.getRepeatPercentage(), l1, this.region);
+                    this.getRepeatPercentage(), l1, region);
                 let v2 = e.calculate(this.getTilesPercentage(region), 
                     this.getChangePercentage(region), 
-                    this.getRepeatPercentage(), l2, this.region);
+                    this.getRepeatPercentage(), l2, region);
                 if(v1 != v2){
                     return v1-v2;
                 }
