@@ -2518,7 +2518,7 @@ var WideExplorer = /** @class */ (function (_super) {
     WideExplorer.prototype.checkRepeatTermination = function (region) {
         return this.locations.length == 0 || _super.prototype.checkRepeatTermination.call(this, region);
     };
-    WideExplorer.prototype.getSinglePercentage = function (region) {
+    WideExplorer.prototype.getTilesPercentage = function (region) {
         if (this.max_tiles < region.getHeight() * region.getWidth()) {
             return this.visited_tiles / this.max_tiles;
         }

@@ -23,7 +23,7 @@
             return this.locations.length == 0 || super.checkRepeatTermination(region);
         }
 
-        protected getSinglePercentage(region:Region): number {
+        protected getTilesPercentage(region:Region): number {
             if (this.max_tiles < region.getHeight() * region.getWidth()) {
                 return this.visited_tiles / this.max_tiles;
             }

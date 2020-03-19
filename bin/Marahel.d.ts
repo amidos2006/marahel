@@ -1096,7 +1096,7 @@ declare abstract class WideExplorer extends Explorer {
     protected restartRepeat(region: Region): Point;
     protected getNextLocation(currentLocation: Point, region: Region): Point;
     protected checkRepeatTermination(region: Region): boolean;
-    protected getSinglePercentage(region: Region): number;
+    protected getTilesPercentage(region: Region): number;
 }
 /**
  * Agent based generator
