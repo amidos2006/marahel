@@ -2366,8 +2366,7 @@ var DrunkTurtleExplorer = /** @class */ (function (_super) {
     }
     DrunkTurtleExplorer.prototype.restartRepeat = function (region) {
         var dir = Random.choiceArray(this.directions.locations);
-        this.dir.x = dir.x;
-        this.dir.y = dir.y;
+        this.dir = new Point(dir.x, dir.y);
         return _super.prototype.restartRepeat.call(this, region);
     };
     DrunkTurtleExplorer.prototype.getNextLocation = function (currentLocation, region) {

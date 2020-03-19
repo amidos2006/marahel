@@ -15,8 +15,7 @@ class DrunkTurtleExplorer extends TurtleExplorer {
 
     protected restartRepeat(region: Region): Point {
         let dir = Random.choiceArray(this.directions.locations);
-        this.dir.x = dir.x;
-        this.dir.y = dir.y;
+        this.dir = new Point(dir.x, dir.y);
         return super.restartRepeat(region);
     }
 
