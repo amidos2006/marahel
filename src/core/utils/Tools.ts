@@ -239,7 +239,7 @@ class Factory{
         switch(type.trim()){
             case "narrow":
             case "narrow_horz":
-            case "horz":
+            case "horiz":
             case "horizontal":
                 return new HorizontalNarrowExplorer(regionNames, parameters, rules);
             case "narrow_vert":
