@@ -91,6 +91,8 @@ class Random{
      * @param seed new seed for the random and noise objects
      */
     public static changeSeed(seed:number):void{
+        if(this.rnd == null || this.noise == null) this.initialize();
+
         this.rnd = new Prando(seed);
         this.noise.seed(seed);
     }
@@ -100,6 +102,8 @@ class Random{
      * @return a random value between 0 (inclusive) and 1 (exclusive)
      */
 	public static getRandom():number{
+        if (this.rnd == null || this.noise == null) this.initialize();
+
         return this.rnd.next();
     }
 
@@ -110,6 +114,8 @@ class Random{
      * @return a random integer between min (inclusive) and max (exclusive)
      */
     public static getIntRandom(min:number, max:number):number{
+        if (this.rnd == null || this.noise == null) this.initialize();
+
         if(max <= min) return min;
         return this.rnd.nextInt(min, max - 1);
     }
@@ -121,6 +127,8 @@ class Random{
      * @return noise value based on the location x and y
      */
     public static getNoise(x:number, y:number):number{
+        if (this.rnd == null || this.noise == null) this.initialize();
+
         return this.noise.perlin2(x, y);
     }
 
@@ -129,6 +137,8 @@ class Random{
      * @param array input array to be shuffled
      */
     public static shuffleArray(array:any[]):void{
+        if (this.rnd == null || this.noise == null) this.initialize();
+
         for(let i:number=0; i<array.length; i++){
             let i1:number = this.getIntRandom(0, array.length);
             let i2:number = this.getIntRandom(0, array.length);
@@ -144,6 +154,8 @@ class Random{
      * @return a random value from the array
      */
     public static choiceArray(array:any[]):any{
+        if (this.rnd == null || this.noise == null) this.initialize();
+        
         return array[Random.getIntRandom(0, array.length)];
     }
 

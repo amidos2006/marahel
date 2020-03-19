@@ -2660,6 +2660,8 @@ var Random = /** @class */ (function () {
      * @param seed new seed for the random and noise objects
      */
     Random.changeSeed = function (seed) {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         this.rnd = new Prando(seed);
         this.noise.seed(seed);
     };
@@ -2668,6 +2670,8 @@ var Random = /** @class */ (function () {
      * @return a random value between 0 (inclusive) and 1 (exclusive)
      */
     Random.getRandom = function () {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         return this.rnd.next();
     };
     /**
@@ -2677,6 +2681,8 @@ var Random = /** @class */ (function () {
      * @return a random integer between min (inclusive) and max (exclusive)
      */
     Random.getIntRandom = function (min, max) {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         if (max <= min)
             return min;
         return this.rnd.nextInt(min, max - 1);
@@ -2688,6 +2694,8 @@ var Random = /** @class */ (function () {
      * @return noise value based on the location x and y
      */
     Random.getNoise = function (x, y) {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         return this.noise.perlin2(x, y);
     };
     /**
@@ -2695,6 +2703,8 @@ var Random = /** @class */ (function () {
      * @param array input array to be shuffled
      */
     Random.shuffleArray = function (array) {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         for (var i = 0; i < array.length; i++) {
             var i1 = this.getIntRandom(0, array.length);
             var i2 = this.getIntRandom(0, array.length);
@@ -2709,6 +2719,8 @@ var Random = /** @class */ (function () {
      * @return a random value from the array
      */
     Random.choiceArray = function (array) {
+        if (this.rnd == null || this.noise == null)
+            this.initialize();
         return array[Random.getIntRandom(0, array.length)];
     };
     return Random;
