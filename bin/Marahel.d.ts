@@ -39,6 +39,7 @@ declare class MarahelMap {
      * @param value entity index
      */
     setValue(x: number, y: number, value: number): void;
+    initializeBackBuffer(): void;
     /**
      * switch the two buffers
      */

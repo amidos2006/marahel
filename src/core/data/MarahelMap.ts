@@ -67,6 +67,14 @@ class MarahelMap{
         }
     }
 
+    initializeBackBuffer():void{
+        for (let y: number = 0; y < this.mapValues.length; y++) {
+            for (let x: number = 0; x < this.mapValues[y].length; x++) {
+                this.backValues[y][x] = this.mapValues[y][x];
+            }
+        }
+    }
+
     /**
      * switch the two buffers
      */

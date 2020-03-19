@@ -50,6 +50,13 @@ var MarahelMap = /** @class */ (function () {
             this.backValues[y][x] = value;
         }
     };
+    MarahelMap.prototype.initializeBackBuffer = function () {
+        for (var y = 0; y < this.mapValues.length; y++) {
+            for (var x = 0; x < this.mapValues[y].length; x++) {
+                this.backValues[y][x] = this.mapValues[y][x];
+            }
+        }
+    };
     /**
      * switch the two buffers
      */
@@ -2251,6 +2258,7 @@ var Explorer = /** @class */ (function () {
         while (this.getRepeatPercentage() < 1) {
             for (var _i = 0, _a = this.regions; _i < _a.length; _i++) {
                 var r = _a[_i];
+                Marahel.marahelEngine.currentMap.initializeBackBuffer();
                 this.visited_tiles = 0;
                 this.changed_tiles = 0;
                 this.applyRepeat(r);

@@ -187,6 +187,7 @@ abstract class Explorer{
         this.repeats = 0;
         while(this.getRepeatPercentage() < 1){
             for(let r of this.regions){
+                Marahel.marahelEngine.currentMap.initializeBackBuffer();
                 this.visited_tiles = 0;
                 this.changed_tiles = 0;
                 this.applyRepeat(r);
