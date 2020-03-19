@@ -2905,7 +2905,9 @@ var Engine = /** @class */ (function () {
             this.neighbors["self"] = new Neighborhood("self", "3");
         }
         // define the generator region divider
-        this.regionDivider = Factory.getDivider(data["regions"]["type"], parseInt(data["regions"]["number"]), data["regions"]["parameters"]);
+        if (data["regions"]) {
+            this.regionDivider = Factory.getDivider(data["regions"]["type"], parseInt(data["regions"]["number"]), data["regions"]["parameters"]);
+        }
         // define the modules of the current level generator
         this.explorers = [];
         for (var _i = 0, _a = data["explorers"]; _i < _a.length; _i++) {

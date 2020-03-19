@@ -128,8 +128,10 @@ class Engine{
         }
 
         // define the generator region divider
-        this.regionDivider = Factory.getDivider(data["regions"]["type"], 
-            parseInt(data["regions"]["number"]), data["regions"]["parameters"]);
+        if(data["regions"]){
+            this.regionDivider = Factory.getDivider(data["regions"]["type"], 
+                parseInt(data["regions"]["number"]), data["regions"]["parameters"]);
+        }
 
         // define the modules of the current level generator
         this.explorers = [];
