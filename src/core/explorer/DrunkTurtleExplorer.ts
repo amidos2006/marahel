@@ -13,6 +13,13 @@ class DrunkTurtleExplorer extends TurtleExplorer {
         }
     }
 
+    protected restartRepeat(region: Region): Point {
+        let dir = Random.choiceArray(this.directions.locations);
+        this.dir.x = dir.x;
+        this.dir.y = dir.y;
+        return super.restartRepeat(region);
+    }
+
     protected getNextLocation(currentLocation: Point, region: Region): Point {
         let newX: number = currentLocation.x + this.dir.x;
         let newY: number = currentLocation.y + this.dir.y;

@@ -2364,6 +2364,12 @@ var DrunkTurtleExplorer = /** @class */ (function (_super) {
         }
         return _this;
     }
+    DrunkTurtleExplorer.prototype.restartRepeat = function (region) {
+        var dir = Random.choiceArray(this.directions.locations);
+        this.dir.x = dir.x;
+        this.dir.y = dir.y;
+        return _super.prototype.restartRepeat.call(this, region);
+    };
     DrunkTurtleExplorer.prototype.getNextLocation = function (currentLocation, region) {
         var newX = currentLocation.x + this.dir.x;
         var newY = currentLocation.y + this.dir.y;

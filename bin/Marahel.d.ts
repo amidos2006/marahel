@@ -1070,6 +1070,7 @@ declare class DrunkTurtleExplorer extends TurtleExplorer {
     private change_prob;
     private dir;
     constructor(regionNames: string[], parameters: any, rules: string[]);
+    protected restartRepeat(region: Region): Point;
     protected getNextLocation(currentLocation: Point, region: Region): Point;
 }
 declare class HeuristicTurtleExplorer extends TurtleExplorer {
