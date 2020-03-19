@@ -2400,8 +2400,8 @@ var HeuristicTurtleExplorer = /** @class */ (function (_super) {
         newlocs.sort(function (l1, l2) {
             for (var _i = 0, _a = this.estimators; _i < _a.length; _i++) {
                 var e = _a[_i];
-                var v1 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
-                var v2 = e.calculate(this.getSinglePercentage(), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
+                var v1 = e.calculate(this.getTilesPercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
+                var v2 = e.calculate(this.getTilesPercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
                     return v1 - v2;
                 }
@@ -2552,8 +2552,8 @@ var HeuristicWideExplorer = /** @class */ (function (_super) {
         this.locations.sort(function (l1, l2) {
             for (var _i = 0, _a = this.estimators; _i < _a.length; _i++) {
                 var e = _a[_i];
-                var v1 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
-                var v2 = e.calculate(this.getSinglePercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
+                var v1 = e.calculate(this.getTilesPercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l1, this.region);
+                var v2 = e.calculate(this.getTilesPercentage(region), this.getChangePercentage(region), this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
                     return v1 - v2;
                 }

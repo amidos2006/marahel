@@ -25,10 +25,10 @@ class HeuristicWideExplorer extends WideExplorer {
     protected sortTiles(region:Region): void{
         this.locations.sort(function (l1, l2) {
             for (let e of this.estimators) {
-                let v1 = e.calculate(this.getSinglePercentage(region),
+                let v1 = e.calculate(this.getTilesPercentage(region),
                     this.getChangePercentage(region),
                     this.getRepeatPercentage(), l1, this.region);
-                let v2 = e.calculate(this.getSinglePercentage(region),
+                let v2 = e.calculate(this.getTilesPercentage(region),
                     this.getChangePercentage(region),
                     this.getRepeatPercentage(), l2, this.region);
                 if (v1 != v2) {
