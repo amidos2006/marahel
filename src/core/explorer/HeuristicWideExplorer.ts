@@ -31,7 +31,7 @@ class HeuristicWideExplorer extends WideExplorer {
                     return v1 - v2;
                 }
             }
-            return Math.random() - 0.5;
+            return Random.getRandom() - 0.5;
         });
     }
 }

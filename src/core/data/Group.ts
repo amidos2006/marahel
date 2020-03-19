@@ -55,7 +55,7 @@ class Group {
             let d1: number = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
             let d2: number = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
             if (d1 == d2) {
-                return Math.random() - 0.5;
+                return Random.getRandom() - 0.5;
             }
             return d1 - d2;
         })

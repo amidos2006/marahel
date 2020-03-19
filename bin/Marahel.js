@@ -456,7 +456,7 @@ var Group = /** @class */ (function () {
             var d1 = Math.abs(p.x - a.x) + Math.abs(p.y - a.y);
             var d2 = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
             if (d1 == d2) {
-                return Math.random() - 0.5;
+                return Random.getRandom() - 0.5;
             }
             return d1 - d2;
         });
@@ -2360,7 +2360,7 @@ var DrunkTurtleExplorer = /** @class */ (function (_super) {
         var _this = _super.call(this, regionNames, parameters, rules) || this;
         _this.change_prob = 0.1;
         if (parameters["change"]) {
-            _this.change_prob = parameters["change"];
+            _this.change_prob = parseFloat(parameters["change"]);
         }
         return _this;
     }
@@ -2406,7 +2406,7 @@ var HeuristicTurtleExplorer = /** @class */ (function (_super) {
                     return v1 - v2;
                 }
             }
-            return Math.random() - 0.5;
+            return Random.getRandom() - 0.5;
         });
         return newlocs[0];
     };
@@ -2558,7 +2558,7 @@ var HeuristicWideExplorer = /** @class */ (function (_super) {
                     return v1 - v2;
                 }
             }
-            return Math.random() - 0.5;
+            return Random.getRandom() - 0.5;
         });
     };
     return HeuristicWideExplorer;
@@ -2574,7 +2574,7 @@ var RandomWideExplorer = /** @class */ (function (_super) {
     }
     RandomWideExplorer.prototype.sortTiles = function () {
         this.locations.sort(function (l1, l2) {
-            return Math.random() - 0.5;
+            return Random.getRandom() - 0.5;
         });
     };
     return RandomWideExplorer;
