@@ -149,7 +149,7 @@ declare class Marahel {
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    static generate(indeces?: boolean, seed?: number): any[][];
+    static generate(indeces?: boolean, callback?: (map: number[][]) => void, seed?: number): any[][];
     /**
      * print the index generate map in the console in a 2D array format
      * @param generatedMap the map required to be printed
@@ -1289,7 +1289,7 @@ declare class Engine {
     /**
      * generate a new map using the defined generator
      */
-    generate(): void;
+    generate(callback?: (map: number[][]) => void): void;
     /**
      * get entity object using its name or index. It returns undefined entity otherwise
      * @param value name or index of the required entity

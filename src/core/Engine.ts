@@ -153,7 +153,7 @@ class Engine{
     /**
      * generate a new map using the defined generator
      */
-    public generate():void{
+    public generate(callback?:(map:number[][])=>void):void{
         // create a map object with randomly selected dimensions between minDim and maxDim
         this.currentMap = new MarahelMap(Random.getIntRandom(this.minDim.x, this.maxDim.x), 
             Random.getIntRandom(this.minDim.y, this.maxDim.y));
@@ -168,6 +168,9 @@ class Engine{
         for(let e of this.explorers){
             e.applyRegion(mapRegion, regions);
             e.runExplorer();
+            if(callback){
+                callback(this.currentMap.getIndexMap());
+            }
         }
     }
 

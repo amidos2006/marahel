@@ -213,14 +213,14 @@ var Marahel = /** @class */ (function () {
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    Marahel.generate = function (indeces, seed) {
+    Marahel.generate = function (indeces, callback, seed) {
         if (!Marahel.marahelEngine) {
             throw new Error("Call initialize first.");
         }
         if (seed) {
             Random.changeSeed(seed);
         }
-        this.marahelEngine.generate();
+        this.marahelEngine.generate(callback);
         if (indeces) {
             return this.marahelEngine.currentMap.getIndexMap();
         }
@@ -2937,7 +2937,7 @@ var Engine = /** @class */ (function () {
     /**
      * generate a new map using the defined generator
      */
-    Engine.prototype.generate = function () {
+    Engine.prototype.generate = function (callback) {
         // create a map object with randomly selected dimensions between minDim and maxDim
         this.currentMap = new MarahelMap(Random.getIntRandom(this.minDim.x, this.maxDim.x), Random.getIntRandom(this.minDim.y, this.maxDim.y));
         // define a region that covers the whole map
@@ -2952,6 +2952,9 @@ var Engine = /** @class */ (function () {
             var e = _a[_i];
             e.applyRegion(mapRegion, regions);
             e.runExplorer();
+            if (callback) {
+                callback(this.currentMap.getIndexMap());
+            }
         }
     };
     /**
