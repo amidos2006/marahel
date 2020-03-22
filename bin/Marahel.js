@@ -1889,6 +1889,9 @@ var NeighborhoodEstimator = /** @class */ (function () {
         }
         return result;
     };
+    NeighborhoodEstimator.prototype.numberOfOnes = function () {
+        return this.neighbor.locations.length;
+    };
     return NeighborhoodEstimator;
 }());
 /// <reference path="EstimatorInterface.ts"/>
@@ -2024,6 +2027,10 @@ var Condition = /** @class */ (function () {
         else {
             this.operator = Factory.getOperator(">");
             this.rightSide = Factory.getEstimator("0");
+            if (this.leftSide instanceof NeighborhoodEstimator) {
+                this.rightSide = Factory.getEstimator((this.leftSide.
+                    numberOfOnes() - 1).toString());
+            }
         }
     }
     /**

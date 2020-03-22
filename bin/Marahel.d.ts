@@ -834,6 +834,7 @@ declare class NeighborhoodEstimator implements EstimatorInterface {
      * @return number of entities using a certain neighborhood
      */
     calculate(singleperc: number, changeperc: number, repeatperc: number, position: Point, region: Region): number;
+    numberOfOnes(): number;
 }
 /**
  * Number estimator is most common used estimator. It can return completion percentage,

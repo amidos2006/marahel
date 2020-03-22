@@ -42,4 +42,8 @@ class NeighborhoodEstimator implements EstimatorInterface{
         }
         return result;
     }
+
+    numberOfOnes():number{
+        return this.neighbor.locations.length;
+    }
 }

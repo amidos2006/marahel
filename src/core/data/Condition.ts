@@ -36,6 +36,10 @@ class Condition{
         else{
             this.operator = Factory.getOperator(">");
             this.rightSide = Factory.getEstimator("0");
+            if(this.leftSide instanceof NeighborhoodEstimator){
+                this.rightSide = Factory.getEstimator(((<NeighborhoodEstimator>this.leftSide).
+                    numberOfOnes() - 1).toString());
+            }
         }
     }
 
