@@ -117,7 +117,14 @@ class Random{
         if (this.rnd == null || this.noise == null) this.initialize();
 
         if(max <= min) return min;
-        return this.rnd.nextInt(min, max - 1);
+        let value = this.rnd.nextInt(min, max - 1);
+        if(value < min){
+            value = min;
+        }
+        if(value >= max){
+            value = max - 1;
+        }
+        return value;
     }
 
     /**

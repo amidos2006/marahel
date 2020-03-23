@@ -2705,7 +2705,14 @@ var Random = /** @class */ (function () {
             this.initialize();
         if (max <= min)
             return min;
-        return this.rnd.nextInt(min, max - 1);
+        var value = this.rnd.nextInt(min, max - 1);
+        if (value < min) {
+            value = min;
+        }
+        if (value >= max) {
+            value = max - 1;
+        }
+        return value;
     };
     /**
      * get 2D perlin noise value based on the location x and y
