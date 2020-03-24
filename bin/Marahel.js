@@ -481,11 +481,11 @@ var Group = /** @class */ (function () {
         }
         var random = Random.getRandom();
         for (var i = 0; i < this.points.length; i++) {
-            if (random < prob[i]) {
-                return this.points[i];
+            if (random < prob[i] / total) {
+                return new Point(this.points[i].x, this.points[i].y);
             }
         }
-        return this.points[this.points.length - 1];
+        return new Point(this.points[this.points.length - 1].x, this.points[this.points.length - 1].y);
     };
     /**
      * remove all the points that inside the shape so the group only have border points
@@ -2476,7 +2476,7 @@ var ConnectTurtleExplorer = /** @class */ (function (_super) {
             this.waypoints.push(currentPoint);
             if (Random.getRandom() < 0.25) {
                 this.waypoints.push(prevPoint);
-                currentPoint = prevPoint;
+                currentPoint = new Point(prevPoint.x, prevPoint.y);
             }
             centers.sort(currentPoint);
             prevPoint = currentPoint;
