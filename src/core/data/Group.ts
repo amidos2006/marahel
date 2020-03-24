@@ -38,7 +38,7 @@ class Group {
         let result: Point = new Point(0, 0);
         for (let p of this.points) {
             result.x += p.x;
-            result.y + p.y;
+            result.y += p.y;
         }
 
         result.x /= this.points.length;

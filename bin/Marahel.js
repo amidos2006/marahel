@@ -448,7 +448,7 @@ var Group = /** @class */ (function () {
         for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
             var p = _a[_i];
             result.x += p.x;
-            result.y + p.y;
+            result.y += p.y;
         }
         result.x /= this.points.length;
         result.y /= this.points.length;
