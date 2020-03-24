@@ -473,7 +473,7 @@ var Group = /** @class */ (function () {
             return null;
         }
         var prob = [];
-        var total = 0;
+        var total = this.points.length;
         prob.push(this.points.length);
         for (var i = 1; i < this.points.length; i++) {
             prob.push(this.points.length - i + prob[i - 1]);

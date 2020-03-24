@@ -66,7 +66,7 @@ class Group {
             return null;
         }
         let prob:number[] = [];
-        let total:number = 0;
+        let total:number = this.points.length;
         prob.push(this.points.length);
         for(let i:number=1; i<this.points.length; i++){
             prob.push(this.points.length - i + prob[i-1]);
