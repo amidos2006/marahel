@@ -169,10 +169,9 @@ class Neighborhood {
         for (let y: number = 0; y < region.getHeight(); y++) {
             for (let x: number = 0; x < region.getWidth(); x++) {
                 if (labelBoard[y][x] == -1) {
-                    if (entities.indexOf(region.getValue(x, y)) >= 0){
+                    if (entities.indexOf(region.getValue(x + region.getX(), y + region.getY())) >= 0){
                         this.floodFill(x, y, entities, label, labelBoard, region);
                         label += 1;
-                        break;
                     }
                 }
             }

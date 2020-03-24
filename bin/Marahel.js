@@ -680,10 +680,9 @@ var Neighborhood = /** @class */ (function () {
         for (var y = 0; y < region.getHeight(); y++) {
             for (var x = 0; x < region.getWidth(); x++) {
                 if (labelBoard[y][x] == -1) {
-                    if (entities.indexOf(region.getValue(x, y)) >= 0) {
+                    if (entities.indexOf(region.getValue(x + region.getX(), y + region.getY())) >= 0) {
                         this.floodFill(x, y, entities, label, labelBoard, region);
                         label += 1;
-                        break;
                     }
                 }
             }
