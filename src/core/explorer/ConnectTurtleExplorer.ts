@@ -45,7 +45,7 @@ class ConnectTurtleExplorer extends TurtleExplorer {
             centers.points.splice(centers.points.indexOf(currentPoint), 1);
             this.waypoints.push(currentPoint);
             if(Random.getRandom() < 0.25){
-                this.waypoints.push(prevPoint);
+                this.waypoints.push(new Point(prevPoint.x, prevPoint.y));
                 currentPoint = new Point(prevPoint.x, prevPoint.y);
             }
             centers.sort(currentPoint);
