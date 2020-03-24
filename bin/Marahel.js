@@ -482,10 +482,10 @@ var Group = /** @class */ (function () {
         var random = Random.getRandom();
         for (var i = 0; i < this.points.length; i++) {
             if (random < prob[i] / total) {
-                return new Point(this.points[i].x, this.points[i].y);
+                return this.points[i];
             }
         }
-        return new Point(this.points[this.points.length - 1].x, this.points[this.points.length - 1].y);
+        return this.points[this.points.length - 1];
     };
     /**
      * remove all the points that inside the shape so the group only have border points
