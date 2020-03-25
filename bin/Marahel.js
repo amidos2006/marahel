@@ -2373,8 +2373,8 @@ var DrunkTurtleExplorer = /** @class */ (function (_super) {
     function DrunkTurtleExplorer(regionNames, parameters, rules) {
         var _this = _super.call(this, regionNames, parameters, rules) || this;
         _this.change_prob = 0.1;
-        if (parameters["change"]) {
-            _this.change_prob = parseFloat(parameters["change"]);
+        if (parameters["dirprob"]) {
+            _this.change_prob = parseFloat(parameters["dirprob"]);
         }
         return _this;
     }

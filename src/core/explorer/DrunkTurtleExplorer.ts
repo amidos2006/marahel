@@ -8,8 +8,8 @@ class DrunkTurtleExplorer extends TurtleExplorer {
         super(regionNames, parameters, rules);
         
         this.change_prob = 0.1;
-        if(parameters["change"]){
-            this.change_prob = parseFloat(parameters["change"]);
+        if(parameters["dirprob"]){
+            this.change_prob = parseFloat(parameters["dirprob"]);
         }
     }
 
