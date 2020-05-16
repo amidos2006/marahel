@@ -181,7 +181,7 @@ class Factory{
         if(line.match(/\((.+)\)/) == null){
             return new NumberEstimator(line);
         }
-        else if(line.match("Dist")){
+        else if(line.match("dist")){
             return new DistanceEstimator(line);
         }
         return new NeighborhoodEstimator(line);
