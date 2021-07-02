@@ -83,7 +83,7 @@ class Random{
      */
     public static initialize():void{
         this.rnd = new Prando();
-        this.noise = new Noise();
+        this.noise = new Noise(this.rnd.next());
     }
 
     /**

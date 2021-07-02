@@ -899,7 +899,7 @@ var Grad = /** @class */ (function () {
     return Grad;
 }());
 var Noise = /** @class */ (function () {
-    function Noise() {
+    function Noise(seed) {
         this.grad3 = [new Grad(1, 1, 0), new Grad(-1, 1, 0), new Grad(1, -1, 0), new Grad(-1, -1, 0),
             new Grad(1, 0, 1), new Grad(-1, 0, 1), new Grad(1, 0, -1), new Grad(-1, 0, -1),
             new Grad(0, 1, 1), new Grad(0, -1, 1), new Grad(0, 1, -1), new Grad(0, -1, -1)];
@@ -922,7 +922,7 @@ var Noise = /** @class */ (function () {
         this.G2 = (3 - Math.sqrt(3)) / 6;
         this.F3 = 1 / 3;
         this.G3 = 1 / 6;
-        this.seed(0);
+        this.seed(seed);
     }
     Noise.prototype.seed = function (seed) {
         if (seed > 0 && seed < 1) {
@@ -2675,7 +2675,7 @@ var Random = /** @class */ (function () {
      */
     Random.initialize = function () {
         this.rnd = new Prando();
-        this.noise = new Noise();
+        this.noise = new Noise(this.rnd.next());
     };
     /**
      * change noise and random seeds

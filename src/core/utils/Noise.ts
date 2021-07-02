@@ -39,7 +39,7 @@ class Noise {
     private G2: number;
     private G3: number;
 
-    constructor() {
+    constructor(seed:number) {
         this.grad3 = [new Grad(1, 1, 0), new Grad(-1, 1, 0), new Grad(1, -1, 0), new Grad(-1, -1, 0),
         new Grad(1, 0, 1), new Grad(-1, 0, 1), new Grad(1, 0, -1), new Grad(-1, 0, -1),
         new Grad(0, 1, 1), new Grad(0, -1, 1), new Grad(0, 1, -1), new Grad(0, -1, -1)];
@@ -63,7 +63,7 @@ class Noise {
 
         this.F3 = 1 / 3;
         this.G3 = 1 / 6;
-        this.seed(0);
+        this.seed(seed);
     }
 
     seed(seed: number): void {

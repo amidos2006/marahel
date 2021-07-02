@@ -506,7 +506,7 @@ declare class Noise {
     private F3;
     private G2;
     private G3;
-    constructor();
+    constructor(seed: number);
     seed(seed: number): void;
     simplex2(xin: number, yin: number): number;
     simplex3(xin: any, yin: any, zin: any): number;
