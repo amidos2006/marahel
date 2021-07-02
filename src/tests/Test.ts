@@ -1,4 +1,5 @@
 /// <reference path="../core/Marahel.ts"/>
+declare function require(name:string);
 
 let fs = require("fs");
 let savePixels = require("save-pixels");

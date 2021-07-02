@@ -7,6 +7,7 @@ class ConnectTurtleExplorer extends TurtleExplorer {
 
     private waypoints:Point[];
     private total_waypoints:number;
+    private tie_breaker:number;
     
     constructor(regionNames:string[], parameters:any, rules:string[]) {
         super(regionNames, parameters, rules);
@@ -22,6 +23,8 @@ class ConnectTurtleExplorer extends TurtleExplorer {
     }
 
     protected restartRepeat(region:Region):Point {
+        this.tie_breaker = 2 * Random.getIntRandom(0, 2) - 1;
+
         let groups = this.directions.getGroups(this.entities, region);
         if(groups.length == 0){
             this.waypoints = [];
@@ -74,7 +77,7 @@ class ConnectTurtleExplorer extends TurtleExplorer {
             let dist1 = Math.abs(l1.x - target.x) + Math.abs(l1.y - target.y);
             let dist2 = Math.abs(l2.x - target.x) + Math.abs(l2.y - target.y);
             if(dist1 == dist2){
-                return Random.getRandom() - 0.5;
+                return this.tie_breaker;
             }
             return dist1 - dist2;
         });

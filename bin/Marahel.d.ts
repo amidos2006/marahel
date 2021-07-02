@@ -1084,6 +1084,7 @@ declare class ConnectTurtleExplorer extends TurtleExplorer {
     private entities;
     private waypoints;
     private total_waypoints;
+    private tie_breaker;
     constructor(regionNames: string[], parameters: any, rules: string[]);
     protected restartRepeat(region: Region): Point;
     protected getNextLocation(currentLocation: Point, region: Region): Point;

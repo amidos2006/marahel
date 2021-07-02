@@ -266,7 +266,7 @@ class Factory{
             case "greedy":
             case "agent":
                 return new HeuristicTurtleExplorer(regionNames, parameters, rules);
-            case "turlte_connect":
+            case "turtle_connect":
             case "connect":
                 return new ConnectTurtleExplorer(regionNames, parameters, rules);
             case "wide":

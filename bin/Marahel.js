@@ -2,10 +2,12 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -2450,6 +2452,7 @@ var ConnectTurtleExplorer = /** @class */ (function (_super) {
         return _this;
     }
     ConnectTurtleExplorer.prototype.restartRepeat = function (region) {
+        this.tie_breaker = 2 * Random.getIntRandom(0, 2) - 1;
         var groups = this.directions.getGroups(this.entities, region);
         if (groups.length == 0) {
             this.waypoints = [];
@@ -2502,7 +2505,7 @@ var ConnectTurtleExplorer = /** @class */ (function (_super) {
             var dist1 = Math.abs(l1.x - target.x) + Math.abs(l1.y - target.y);
             var dist2 = Math.abs(l2.x - target.x) + Math.abs(l2.y - target.y);
             if (dist1 == dist2) {
-                return Random.getRandom() - 0.5;
+                return this.tie_breaker;
             }
             return dist1 - dist2;
         });
@@ -2848,7 +2851,7 @@ var Factory = /** @class */ (function () {
             case "greedy":
             case "agent":
                 return new HeuristicTurtleExplorer(regionNames, parameters, rules);
-            case "turlte_connect":
+            case "turtle_connect":
             case "connect":
                 return new ConnectTurtleExplorer(regionNames, parameters, rules);
             case "wide":
