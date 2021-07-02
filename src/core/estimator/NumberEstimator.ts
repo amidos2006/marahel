@@ -48,6 +48,10 @@ class NumberEstimator implements EstimatorInterface{
             return Random.getNoise((position.x - region.getX())/region.getWidth(), 
                 (position.y - region.getY())/region.getHeight());
         }
+        if(this.name == "noise2"){
+            return Random.getNoise((position.x - region.getX())/(2*region.getWidth()), 
+                (position.y - region.getY())/(2*region.getHeight()));
+        }
         if(isNaN(parseFloat(this.name))){
             if(this.name == "out"){
                 return 0;
