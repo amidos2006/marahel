@@ -17,7 +17,7 @@ class NumberEstimator implements EstimatorInterface{
     constructor(line:string){
         this.name = line;
         if(this.name != "percent" && this.name != "rpercent" && this.name != "cperct" &&
-            this.name != "random" && this.name != "noise" && 
+            this.name != "random" && this.name.indexOf("noise") >= 0 && 
             isNaN(parseFloat(this.name)) && 
             Marahel.marahelEngine.getEntityIndex(this.name) == -1){
             throw new Error("Undefined name estimator.");
