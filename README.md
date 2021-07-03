@@ -116,7 +116,7 @@ A condition is consists of either a single estimator or two estimator and an ope
 - `entityname`: the number of times this entity exist in the current region
 - `number`: a fixed number
 - `random`: a random number between 0 and 1
-- `noise`: a random noise value between -1 and 1
+- `noise` or `noiseX`: a random noise value between -1 and 1 where X is an integer number defines the scale of perlin noise
 - `percent`: the percentage of completion of the map modification
 - `cpercent`: the percentage of changes of the map
 - `rpercent`: the percentage of completion if the explorer is being repeated more than once

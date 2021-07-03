@@ -1934,7 +1934,7 @@ var NumberEstimator = /** @class */ (function () {
         if (this.name == "random") {
             return Random.getRandom();
         }
-        if (this.name == "noise") {
+        if (this.name.indexOf("noise") >= 0) {
             var scale = parseInt(this.name.split("noise")[1]);
             if (!scale) {
                 scale = 1;

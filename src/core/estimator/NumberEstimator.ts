@@ -44,7 +44,7 @@ class NumberEstimator implements EstimatorInterface{
         if(this.name == "random"){
             return Random.getRandom();
         }
-        if(this.name == "noise"){
+        if(this.name.indexOf("noise") >= 0){
             let scale:number = parseInt(this.name.split("noise")[1]);
             if(!scale){
                 scale = 1;
