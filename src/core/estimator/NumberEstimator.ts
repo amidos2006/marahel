@@ -45,12 +45,12 @@ class NumberEstimator implements EstimatorInterface{
             return Random.getRandom();
         }
         if(this.name == "noise"){
-            return Random.getNoise((position.x - region.getX())/region.getWidth(), 
-                (position.y - region.getY())/region.getHeight());
-        }
-        if(this.name == "noise2"){
-            return Random.getNoise((position.x - region.getX())/(2*region.getWidth()), 
-                (position.y - region.getY())/(2*region.getHeight()));
+            let scale:number = parseInt(this.name.split("noise")[1]);
+            if(!scale){
+                scale = 1;
+            }
+            return Random.getNoise((position.x - region.getX()) / (scale * 0.1 * region.getWidth()), 
+                (position.y - region.getY()) / (scale * 0.1 * region.getHeight()));
         }
         if(isNaN(parseFloat(this.name))){
             if(this.name == "out"){
