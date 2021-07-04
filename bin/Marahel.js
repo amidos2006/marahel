@@ -215,7 +215,7 @@ var Marahel = /** @class */ (function () {
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    Marahel.generate = function (indeces, callback, seed) {
+    Marahel.generate = function (indeces, seed, callback) {
         if (!Marahel.marahelEngine) {
             throw new Error("Call initialize first.");
         }

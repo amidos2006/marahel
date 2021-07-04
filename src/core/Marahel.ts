@@ -40,7 +40,7 @@ class Marahel{
      * @param seed (optional) the seed for the random number generator
      * @return the generated map in form of 2D matrix
      */
-    public static generate(indeces?:boolean, callback?:(map:number[][])=>void, seed?:number):any[][]{
+    public static generate(indeces?:boolean, seed?:number, callback?:(map:number[][])=>void):any[][]{
         if(!Marahel.marahelEngine){
             throw new Error("Call initialize first.");
         }
