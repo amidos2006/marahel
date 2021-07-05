@@ -1717,10 +1717,10 @@ var EqualDivider = /** @class */ (function () {
      */
     EqualDivider.prototype.getRegions = function (map) {
         var result = [];
-        var currentWidth = Random.getIntRandom(this.minWidth, this.maxWidth);
-        var currentHeight = Random.getIntRandom(this.minHeight, this.maxHeight);
-        var roomWidth = Math.floor(map.getWidth() / currentWidth);
-        var roomHeight = Math.floor(map.getHeight() / currentHeight);
+        var roomWidth = Random.getIntRandom(this.minWidth, this.maxWidth);
+        var roomHeight = Random.getIntRandom(this.minHeight, this.maxHeight);
+        var currentWidth = Math.floor(map.getWidth() / roomWidth);
+        var currentHeight = Math.floor(map.getHeight() / roomHeight);
         for (var x = 0; x < currentWidth; x++) {
             for (var y = 0; y < currentHeight; y++) {
                 var rX = x * roomWidth;
