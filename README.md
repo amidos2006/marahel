@@ -61,7 +61,7 @@ This section is used to define a PCG algorithm that will divide the map into sev
 }
 ```
 The following is a list of all the different types of the region divider supported by the current framework version. All the dividers have the same parameter set as thre previous example.
-- `equal`: divide the map into equal size rooms based on the `min` and `max` value where `min` is the minimum size of the region in x and y and `max` is the maximum size of the region. After the division happens the system will pick a group of random regions equal to the defined `number`.
+- `equal`: divide the map into equal size rooms based on the `min` and `max` value where `min` is the minimum number of divisions in x and y and `max` is the maximum number of divisions. After the division happens the system will pick a group of random regions equal to the defined `number`.
 - `bsp`: uses bsp to divide the map such as no room is smaller than `min` and no room is larger than `max`. It then select a `number` of rooms randomly based on that.
 - `sampling`: sample the `number` of regions in the map with dimensions between `min` and `max`. Then the system will try several `trials` (integer number defined in the parameters object) till it make sure that none of the regions collides. You don't need to define the `trails` as they are autocalculated using the other parameters but feel free to override it.
 
