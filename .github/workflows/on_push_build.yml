@@ -16,4 +16,8 @@ jobs:
         run: npm install typescript
         
       - name: Build Marahel
-        run: tsc -d --outFile bin/Marahel.js
+        run: |
+          cd src/core/Data/
+          ls
+          cd ../../..
+          tsc -d --outFile bin/Marahel.js
