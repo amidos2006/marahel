@@ -4,7 +4,7 @@ on:
     paths:
       - 'src/**'
       - 'tsconfig.json'
-      - '.github/workflows/on_push_build.yml'
+      - '.github/**'
 
 jobs:
   build_marahel:
