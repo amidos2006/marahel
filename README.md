@@ -12,7 +12,9 @@
 
 Marahel (ProcEngine 2.0) is a step toward having a constructive language that can be used to describe different map generation techniques. This framework uses Prando (https://www.npmjs.com/package/prando) for random number generation and Noise! (https://github.com/josephg/noisejs) for 2D perlin noise generation.
 
-Fore more technical details check the framework's paper: http://www.akhalifa.com/marahel/Khalifa2017Marahel.pdf
+For more technical details check the framework's paper: https://www.aaai.org/ocs/index.php/AIIDE/AIIDE17/paper/viewPaper/15878
+
+For more advanced project about evolving Marahel generators, check that paper: https://arxiv.org/abs/2005.08368
 
 ## How to use?
 The library is made using TypeScript and compiled to ES5 code to be able to use it in any of your javascript projects. You have to do the following steps:
