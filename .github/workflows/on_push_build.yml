@@ -1,5 +1,9 @@
 name: Build Marahel Library
-on: [push]
+on: 
+  push:
+    paths:
+      - 'src/**'
+      - 'tsconfig.json'
 
 jobs:
   build_marahel:
