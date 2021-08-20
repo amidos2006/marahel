@@ -17,3 +17,15 @@ jobs:
         
       - name: Build Marahel
         run: tsc -d --outFile bin/Marahel.js
+      
+      - name: Add build libraries
+        run: |
+          cd bin
+          git add *
+          git commit -m "Automatically Build Library"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
