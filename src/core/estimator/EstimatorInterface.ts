@@ -1,6 +1,6 @@
 /// <reference path="../Marahel.ts"/>
-/// <reference path="../Data/Point.ts"/>
-/// <reference path="../Data/Region.ts"/>
+/// <reference path="../data/Point.ts"/>
+/// <reference path="../data/Region.ts"/>
 
 /**
  * Estimator interface used by the condition class
