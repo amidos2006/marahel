@@ -1,5 +1,5 @@
 /// <reference path="../Marahel.ts"/>
-/// <reference path="../Data/Region.ts"/>
+/// <reference path="../data/Region.ts"/>
 
 /**
  * Interface that all divider algorithms should have
