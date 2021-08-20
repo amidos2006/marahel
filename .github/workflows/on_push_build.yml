@@ -18,7 +18,8 @@ jobs:
       - name: Build Marahel
         run: |
           ls
-          cd src/core/Data/
+          cd src/core/
           ls
           cd ../../..
+          pwd
           tsc -d --outFile bin/Marahel.js
