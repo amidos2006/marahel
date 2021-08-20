@@ -1,0 +1,20 @@
+name: Build Marahel Library
+on: [push]
+
+jobs:
+  build_marahel:
+    name: Build Marahel to JS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the current repo
+        uses: actions/checkout@v2
+        
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v2
+        
+      - name: Setup typescript
+        run: npm install typescript
+        
+      - name: Build Marahel
+        run: |
+          echo "hello"
