@@ -17,4 +17,4 @@ jobs:
         
       - name: Build Marahel
         run: |
-          echo "hello"
+          pwd
