@@ -1192,7 +1192,7 @@ var Noise = /** @class */ (function () {
     return Noise;
 }());
 /// <reference path="../Marahel.ts"/>
-/// <reference path="../Data/Region.ts"/>
+/// <reference path="../data/Region.ts"/>
 /// <reference path="DividerInterface.ts"/>
 /**
  * Divide the map into regions by sampling different ones
@@ -1855,8 +1855,8 @@ var NotEqualOperator = /** @class */ (function () {
     return NotEqualOperator;
 }());
 /// <reference path="../Marahel.ts"/>
-/// <reference path="../Data/Point.ts"/>
-/// <reference path="../Data/Region.ts"/>
+/// <reference path="../data/Point.ts"/>
+/// <reference path="../data/Region.ts"/>
 /// <reference path="EstimatorInterface.ts"/>
 /// <reference path="../utils/Tools.ts"/>
 /**
