@@ -2,7 +2,8 @@
     "compilerOptions": {
         "target": "es5",
         "sourceMap": true,
-        "outDir": "bin"
+        "outDir": "bin",
+        "declaration": true
     },
     "exclude": [
         "bin/*",
